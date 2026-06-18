@@ -16,32 +16,102 @@ export type Database = {
     Tables: {
       categorias_despesa: {
         Row: {
+          categoria_pai_id: string | null
           created_at: string
+          descricao: string | null
           id: string
           nome: string
           tipo: string
         }
         Insert: {
+          categoria_pai_id?: string | null
           created_at?: string
+          descricao?: string | null
           id?: string
           nome: string
           tipo?: string
         }
         Update: {
+          categoria_pai_id?: string | null
           created_at?: string
+          descricao?: string | null
           id?: string
           nome?: string
           tipo?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categorias_despesa_categoria_pai_id_fkey"
+            columns: ["categoria_pai_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_despesa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      centros_custo: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          descricao: string | null
+          empresa_id: string | null
+          id: string
+          loja_id: string | null
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string | null
+          id?: string
+          loja_id?: string | null
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string | null
+          id?: string
+          loja_id?: string | null
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "centros_custo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "centros_custo_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       despesas: {
         Row: {
           categoria_id: string | null
           centro_custo: string | null
+          centro_custo_id: string | null
           created_at: string
           data_competencia: string
+          data_pagamento: string | null
+          data_vencimento: string | null
           descricao: string
+          empresa_id: string | null
+          forma_pagamento: string | null
           id: string
           loja_id: string
           observacoes: string | null
@@ -52,9 +122,14 @@ export type Database = {
         Insert: {
           categoria_id?: string | null
           centro_custo?: string | null
+          centro_custo_id?: string | null
           created_at?: string
           data_competencia: string
+          data_pagamento?: string | null
+          data_vencimento?: string | null
           descricao: string
+          empresa_id?: string | null
+          forma_pagamento?: string | null
           id?: string
           loja_id: string
           observacoes?: string | null
@@ -65,9 +140,14 @@ export type Database = {
         Update: {
           categoria_id?: string | null
           centro_custo?: string | null
+          centro_custo_id?: string | null
           created_at?: string
           data_competencia?: string
+          data_pagamento?: string | null
+          data_vencimento?: string | null
           descricao?: string
+          empresa_id?: string | null
+          forma_pagamento?: string | null
           id?: string
           loja_id?: string
           observacoes?: string | null
@@ -84,7 +164,160 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "despesas_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "despesas_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      empresas: {
+        Row: {
+          ativo: boolean
+          cnpj: string | null
+          created_at: string
+          email: string | null
+          endereco: string | null
+          id: string
+          inscricao_estadual: string | null
+          nome_fantasia: string | null
+          razao_social: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          nome_fantasia?: string | null
+          razao_social: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          nome_fantasia?: string | null
+          razao_social?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      folha_pagamento: {
+        Row: {
+          beneficios: number
+          comissoes: number
+          competencia: string
+          created_at: string
+          custo_total: number
+          data_pagamento: string | null
+          empresa_id: string | null
+          fgts: number
+          funcionario_id: string
+          horas_extras: number
+          id: string
+          inss: number
+          irrf: number
+          liquido: number
+          loja_id: string | null
+          outros_descontos: number
+          outros_encargos: number
+          salario_base: number
+          status: string
+          total_descontos: number
+          total_proventos: number
+          updated_at: string
+        }
+        Insert: {
+          beneficios?: number
+          comissoes?: number
+          competencia: string
+          created_at?: string
+          custo_total?: number
+          data_pagamento?: string | null
+          empresa_id?: string | null
+          fgts?: number
+          funcionario_id: string
+          horas_extras?: number
+          id?: string
+          inss?: number
+          irrf?: number
+          liquido?: number
+          loja_id?: string | null
+          outros_descontos?: number
+          outros_encargos?: number
+          salario_base?: number
+          status?: string
+          total_descontos?: number
+          total_proventos?: number
+          updated_at?: string
+        }
+        Update: {
+          beneficios?: number
+          comissoes?: number
+          competencia?: string
+          created_at?: string
+          custo_total?: number
+          data_pagamento?: string | null
+          empresa_id?: string | null
+          fgts?: number
+          funcionario_id?: string
+          horas_extras?: number
+          id?: string
+          inss?: number
+          irrf?: number
+          liquido?: number
+          loja_id?: string | null
+          outros_descontos?: number
+          outros_encargos?: number
+          salario_base?: number
+          status?: string
+          total_descontos?: number
+          total_proventos?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "folha_pagamento_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "folha_pagamento_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "folha_pagamento_loja_id_fkey"
             columns: ["loja_id"]
             isOneToOne: false
             referencedRelation: "lojas"
@@ -97,44 +330,132 @@ export type Database = {
           ativo: boolean
           beneficios: number
           cargo: string | null
+          cpf: string | null
           created_at: string
           data_admissao: string | null
+          email: string | null
+          empresa_id: string | null
           encargos: number
           id: string
           loja_id: string
           nome: string
           salario_base: number
+          telefone: string | null
           updated_at: string
         }
         Insert: {
           ativo?: boolean
           beneficios?: number
           cargo?: string | null
+          cpf?: string | null
           created_at?: string
           data_admissao?: string | null
+          email?: string | null
+          empresa_id?: string | null
           encargos?: number
           id?: string
           loja_id: string
           nome: string
           salario_base?: number
+          telefone?: string | null
           updated_at?: string
         }
         Update: {
           ativo?: boolean
           beneficios?: number
           cargo?: string | null
+          cpf?: string | null
           created_at?: string
           data_admissao?: string | null
+          email?: string | null
+          empresa_id?: string | null
           encargos?: number
           id?: string
           loja_id?: string
           nome?: string
           salario_base?: number
+          telefone?: string | null
           updated_at?: string
         }
         Relationships: [
           {
+            foreignKeyName: "funcionarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "funcionarios_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      impostos: {
+        Row: {
+          aliquota: number
+          base_calculo: number
+          competencia: string
+          created_at: string
+          data_pagamento: string | null
+          data_vencimento: string | null
+          descricao: string | null
+          empresa_id: string | null
+          id: string
+          loja_id: string | null
+          observacoes: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          aliquota?: number
+          base_calculo?: number
+          competencia: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          descricao?: string | null
+          empresa_id?: string | null
+          id?: string
+          loja_id?: string | null
+          observacoes?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          aliquota?: number
+          base_calculo?: number
+          competencia?: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          descricao?: string | null
+          empresa_id?: string | null
+          id?: string
+          loja_id?: string | null
+          observacoes?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impostos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impostos_loja_id_fkey"
             columns: ["loja_id"]
             isOneToOne: false
             referencedRelation: "lojas"
@@ -146,8 +467,11 @@ export type Database = {
         Row: {
           ativo: boolean
           cidade: string | null
+          cnpj: string | null
           codigo: string
           created_at: string
+          empresa_id: string | null
+          endereco: string | null
           estado: string | null
           gerente: string | null
           id: string
@@ -157,8 +481,11 @@ export type Database = {
         Insert: {
           ativo?: boolean
           cidade?: string | null
+          cnpj?: string | null
           codigo: string
           created_at?: string
+          empresa_id?: string | null
+          endereco?: string | null
           estado?: string | null
           gerente?: string | null
           id?: string
@@ -168,15 +495,222 @@ export type Database = {
         Update: {
           ativo?: boolean
           cidade?: string | null
+          cnpj?: string | null
           codigo?: string
           created_at?: string
+          empresa_id?: string | null
+          endereco?: string | null
           estado?: string | null
           gerente?: string | null
           id?: string
           nome?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "lojas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metas: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          empresa_id: string | null
+          id: string
+          loja_id: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          status: string
+          tipo: string
+          updated_at: string
+          valor_meta: number
+          valor_realizado: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string | null
+          id?: string
+          loja_id?: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          status?: string
+          tipo: string
+          updated_at?: string
+          valor_meta?: number
+          valor_realizado?: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string | null
+          id?: string
+          loja_id?: string | null
+          periodo_fim?: string
+          periodo_inicio?: string
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor_meta?: number
+          valor_realizado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metas_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movimentacoes_financeiras: {
+        Row: {
+          categoria_id: string | null
+          centro_custo_id: string | null
+          conta: string | null
+          created_at: string
+          data_movimentacao: string
+          descricao: string
+          empresa_id: string | null
+          forma_pagamento: string | null
+          id: string
+          loja_id: string | null
+          observacoes: string | null
+          origem: string | null
+          origem_id: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          categoria_id?: string | null
+          centro_custo_id?: string | null
+          conta?: string | null
+          created_at?: string
+          data_movimentacao: string
+          descricao: string
+          empresa_id?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          loja_id?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          origem_id?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          categoria_id?: string | null
+          centro_custo_id?: string | null
+          conta?: string | null
+          created_at?: string
+          data_movimentacao?: string
+          descricao?: string
+          empresa_id?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          loja_id?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          origem_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_financeiras_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_despesa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_financeiras_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_financeiras_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_financeiras_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usuarios: {
+        Row: {
+          ativo: boolean
+          cargo: string | null
+          created_at: string
+          email: string
+          empresa_id: string | null
+          id: string
+          nome: string
+          perfil: string
+          ultimo_acesso: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cargo?: string | null
+          created_at?: string
+          email: string
+          empresa_id?: string | null
+          id?: string
+          nome: string
+          perfil?: string
+          ultimo_acesso?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cargo?: string | null
+          created_at?: string
+          email?: string
+          empresa_id?: string | null
+          id?: string
+          nome?: string
+          perfil?: string
+          ultimo_acesso?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
