@@ -41,7 +41,7 @@ function LojasPage() {
   });
 
   const save = useMutation({
-    mutationFn: async (payload: Partial<Loja>) => {
+    mutationFn: async (payload: { codigo: string; nome: string; cidade: string | null; estado: string | null; gerente: string | null; ativo: boolean }) => {
       if (edit) {
         const { error } = await supabase.from("lojas").update(payload).eq("id", edit.id);
         if (error) throw error;
