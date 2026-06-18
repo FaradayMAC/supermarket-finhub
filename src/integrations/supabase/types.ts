@@ -14,7 +14,170 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categorias_despesa: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          tipo?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
+      despesas: {
+        Row: {
+          categoria_id: string | null
+          centro_custo: string | null
+          created_at: string
+          data_competencia: string
+          descricao: string
+          id: string
+          loja_id: string
+          observacoes: string | null
+          status: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          categoria_id?: string | null
+          centro_custo?: string | null
+          created_at?: string
+          data_competencia: string
+          descricao: string
+          id?: string
+          loja_id: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          categoria_id?: string | null
+          centro_custo?: string | null
+          created_at?: string
+          data_competencia?: string
+          descricao?: string
+          id?: string
+          loja_id?: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "despesas_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_despesa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesas_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funcionarios: {
+        Row: {
+          ativo: boolean
+          beneficios: number
+          cargo: string | null
+          created_at: string
+          data_admissao: string | null
+          encargos: number
+          id: string
+          loja_id: string
+          nome: string
+          salario_base: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          beneficios?: number
+          cargo?: string | null
+          created_at?: string
+          data_admissao?: string | null
+          encargos?: number
+          id?: string
+          loja_id: string
+          nome: string
+          salario_base?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          beneficios?: number
+          cargo?: string | null
+          created_at?: string
+          data_admissao?: string | null
+          encargos?: number
+          id?: string
+          loja_id?: string
+          nome?: string
+          salario_base?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funcionarios_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lojas: {
+        Row: {
+          ativo: boolean
+          cidade: string | null
+          codigo: string
+          created_at: string
+          estado: string | null
+          gerente: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cidade?: string | null
+          codigo: string
+          created_at?: string
+          estado?: string | null
+          gerente?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cidade?: string | null
+          codigo?: string
+          created_at?: string
+          estado?: string | null
+          gerente?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
