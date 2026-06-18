@@ -134,7 +134,7 @@ function LojasPage() {
   );
 }
 
-function LojaForm({ initial, onSubmit, saving }: { initial: Loja | null; onSubmit: (v: Partial<Loja>) => void; saving: boolean }) {
+function LojaForm({ initial, onSubmit, saving }: { initial: Loja | null; onSubmit: (v: { codigo: string; nome: string; cidade: string | null; estado: string | null; gerente: string | null; ativo: boolean }) => void; saving: boolean }) {
   return (
     <DialogContent>
       <DialogHeader><DialogTitle>{initial ? "Editar loja" : "Nova loja"}</DialogTitle></DialogHeader>
