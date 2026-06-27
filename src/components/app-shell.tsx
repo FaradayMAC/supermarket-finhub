@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Store, Receipt, Users } from "lucide-react";
+import { LayoutDashboard, Store, Receipt, Users, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
 
 const nav = [
@@ -7,6 +7,7 @@ const nav = [
   { to: "/lojas", label: "Lojas", icon: Store },
   { to: "/despesas", label: "Despesas", icon: Receipt },
   { to: "/funcionarios", label: "Funcionários", icon: Users },
+  { to: "/folha", label: "Folha", icon: Wallet },
 ] as const;
 
 export function AppShell({ children, title, actions }: { children: ReactNode; title: string; actions?: ReactNode }) {
