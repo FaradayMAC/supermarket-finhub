@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LojasRouteImport } from './routes/lojas'
 import { Route as FuncionariosRouteImport } from './routes/funcionarios'
 import { Route as DespesasRouteImport } from './routes/despesas'
+import { Route as CalculadoraRouteImport } from './routes/calculadora'
 import { Route as IndexRouteImport } from './routes/index'
 
 const LojasRoute = LojasRouteImport.update({
@@ -29,6 +30,11 @@ const DespesasRoute = DespesasRouteImport.update({
   path: '/despesas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CalculadoraRoute = CalculadoraRouteImport.update({
+  id: '/calculadora',
+  path: '/calculadora',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,12 +43,14 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/calculadora': typeof CalculadoraRoute
   '/despesas': typeof DespesasRoute
   '/funcionarios': typeof FuncionariosRoute
   '/lojas': typeof LojasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/calculadora': typeof CalculadoraRoute
   '/despesas': typeof DespesasRoute
   '/funcionarios': typeof FuncionariosRoute
   '/lojas': typeof LojasRoute
@@ -50,20 +58,28 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/calculadora': typeof CalculadoraRoute
   '/despesas': typeof DespesasRoute
   '/funcionarios': typeof FuncionariosRoute
   '/lojas': typeof LojasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/despesas' | '/funcionarios' | '/lojas'
+  fullPaths: '/' | '/calculadora' | '/despesas' | '/funcionarios' | '/lojas'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/despesas' | '/funcionarios' | '/lojas'
-  id: '__root__' | '/' | '/despesas' | '/funcionarios' | '/lojas'
+  to: '/' | '/calculadora' | '/despesas' | '/funcionarios' | '/lojas'
+  id:
+    | '__root__'
+    | '/'
+    | '/calculadora'
+    | '/despesas'
+    | '/funcionarios'
+    | '/lojas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CalculadoraRoute: typeof CalculadoraRoute
   DespesasRoute: typeof DespesasRoute
   FuncionariosRoute: typeof FuncionariosRoute
   LojasRoute: typeof LojasRoute
@@ -92,6 +108,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DespesasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/calculadora': {
+      id: '/calculadora'
+      path: '/calculadora'
+      fullPath: '/calculadora'
+      preLoaderRoute: typeof CalculadoraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +127,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CalculadoraRoute: CalculadoraRoute,
   DespesasRoute: DespesasRoute,
   FuncionariosRoute: FuncionariosRoute,
   LojasRoute: LojasRoute,
