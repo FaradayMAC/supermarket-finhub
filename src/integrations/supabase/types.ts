@@ -333,15 +333,19 @@ export type Database = {
           cpf: string | null
           created_at: string
           data_admissao: string | null
+          dependentes: number
           email: string | null
           empresa_id: string | null
           encargos: number
           id: string
           loja_id: string
           nome: string
+          plano_saude: number
           salario_base: number
           telefone: string | null
           updated_at: string
+          vale_alimentacao: number
+          vale_transporte: number
         }
         Insert: {
           ativo?: boolean
@@ -350,15 +354,19 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           data_admissao?: string | null
+          dependentes?: number
           email?: string | null
           empresa_id?: string | null
           encargos?: number
           id?: string
           loja_id: string
           nome: string
+          plano_saude?: number
           salario_base?: number
           telefone?: string | null
           updated_at?: string
+          vale_alimentacao?: number
+          vale_transporte?: number
         }
         Update: {
           ativo?: boolean
@@ -367,15 +375,19 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           data_admissao?: string | null
+          dependentes?: number
           email?: string | null
           empresa_id?: string | null
           encargos?: number
           id?: string
           loja_id?: string
           nome?: string
+          plano_saude?: number
           salario_base?: number
           telefone?: string | null
           updated_at?: string
+          vale_alimentacao?: number
+          vale_transporte?: number
         }
         Relationships: [
           {
