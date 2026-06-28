@@ -21,6 +21,7 @@ import { Route as AuthenticatedDreRouteImport } from './routes/_authenticated/dr
 import { Route as AuthenticatedDespesasRouteImport } from './routes/_authenticated/despesas'
 import { Route as AuthenticatedComparativoRouteImport } from './routes/_authenticated/comparativo'
 import { Route as AuthenticatedCalculadoraRouteImport } from './routes/_authenticated/calculadora'
+import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -84,10 +85,16 @@ const AuthenticatedCalculadoraRoute =
     path: '/calculadora',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCaixaRoute = AuthenticatedCaixaRouteImport.update({
+  id: '/caixa',
+  path: '/caixa',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
+  '/caixa': typeof AuthenticatedCaixaRoute
   '/calculadora': typeof AuthenticatedCalculadoraRoute
   '/comparativo': typeof AuthenticatedComparativoRoute
   '/despesas': typeof AuthenticatedDespesasRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
+  '/caixa': typeof AuthenticatedCaixaRoute
   '/calculadora': typeof AuthenticatedCalculadoraRoute
   '/comparativo': typeof AuthenticatedComparativoRoute
   '/despesas': typeof AuthenticatedDespesasRoute
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/caixa': typeof AuthenticatedCaixaRoute
   '/_authenticated/calculadora': typeof AuthenticatedCalculadoraRoute
   '/_authenticated/comparativo': typeof AuthenticatedComparativoRoute
   '/_authenticated/despesas': typeof AuthenticatedDespesasRoute
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/caixa'
     | '/calculadora'
     | '/comparativo'
     | '/despesas'
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
+    | '/caixa'
     | '/calculadora'
     | '/comparativo'
     | '/despesas'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/caixa'
     | '/_authenticated/calculadora'
     | '/_authenticated/comparativo'
     | '/_authenticated/despesas'
@@ -260,10 +272,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCalculadoraRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/caixa': {
+      id: '/_authenticated/caixa'
+      path: '/caixa'
+      fullPath: '/caixa'
+      preLoaderRoute: typeof AuthenticatedCaixaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCaixaRoute: typeof AuthenticatedCaixaRoute
   AuthenticatedCalculadoraRoute: typeof AuthenticatedCalculadoraRoute
   AuthenticatedComparativoRoute: typeof AuthenticatedComparativoRoute
   AuthenticatedDespesasRoute: typeof AuthenticatedDespesasRoute
@@ -277,6 +297,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCaixaRoute: AuthenticatedCaixaRoute,
   AuthenticatedCalculadoraRoute: AuthenticatedCalculadoraRoute,
   AuthenticatedComparativoRoute: AuthenticatedComparativoRoute,
   AuthenticatedDespesasRoute: AuthenticatedDespesasRoute,
