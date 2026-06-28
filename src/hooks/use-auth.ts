@@ -31,7 +31,7 @@ export function useAuth() {
     enabled: !!user,
     queryFn: async () => {
       const [{ data: profile }, { data: roles }] = await Promise.all([
-        supabase.from("profiles").select("id, nome, email, loja_id").eq("id", user!.id).maybeSingle(),
+        supabase.from("profiles").select("id, nome, email, loja_id, approved").eq("id", user!.id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", user!.id),
       ]);
       return { profile, roles: (roles ?? []).map((r: any) => r.role as AppRole) };
