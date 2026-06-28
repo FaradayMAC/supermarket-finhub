@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MetasRouteImport } from './routes/metas'
 import { Route as LojasRouteImport } from './routes/lojas'
 import { Route as ImpostosRouteImport } from './routes/impostos'
 import { Route as FuncionariosRouteImport } from './routes/funcionarios'
@@ -16,6 +17,11 @@ import { Route as DespesasRouteImport } from './routes/despesas'
 import { Route as CalculadoraRouteImport } from './routes/calculadora'
 import { Route as IndexRouteImport } from './routes/index'
 
+const MetasRoute = MetasRouteImport.update({
+  id: '/metas',
+  path: '/metas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LojasRoute = LojasRouteImport.update({
   id: '/lojas',
   path: '/lojas',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/funcionarios': typeof FuncionariosRoute
   '/impostos': typeof ImpostosRoute
   '/lojas': typeof LojasRoute
+  '/metas': typeof MetasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/funcionarios': typeof FuncionariosRoute
   '/impostos': typeof ImpostosRoute
   '/lojas': typeof LojasRoute
+  '/metas': typeof MetasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/funcionarios': typeof FuncionariosRoute
   '/impostos': typeof ImpostosRoute
   '/lojas': typeof LojasRoute
+  '/metas': typeof MetasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/funcionarios'
     | '/impostos'
     | '/lojas'
+    | '/metas'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/funcionarios'
     | '/impostos'
     | '/lojas'
+    | '/metas'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/funcionarios'
     | '/impostos'
     | '/lojas'
+    | '/metas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,10 +118,18 @@ export interface RootRouteChildren {
   FuncionariosRoute: typeof FuncionariosRoute
   ImpostosRoute: typeof ImpostosRoute
   LojasRoute: typeof LojasRoute
+  MetasRoute: typeof MetasRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/metas': {
+      id: '/metas'
+      path: '/metas'
+      fullPath: '/metas'
+      preLoaderRoute: typeof MetasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lojas': {
       id: '/lojas'
       path: '/lojas'
@@ -162,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   FuncionariosRoute: FuncionariosRoute,
   ImpostosRoute: ImpostosRoute,
   LojasRoute: LojasRoute,
+  MetasRoute: MetasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
