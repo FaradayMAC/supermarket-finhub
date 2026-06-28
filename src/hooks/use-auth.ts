@@ -54,6 +54,7 @@ export function useAuth() {
   const canViewAll = isAdmin || isControladoria || isDiretoria;
   const canEditOwnLoja = canEditAll || isGerente;
   const lojaId = data?.profile?.loja_id ?? null;
+  const approved = !!data?.profile?.approved || isAdmin;
 
   return {
     user, loading: loading || isLoading,
@@ -61,7 +62,7 @@ export function useAuth() {
     roles, role,
     isAdmin, isDiretoria, isControladoria, isGerente,
     canEditAll, canViewAll, canEditOwnLoja,
-    lojaId,
+    lojaId, approved,
   };
 }
 
