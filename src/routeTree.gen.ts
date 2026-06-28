@@ -14,6 +14,7 @@ import { Route as LojasRouteImport } from './routes/lojas'
 import { Route as ImpostosRouteImport } from './routes/impostos'
 import { Route as FuncionariosRouteImport } from './routes/funcionarios'
 import { Route as DespesasRouteImport } from './routes/despesas'
+import { Route as ComparativoRouteImport } from './routes/comparativo'
 import { Route as CalculadoraRouteImport } from './routes/calculadora'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -42,6 +43,11 @@ const DespesasRoute = DespesasRouteImport.update({
   path: '/despesas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComparativoRoute = ComparativoRouteImport.update({
+  id: '/comparativo',
+  path: '/comparativo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CalculadoraRoute = CalculadoraRouteImport.update({
   id: '/calculadora',
   path: '/calculadora',
@@ -56,6 +62,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/calculadora': typeof CalculadoraRoute
+  '/comparativo': typeof ComparativoRoute
   '/despesas': typeof DespesasRoute
   '/funcionarios': typeof FuncionariosRoute
   '/impostos': typeof ImpostosRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calculadora': typeof CalculadoraRoute
+  '/comparativo': typeof ComparativoRoute
   '/despesas': typeof DespesasRoute
   '/funcionarios': typeof FuncionariosRoute
   '/impostos': typeof ImpostosRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/calculadora': typeof CalculadoraRoute
+  '/comparativo': typeof ComparativoRoute
   '/despesas': typeof DespesasRoute
   '/funcionarios': typeof FuncionariosRoute
   '/impostos': typeof ImpostosRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/calculadora'
+    | '/comparativo'
     | '/despesas'
     | '/funcionarios'
     | '/impostos'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/calculadora'
+    | '/comparativo'
     | '/despesas'
     | '/funcionarios'
     | '/impostos'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/calculadora'
+    | '/comparativo'
     | '/despesas'
     | '/funcionarios'
     | '/impostos'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CalculadoraRoute: typeof CalculadoraRoute
+  ComparativoRoute: typeof ComparativoRoute
   DespesasRoute: typeof DespesasRoute
   FuncionariosRoute: typeof FuncionariosRoute
   ImpostosRoute: typeof ImpostosRoute
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DespesasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/comparativo': {
+      id: '/comparativo'
+      path: '/comparativo'
+      fullPath: '/comparativo'
+      preLoaderRoute: typeof ComparativoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/calculadora': {
       id: '/calculadora'
       path: '/calculadora'
@@ -178,6 +198,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CalculadoraRoute: CalculadoraRoute,
+  ComparativoRoute: ComparativoRoute,
   DespesasRoute: DespesasRoute,
   FuncionariosRoute: FuncionariosRoute,
   ImpostosRoute: ImpostosRoute,
