@@ -17,6 +17,7 @@ import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedLojasRouteImport } from './routes/_authenticated/lojas'
 import { Route as AuthenticatedImpostosRouteImport } from './routes/_authenticated/impostos'
 import { Route as AuthenticatedFuncionariosRouteImport } from './routes/_authenticated/funcionarios'
+import { Route as AuthenticatedDreRouteImport } from './routes/_authenticated/dre'
 import { Route as AuthenticatedDespesasRouteImport } from './routes/_authenticated/despesas'
 import { Route as AuthenticatedComparativoRouteImport } from './routes/_authenticated/comparativo'
 import { Route as AuthenticatedCalculadoraRouteImport } from './routes/_authenticated/calculadora'
@@ -61,6 +62,11 @@ const AuthenticatedFuncionariosRoute =
     path: '/funcionarios',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDreRoute = AuthenticatedDreRouteImport.update({
+  id: '/dre',
+  path: '/dre',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDespesasRoute = AuthenticatedDespesasRouteImport.update({
   id: '/despesas',
   path: '/despesas',
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/calculadora': typeof AuthenticatedCalculadoraRoute
   '/comparativo': typeof AuthenticatedComparativoRoute
   '/despesas': typeof AuthenticatedDespesasRoute
+  '/dre': typeof AuthenticatedDreRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/impostos': typeof AuthenticatedImpostosRoute
   '/lojas': typeof AuthenticatedLojasRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/calculadora': typeof AuthenticatedCalculadoraRoute
   '/comparativo': typeof AuthenticatedComparativoRoute
   '/despesas': typeof AuthenticatedDespesasRoute
+  '/dre': typeof AuthenticatedDreRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/impostos': typeof AuthenticatedImpostosRoute
   '/lojas': typeof AuthenticatedLojasRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/_authenticated/calculadora': typeof AuthenticatedCalculadoraRoute
   '/_authenticated/comparativo': typeof AuthenticatedComparativoRoute
   '/_authenticated/despesas': typeof AuthenticatedDespesasRoute
+  '/_authenticated/dre': typeof AuthenticatedDreRoute
   '/_authenticated/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/_authenticated/impostos': typeof AuthenticatedImpostosRoute
   '/_authenticated/lojas': typeof AuthenticatedLojasRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/calculadora'
     | '/comparativo'
     | '/despesas'
+    | '/dre'
     | '/funcionarios'
     | '/impostos'
     | '/lojas'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/calculadora'
     | '/comparativo'
     | '/despesas'
+    | '/dre'
     | '/funcionarios'
     | '/impostos'
     | '/lojas'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/_authenticated/calculadora'
     | '/_authenticated/comparativo'
     | '/_authenticated/despesas'
+    | '/_authenticated/dre'
     | '/_authenticated/funcionarios'
     | '/_authenticated/impostos'
     | '/_authenticated/lojas'
@@ -220,6 +232,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFuncionariosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dre': {
+      id: '/_authenticated/dre'
+      path: '/dre'
+      fullPath: '/dre'
+      preLoaderRoute: typeof AuthenticatedDreRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/despesas': {
       id: '/_authenticated/despesas'
       path: '/despesas'
@@ -248,6 +267,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalculadoraRoute: typeof AuthenticatedCalculadoraRoute
   AuthenticatedComparativoRoute: typeof AuthenticatedComparativoRoute
   AuthenticatedDespesasRoute: typeof AuthenticatedDespesasRoute
+  AuthenticatedDreRoute: typeof AuthenticatedDreRoute
   AuthenticatedFuncionariosRoute: typeof AuthenticatedFuncionariosRoute
   AuthenticatedImpostosRoute: typeof AuthenticatedImpostosRoute
   AuthenticatedLojasRoute: typeof AuthenticatedLojasRoute
@@ -260,6 +280,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalculadoraRoute: AuthenticatedCalculadoraRoute,
   AuthenticatedComparativoRoute: AuthenticatedComparativoRoute,
   AuthenticatedDespesasRoute: AuthenticatedDespesasRoute,
+  AuthenticatedDreRoute: AuthenticatedDreRoute,
   AuthenticatedFuncionariosRoute: AuthenticatedFuncionariosRoute,
   AuthenticatedImpostosRoute: AuthenticatedImpostosRoute,
   AuthenticatedLojasRoute: AuthenticatedLojasRoute,
