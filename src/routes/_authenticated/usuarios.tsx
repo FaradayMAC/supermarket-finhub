@@ -31,13 +31,14 @@ function Usuarios() {
   const updateFn = useServerFn(adminUpdateUser);
   const deleteFn = useServerFn(adminDeleteUser);
   const resetFn = useServerFn(adminResetPassword);
+  const approveFn = useServerFn(adminSetApproved);
 
   const { data, isLoading } = useQuery({
     queryKey: ["usuarios-admin"],
     enabled: auth.isAdmin,
     queryFn: async () => {
       const [{ data: profiles }, { data: roles }, { data: lojas }] = await Promise.all([
-        supabase.from("profiles").select("id, nome, email, loja_id, created_at"),
+        supabase.from("profiles").select("id, nome, email, loja_id, approved, created_at").order("created_at", { ascending: false }),
         supabase.from("user_roles").select("user_id, role"),
         supabase.from("lojas").select("id, codigo, nome"),
       ]);
