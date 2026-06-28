@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Store, Receipt, Users, Wallet, Calculator, Landmark, Target, Scale, Shield, LogOut } from "lucide-react";
+import { LayoutDashboard, Store, Receipt, Users, Calculator, Landmark, Target, Scale, Shield, LogOut } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth, ROLE_LABEL, signOut } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
