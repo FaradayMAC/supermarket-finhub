@@ -536,6 +536,7 @@ export type Database = {
       }
       metas: {
         Row: {
+          categoria_id: string | null
           created_at: string
           descricao: string | null
           empresa_id: string | null
@@ -550,6 +551,7 @@ export type Database = {
           valor_realizado: number
         }
         Insert: {
+          categoria_id?: string | null
           created_at?: string
           descricao?: string | null
           empresa_id?: string | null
@@ -564,6 +566,7 @@ export type Database = {
           valor_realizado?: number
         }
         Update: {
+          categoria_id?: string | null
           created_at?: string
           descricao?: string | null
           empresa_id?: string | null
@@ -578,6 +581,13 @@ export type Database = {
           valor_realizado?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "metas_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_despesa"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "metas_empresa_id_fkey"
             columns: ["empresa_id"]
