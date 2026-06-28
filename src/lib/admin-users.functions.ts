@@ -36,7 +36,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const uid = created.user!.id;
     await supabaseAdmin.from("profiles").upsert({
-      id: uid, email: data.email, nome: data.nome, loja_id: data.loja_id ?? null,
+      id: uid, email: data.email, nome: data.nome, loja_id: data.loja_id ?? null, approved: true,
     });
     await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
     await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: data.role });
