@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, CalendarClock, Plus, Trash2, Pencil, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/impostos")({
+export const Route = createFileRoute("/_authenticated/impostos")({
   head: () => ({ meta: [{ title: "Impostos · MercadoGest" }] }),
   component: ImpostosPage,
 });

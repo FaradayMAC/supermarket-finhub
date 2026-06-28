@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const Route = createFileRoute("/calculadora")({
+export const Route = createFileRoute("/_authenticated/calculadora")({
   head: () => ({ meta: [{ title: "Calculadora de Custo · MercadoGest" }] }),
   component: CalcPage,
 });

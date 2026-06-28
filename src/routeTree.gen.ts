@@ -9,91 +9,93 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as MetasRouteImport } from './routes/metas'
-import { Route as LojasRouteImport } from './routes/lojas'
-import { Route as ImpostosRouteImport } from './routes/impostos'
-import { Route as FuncionariosRouteImport } from './routes/funcionarios'
-import { Route as DespesasRouteImport } from './routes/despesas'
-import { Route as ComparativoRouteImport } from './routes/comparativo'
-import { Route as CalculadoraRouteImport } from './routes/calculadora'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
+import { Route as AuthenticatedLojasRouteImport } from './routes/_authenticated/lojas'
+import { Route as AuthenticatedImpostosRouteImport } from './routes/_authenticated/impostos'
+import { Route as AuthenticatedFuncionariosRouteImport } from './routes/_authenticated/funcionarios'
+import { Route as AuthenticatedDespesasRouteImport } from './routes/_authenticated/despesas'
+import { Route as AuthenticatedComparativoRouteImport } from './routes/_authenticated/comparativo'
+import { Route as AuthenticatedCalculadoraRouteImport } from './routes/_authenticated/calculadora'
 
-const MetasRoute = MetasRouteImport.update({
-  id: '/metas',
-  path: '/metas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LojasRoute = LojasRouteImport.update({
-  id: '/lojas',
-  path: '/lojas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ImpostosRoute = ImpostosRouteImport.update({
-  id: '/impostos',
-  path: '/impostos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FuncionariosRoute = FuncionariosRouteImport.update({
-  id: '/funcionarios',
-  path: '/funcionarios',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DespesasRoute = DespesasRouteImport.update({
-  id: '/despesas',
-  path: '/despesas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ComparativoRoute = ComparativoRouteImport.update({
-  id: '/comparativo',
-  path: '/comparativo',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CalculadoraRoute = CalculadoraRouteImport.update({
-  id: '/calculadora',
-  path: '/calculadora',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/_authenticated/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedMetasRoute = AuthenticatedMetasRouteImport.update({
+  id: '/_authenticated/metas',
+  path: '/metas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedLojasRoute = AuthenticatedLojasRouteImport.update({
+  id: '/_authenticated/lojas',
+  path: '/lojas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedImpostosRoute = AuthenticatedImpostosRouteImport.update({
+  id: '/_authenticated/impostos',
+  path: '/impostos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedFuncionariosRoute =
+  AuthenticatedFuncionariosRouteImport.update({
+    id: '/_authenticated/funcionarios',
+    path: '/funcionarios',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedDespesasRoute = AuthenticatedDespesasRouteImport.update({
+  id: '/_authenticated/despesas',
+  path: '/despesas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedComparativoRoute =
+  AuthenticatedComparativoRouteImport.update({
+    id: '/_authenticated/comparativo',
+    path: '/comparativo',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedCalculadoraRoute =
+  AuthenticatedCalculadoraRouteImport.update({
+    id: '/_authenticated/calculadora',
+    path: '/calculadora',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/calculadora': typeof CalculadoraRoute
-  '/comparativo': typeof ComparativoRoute
-  '/despesas': typeof DespesasRoute
-  '/funcionarios': typeof FuncionariosRoute
-  '/impostos': typeof ImpostosRoute
-  '/lojas': typeof LojasRoute
-  '/metas': typeof MetasRoute
+  '/calculadora': typeof AuthenticatedCalculadoraRoute
+  '/comparativo': typeof AuthenticatedComparativoRoute
+  '/despesas': typeof AuthenticatedDespesasRoute
+  '/funcionarios': typeof AuthenticatedFuncionariosRoute
+  '/impostos': typeof AuthenticatedImpostosRoute
+  '/lojas': typeof AuthenticatedLojasRoute
+  '/metas': typeof AuthenticatedMetasRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/calculadora': typeof CalculadoraRoute
-  '/comparativo': typeof ComparativoRoute
-  '/despesas': typeof DespesasRoute
-  '/funcionarios': typeof FuncionariosRoute
-  '/impostos': typeof ImpostosRoute
-  '/lojas': typeof LojasRoute
-  '/metas': typeof MetasRoute
+  '/calculadora': typeof AuthenticatedCalculadoraRoute
+  '/comparativo': typeof AuthenticatedComparativoRoute
+  '/despesas': typeof AuthenticatedDespesasRoute
+  '/funcionarios': typeof AuthenticatedFuncionariosRoute
+  '/impostos': typeof AuthenticatedImpostosRoute
+  '/lojas': typeof AuthenticatedLojasRoute
+  '/metas': typeof AuthenticatedMetasRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/calculadora': typeof CalculadoraRoute
-  '/comparativo': typeof ComparativoRoute
-  '/despesas': typeof DespesasRoute
-  '/funcionarios': typeof FuncionariosRoute
-  '/impostos': typeof ImpostosRoute
-  '/lojas': typeof LojasRoute
-  '/metas': typeof MetasRoute
+  '/_authenticated/calculadora': typeof AuthenticatedCalculadoraRoute
+  '/_authenticated/comparativo': typeof AuthenticatedComparativoRoute
+  '/_authenticated/despesas': typeof AuthenticatedDespesasRoute
+  '/_authenticated/funcionarios': typeof AuthenticatedFuncionariosRoute
+  '/_authenticated/impostos': typeof AuthenticatedImpostosRoute
+  '/_authenticated/lojas': typeof AuthenticatedLojasRoute
+  '/_authenticated/metas': typeof AuthenticatedMetasRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/calculadora'
     | '/comparativo'
     | '/despesas'
@@ -101,9 +103,9 @@ export interface FileRouteTypes {
     | '/impostos'
     | '/lojas'
     | '/metas'
+    | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/calculadora'
     | '/comparativo'
     | '/despesas'
@@ -111,99 +113,100 @@ export interface FileRouteTypes {
     | '/impostos'
     | '/lojas'
     | '/metas'
+    | '/'
   id:
     | '__root__'
-    | '/'
-    | '/calculadora'
-    | '/comparativo'
-    | '/despesas'
-    | '/funcionarios'
-    | '/impostos'
-    | '/lojas'
-    | '/metas'
+    | '/_authenticated/calculadora'
+    | '/_authenticated/comparativo'
+    | '/_authenticated/despesas'
+    | '/_authenticated/funcionarios'
+    | '/_authenticated/impostos'
+    | '/_authenticated/lojas'
+    | '/_authenticated/metas'
+    | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  CalculadoraRoute: typeof CalculadoraRoute
-  ComparativoRoute: typeof ComparativoRoute
-  DespesasRoute: typeof DespesasRoute
-  FuncionariosRoute: typeof FuncionariosRoute
-  ImpostosRoute: typeof ImpostosRoute
-  LojasRoute: typeof LojasRoute
-  MetasRoute: typeof MetasRoute
+  AuthenticatedCalculadoraRoute: typeof AuthenticatedCalculadoraRoute
+  AuthenticatedComparativoRoute: typeof AuthenticatedComparativoRoute
+  AuthenticatedDespesasRoute: typeof AuthenticatedDespesasRoute
+  AuthenticatedFuncionariosRoute: typeof AuthenticatedFuncionariosRoute
+  AuthenticatedImpostosRoute: typeof AuthenticatedImpostosRoute
+  AuthenticatedLojasRoute: typeof AuthenticatedLojasRoute
+  AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/metas': {
-      id: '/metas'
-      path: '/metas'
-      fullPath: '/metas'
-      preLoaderRoute: typeof MetasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lojas': {
-      id: '/lojas'
-      path: '/lojas'
-      fullPath: '/lojas'
-      preLoaderRoute: typeof LojasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/impostos': {
-      id: '/impostos'
-      path: '/impostos'
-      fullPath: '/impostos'
-      preLoaderRoute: typeof ImpostosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/funcionarios': {
-      id: '/funcionarios'
-      path: '/funcionarios'
-      fullPath: '/funcionarios'
-      preLoaderRoute: typeof FuncionariosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/despesas': {
-      id: '/despesas'
-      path: '/despesas'
-      fullPath: '/despesas'
-      preLoaderRoute: typeof DespesasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/comparativo': {
-      id: '/comparativo'
-      path: '/comparativo'
-      fullPath: '/comparativo'
-      preLoaderRoute: typeof ComparativoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/calculadora': {
-      id: '/calculadora'
-      path: '/calculadora'
-      fullPath: '/calculadora'
-      preLoaderRoute: typeof CalculadoraRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/metas': {
+      id: '/_authenticated/metas'
+      path: '/metas'
+      fullPath: '/metas'
+      preLoaderRoute: typeof AuthenticatedMetasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/lojas': {
+      id: '/_authenticated/lojas'
+      path: '/lojas'
+      fullPath: '/lojas'
+      preLoaderRoute: typeof AuthenticatedLojasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/impostos': {
+      id: '/_authenticated/impostos'
+      path: '/impostos'
+      fullPath: '/impostos'
+      preLoaderRoute: typeof AuthenticatedImpostosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/funcionarios': {
+      id: '/_authenticated/funcionarios'
+      path: '/funcionarios'
+      fullPath: '/funcionarios'
+      preLoaderRoute: typeof AuthenticatedFuncionariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/despesas': {
+      id: '/_authenticated/despesas'
+      path: '/despesas'
+      fullPath: '/despesas'
+      preLoaderRoute: typeof AuthenticatedDespesasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/comparativo': {
+      id: '/_authenticated/comparativo'
+      path: '/comparativo'
+      fullPath: '/comparativo'
+      preLoaderRoute: typeof AuthenticatedComparativoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/calculadora': {
+      id: '/_authenticated/calculadora'
+      path: '/calculadora'
+      fullPath: '/calculadora'
+      preLoaderRoute: typeof AuthenticatedCalculadoraRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  CalculadoraRoute: CalculadoraRoute,
-  ComparativoRoute: ComparativoRoute,
-  DespesasRoute: DespesasRoute,
-  FuncionariosRoute: FuncionariosRoute,
-  ImpostosRoute: ImpostosRoute,
-  LojasRoute: LojasRoute,
-  MetasRoute: MetasRoute,
+  AuthenticatedCalculadoraRoute: AuthenticatedCalculadoraRoute,
+  AuthenticatedComparativoRoute: AuthenticatedComparativoRoute,
+  AuthenticatedDespesasRoute: AuthenticatedDespesasRoute,
+  AuthenticatedFuncionariosRoute: AuthenticatedFuncionariosRoute,
+  AuthenticatedImpostosRoute: AuthenticatedImpostosRoute,
+  AuthenticatedLojasRoute: AuthenticatedLojasRoute,
+  AuthenticatedMetasRoute: AuthenticatedMetasRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
