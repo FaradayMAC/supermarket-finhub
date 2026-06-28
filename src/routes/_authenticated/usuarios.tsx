@@ -107,9 +107,11 @@ function Usuarios() {
                         {r ? <Badge>{ROLE_LABEL[r]}</Badge> : <Badge variant="outline">Sem acesso</Badge>}
                       </td>
                       <td className="px-4 py-3">
-                        {r === "gerente"
-                          ? (lojas.find((l: any) => l.id === p.loja_id) ? `${lojas.find((l: any) => l.id === p.loja_id).codigo} — ${lojas.find((l: any) => l.id === p.loja_id).nome}` : <span className="text-xs text-muted-foreground">não vinculada</span>)
-                          : <span className="text-xs text-muted-foreground">—</span>}
+                        {(() => {
+                          if (r !== "gerente") return <span className="text-xs text-muted-foreground">—</span>;
+                          const loja = lojas.find((l: any) => l.id === p.loja_id);
+                          return loja ? `${loja.codigo} — ${loja.nome}` : <span className="text-xs text-muted-foreground">não vinculada</span>;
+                        })()}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
