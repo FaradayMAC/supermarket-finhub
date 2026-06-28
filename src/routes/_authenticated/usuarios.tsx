@@ -68,6 +68,11 @@ function Usuarios() {
     onSuccess: () => toast.success("Senha redefinida"),
     onError: (e: any) => toast.error(e.message),
   });
+  const approveMut = useMutation({
+    mutationFn: (v: { userId: string; approved: boolean }) => approveFn({ data: v }),
+    onSuccess: (_d, v) => { invalidate(); toast.success(v.approved ? "Usuário aprovado" : "Acesso revogado"); },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   if (!auth.isAdmin) {
     return <AppShell title="Usuários"><Card><CardContent className="p-8 text-center text-muted-foreground">Acesso restrito ao Administrador.</CardContent></Card></AppShell>;
