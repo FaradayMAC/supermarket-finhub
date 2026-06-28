@@ -6,18 +6,21 @@ import { AppShell, fmtBRL } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/calculadora")({
   head: () => ({ meta: [{ title: "Calculadora de Custo · MercadoGest" }] }),
   component: CalcPage,
 });
 
-// Alíquotas padrão (CLT, regime normal)
+// Alíquotas patronais sobre a folha
 const INSS_PATRONAL = 0.20; // 20%
 const FGTS = 0.08; // 8%
 const RAT_TERCEIROS = 0.085; // ~8,5% (RAT 1-3% + Sistema S ~5,8%)
-const FERIAS_FATOR = (1 / 12) * (1 + 1 / 3); // férias + 1/3 mensalizado
-const DECIMO_FATOR = 1 / 12; // 13º mensalizado
+const FERIAS_FATOR = (1 / 12) * (1 + 1 / 3);
+const DECIMO_FATOR = 1 / 12;
+
+type Regime = "simples" | "lucro_real";
 
 type Fields = {
   salario: number;
@@ -25,21 +28,43 @@ type Fields = {
   va: number;
   ps: number;
   outros: number;
+  salarioFamilia: number;
+  regime: Regime;
 };
 
-const ZERO: Fields = { salario: 0, vt: 0, va: 0, ps: 0, outros: 0 };
+const ZERO: Fields = {
+  salario: 0,
+  vt: 0,
+  va: 0,
+  ps: 0,
+  outros: 0,
+  salarioFamilia: 0,
+  regime: "simples",
+};
 
 function calcular(f: Fields) {
-  const inss = f.salario * INSS_PATRONAL;
+  // No Simples Nacional, INSS Patronal (20%) e RAT/Terceiros (~8,5%) são
+  // recolhidos via DAS — não incidem na folha. FGTS continua devido.
+  const isLucroReal = f.regime === "lucro_real";
+  const inss = isLucroReal ? f.salario * INSS_PATRONAL : 0;
+  const ratTerc = isLucroReal ? f.salario * RAT_TERCEIROS : 0;
   const fgts = f.salario * FGTS;
-  const ratTerc = f.salario * RAT_TERCEIROS;
   const ferias = f.salario * FERIAS_FATOR;
   const decimo = f.salario * DECIMO_FATOR;
-  // encargos incidem também sobre férias e 13º (FGTS, INSS)
-  const encSobreProvisoes = (ferias + decimo) * (INSS_PATRONAL + FGTS);
+  // Encargos sobre férias e 13º: INSS patronal (se Lucro Real) + FGTS sempre.
+  const rateProv = (isLucroReal ? INSS_PATRONAL : 0) + FGTS;
+  const encSobreProvisoes = (ferias + decimo) * rateProv;
   const beneficios = f.vt + f.va + f.ps + f.outros;
   const mensal =
-    f.salario + inss + fgts + ratTerc + ferias + decimo + encSobreProvisoes + beneficios;
+    f.salario +
+    inss +
+    fgts +
+    ratTerc +
+    ferias +
+    decimo +
+    encSobreProvisoes +
+    beneficios +
+    f.salarioFamilia;
   return {
     inss,
     fgts,
@@ -48,8 +73,10 @@ function calcular(f: Fields) {
     decimo,
     encSobreProvisoes,
     beneficios,
+    salarioFamilia: f.salarioFamilia,
     mensal,
     anual: mensal * 12,
+    isLucroReal,
   };
 }
 
@@ -62,7 +89,9 @@ function CalcPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("funcionarios")
-        .select("loja_id, salario_base, vale_transporte, vale_alimentacao, plano_saude, lojas(nome, codigo)")
+        .select(
+          "loja_id, salario_base, vale_transporte, vale_alimentacao, plano_saude, salario_familia, regime_tributario, lojas(nome, codigo)",
+        )
         .eq("ativo", true);
       if (error) throw error;
       return data as any[];
@@ -70,7 +99,10 @@ function CalcPage() {
   });
 
   const porUnidade = useMemo(() => {
-    const map = new Map<string, { nome: string; codigo: string; mensal: number; anual: number; qtd: number }>();
+    const map = new Map<
+      string,
+      { nome: string; codigo: string; mensal: number; anual: number; qtd: number }
+    >();
     for (const x of funcs) {
       const c = calcular({
         salario: Number(x.salario_base) || 0,
@@ -78,6 +110,8 @@ function CalcPage() {
         va: Number(x.vale_alimentacao) || 0,
         ps: Number(x.plano_saude) || 0,
         outros: 0,
+        salarioFamilia: Number(x.salario_familia) || 0,
+        regime: (x.regime_tributario as Regime) ?? "simples",
       });
       const key = x.loja_id;
       const prev = map.get(key) ?? {
@@ -97,7 +131,7 @@ function CalcPage() {
 
   const totalGeralMensal = porUnidade.reduce((s, u) => s + u.mensal, 0);
 
-  const set = (k: keyof Fields) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const setNum = (k: keyof Fields) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setF((p) => ({ ...p, [k]: Number(e.target.value) || 0 }));
 
   return (
@@ -109,25 +143,50 @@ function CalcPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
+              <Label>Regime tributário da empresa</Label>
+              <Select
+                value={f.regime}
+                onValueChange={(v) => setF((p) => ({ ...p, regime: v as Regime }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="simples">Simples Nacional (folha desonerada)</SelectItem>
+                  <SelectItem value="lucro_real">Lucro Real / Presumido</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label>Salário base (R$)</Label>
-              <Input type="number" min="0" step="0.01" value={f.salario} onChange={set("salario")} />
+              <Input type="number" min="0" step="0.01" value={f.salario} onChange={setNum("salario")} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Vale transporte</Label>
-                <Input type="number" min="0" step="0.01" value={f.vt} onChange={set("vt")} />
+                <Input type="number" min="0" step="0.01" value={f.vt} onChange={setNum("vt")} />
               </div>
               <div>
                 <Label>Vale alimentação</Label>
-                <Input type="number" min="0" step="0.01" value={f.va} onChange={set("va")} />
+                <Input type="number" min="0" step="0.01" value={f.va} onChange={setNum("va")} />
               </div>
               <div>
                 <Label>Plano de saúde</Label>
-                <Input type="number" min="0" step="0.01" value={f.ps} onChange={set("ps")} />
+                <Input type="number" min="0" step="0.01" value={f.ps} onChange={setNum("ps")} />
               </div>
               <div>
                 <Label>Outros benefícios</Label>
-                <Input type="number" min="0" step="0.01" value={f.outros} onChange={set("outros")} />
+                <Input type="number" min="0" step="0.01" value={f.outros} onChange={setNum("outros")} />
+              </div>
+              <div className="col-span-2">
+                <Label>Salário-família (R$)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={f.salarioFamilia}
+                  onChange={setNum("salarioFamilia")}
+                />
               </div>
             </div>
           </CardContent>
@@ -135,14 +194,25 @@ function CalcPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Resultado</CardTitle>
+            <CardTitle>
+              Resultado{" "}
+              <span className="text-sm font-normal text-muted-foreground">
+                · {r.isLucroReal ? "Lucro Real" : "Simples Nacional"}
+              </span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-1.5 text-sm">
               <Row label="Salário" value={f.salario} />
-              <Row label="INSS Patronal (20%)" value={r.inss} />
+              <Row
+                label={r.isLucroReal ? "INSS Patronal (20%)" : "INSS Patronal (no DAS)"}
+                value={r.inss}
+              />
               <Row label="FGTS (8%)" value={r.fgts} />
-              <Row label="RAT + Sistema S (~8,5%)" value={r.ratTerc} />
+              <Row
+                label={r.isLucroReal ? "RAT + Sistema S (~8,5%)" : "RAT + Sistema S (no DAS)"}
+                value={r.ratTerc}
+              />
               <Row label="Férias + 1/3 (provisão mensal)" value={r.ferias} />
               <Row label="13º salário (provisão mensal)" value={r.decimo} />
               <Row label="Encargos s/ férias e 13º" value={r.encSobreProvisoes} />
@@ -150,6 +220,7 @@ function CalcPage() {
               <Row label="Vale alimentação" value={f.va} />
               <Row label="Plano de saúde" value={f.ps} />
               <Row label="Outros benefícios" value={f.outros} />
+              <Row label="Salário-família" value={r.salarioFamilia} />
               <div className="my-2 border-t" />
               <div className="flex items-center justify-between rounded-md bg-primary/10 px-3 py-2">
                 <span className="font-semibold">Custo mensal</span>
