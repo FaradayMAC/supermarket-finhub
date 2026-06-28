@@ -95,6 +95,7 @@ function Usuarios() {
                 <tr>
                   <th className="px-4 py-3">Usuário</th>
                   <th className="px-4 py-3">Perfil</th>
+                  <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Unidade (gerentes)</th>
                   <th className="px-4 py-3 text-right">Ações</th>
                 </tr>
@@ -103,6 +104,7 @@ function Usuarios() {
                 {(data?.profiles ?? []).map((p: any) => {
                   const r = rolesByUser.get(p.id) ?? null;
                   const isSelf = p.id === auth.user?.id;
+                  const approved = !!p.approved;
                   return (
                     <tr key={p.id} className="border-b last:border-0">
                       <td className="px-4 py-3">
@@ -113,6 +115,11 @@ function Usuarios() {
                         {r ? <Badge>{ROLE_LABEL[r]}</Badge> : <Badge variant="outline">Sem acesso</Badge>}
                       </td>
                       <td className="px-4 py-3">
+                        {approved
+                          ? <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Aprovado</Badge>
+                          : <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">Aguardando aprovação</Badge>}
+                      </td>
+                      <td className="px-4 py-3">
                         {(() => {
                           if (r !== "gerente") return <span className="text-xs text-muted-foreground">—</span>;
                           const loja = lojas.find((l: any) => l.id === p.loja_id);
@@ -121,6 +128,17 @@ function Usuarios() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
+                          {!isSelf && (
+                            approved ? (
+                              <Button variant="ghost" size="icon" title="Revogar acesso" onClick={() => approveMut.mutate({ userId: p.id, approved: false })}>
+                                <ShieldOff className="h-4 w-4 text-amber-600" />
+                              </Button>
+                            ) : (
+                              <Button variant="ghost" size="icon" title="Aprovar acesso" onClick={() => approveMut.mutate({ userId: p.id, approved: true })}>
+                                <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                              </Button>
+                            )
+                          )}
                           <EditUserDialog user={p} currentRole={r} lojas={lojas} onSubmit={(v) => updateMut.mutateAsync({ userId: p.id, ...v })} />
                           <ResetPasswordDialog userId={p.id} email={p.email} onSubmit={(pwd) => resetMut.mutateAsync({ userId: p.id, password: pwd })} />
                           {!isSelf && (
