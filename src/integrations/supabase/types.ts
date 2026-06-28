@@ -341,7 +341,9 @@ export type Database = {
           loja_id: string
           nome: string
           plano_saude: number
+          regime_tributario: string
           salario_base: number
+          salario_familia: number
           telefone: string | null
           updated_at: string
           vale_alimentacao: number
@@ -362,7 +364,9 @@ export type Database = {
           loja_id: string
           nome: string
           plano_saude?: number
+          regime_tributario?: string
           salario_base?: number
+          salario_familia?: number
           telefone?: string | null
           updated_at?: string
           vale_alimentacao?: number
@@ -383,7 +387,9 @@ export type Database = {
           loja_id?: string
           nome?: string
           plano_saude?: number
+          regime_tributario?: string
           salario_base?: number
+          salario_familia?: number
           telefone?: string | null
           updated_at?: string
           vale_alimentacao?: number
