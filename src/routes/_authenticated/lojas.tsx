@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Plus, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/lojas")({
+export const Route = createFileRoute("/_authenticated/lojas")({
   head: () => ({ meta: [{ title: "Lojas · MercadoGest" }] }),
   component: LojasPage,
 });

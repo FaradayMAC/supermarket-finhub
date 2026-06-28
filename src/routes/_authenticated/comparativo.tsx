@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { Scale } from "lucide-react";
 
-export const Route = createFileRoute("/comparativo")({
+export const Route = createFileRoute("/_authenticated/comparativo")({
   head: () => ({ meta: [{ title: "Comparativo entre unidades · MercadoGest" }] }),
   component: Comparativo,
 });

@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Pencil, Target } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/metas")({
+export const Route = createFileRoute("/_authenticated/metas")({
   head: () => ({ meta: [{ title: "Metas · MercadoGest" }] }),
   component: MetasPage,
 });
