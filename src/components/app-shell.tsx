@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Store, Receipt, Users, Wallet, Calculator, Landmark } from "lucide-react";
+import { LayoutDashboard, Store, Receipt, Users, Wallet, Calculator, Landmark, Target } from "lucide-react";
 import type { ReactNode } from "react";
 
 const nav = [
@@ -9,6 +9,7 @@ const nav = [
   { to: "/funcionarios", label: "Funcionários", icon: Users },
   { to: "/folha", label: "Folha", icon: Wallet },
   { to: "/impostos", label: "Impostos", icon: Landmark },
+  { to: "/metas", label: "Metas", icon: Target },
   { to: "/calculadora", label: "Calc.", icon: Calculator },
 ] as const;
 
@@ -49,7 +50,7 @@ export function AppShell({ children, title, actions }: { children: ReactNode; ti
         <main className="px-4 py-6 sm:px-8 sm:py-8">{children}</main>
 
         {/* Mobile nav */}
-        <nav className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-7 border-t bg-background lg:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-8 border-t bg-background lg:hidden">
           {nav.map((item) => {
             const Icon = item.icon;
             return (
