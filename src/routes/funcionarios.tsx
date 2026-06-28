@@ -13,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2 } from "lucide-react";
@@ -24,8 +23,19 @@ export const Route = createFileRoute("/funcionarios")({
   component: FuncPage,
 });
 
-// Encargos patronais estimados sobre o salário (INSS patronal, FGTS, férias, 13º, etc.)
-const ENCARGOS_RATE = 0.68;
+// Encargos patronais por regime tributário.
+// - Lucro Real (regime normal CLT): INSS Patronal 20% + RAT/Terceiros ~8,5% + FGTS 8%
+//   + provisões de férias+1/3 (~11,11%) e 13º (~8,33%) com encargos sobre elas.
+//   Total estimado ≈ 68% do salário.
+// - Simples Nacional: INSS Patronal e RAT/Terceiros são recolhidos no DAS
+//   (desonerados na folha). Restam FGTS 8% + provisões + FGTS sobre provisões.
+//   Total estimado ≈ 28% do salário.
+const ENCARGOS_RATE_LUCRO_REAL = 0.68;
+const ENCARGOS_RATE_SIMPLES = 0.28;
+
+export function encargosRate(regime: string | null | undefined) {
+  return regime === "lucro_real" ? ENCARGOS_RATE_LUCRO_REAL : ENCARGOS_RATE_SIMPLES;
+}
 
 type Func = {
   id: string;
@@ -39,22 +49,28 @@ type Func = {
   vale_alimentacao: number;
   plano_saude: number;
   dependentes: number;
+  salario_familia: number;
+  regime_tributario: "simples" | "lucro_real";
   ativo: boolean;
   lojas?: { nome: string; codigo: string };
 };
 
-function custoReal(f: {
+export function custoReal(f: {
   salario_base: number | string;
   vale_transporte: number | string;
   vale_alimentacao: number | string;
   plano_saude: number | string;
+  salario_familia?: number | string;
+  regime_tributario?: string | null;
 }) {
   const salario = Number(f.salario_base) || 0;
   const vt = Number(f.vale_transporte) || 0;
   const va = Number(f.vale_alimentacao) || 0;
   const ps = Number(f.plano_saude) || 0;
-  const encargos = salario * ENCARGOS_RATE;
-  return { salario, vt, va, ps, encargos, total: salario + encargos + vt + va + ps };
+  const sf = Number(f.salario_familia) || 0;
+  const rate = encargosRate(f.regime_tributario);
+  const encargos = salario * rate;
+  return { salario, vt, va, ps, sf, encargos, rate, total: salario + encargos + vt + va + ps + sf };
 }
 
 function FuncPage() {
@@ -101,6 +117,7 @@ function FuncPage() {
       toast.success(editing ? "Funcionário atualizado" : "Funcionário cadastrado");
       qc.invalidateQueries({ queryKey: ["funcionarios"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["funcionarios-calc"] });
       setOpen(false);
       setEditing(null);
     },
@@ -116,6 +133,7 @@ function FuncPage() {
       toast.success("Removido");
       qc.invalidateQueries({ queryKey: ["funcionarios"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["funcionarios-calc"] });
     },
   });
 
@@ -194,11 +212,12 @@ function FuncPage() {
                   <th className="px-4 py-3">CPF</th>
                   <th className="px-4 py-3">Cargo</th>
                   <th className="px-4 py-3">Unidade</th>
-                  <th className="px-4 py-3">Admissão</th>
+                  <th className="px-4 py-3">Regime</th>
                   <th className="px-4 py-3 text-center">Dep.</th>
                   <th className="px-4 py-3 text-right">Salário</th>
+                  <th className="px-4 py-3 text-right">Sal. família</th>
                   <th className="px-4 py-3 text-right">Benefícios</th>
-                  <th className="px-4 py-3 text-right">Encargos (68%)</th>
+                  <th className="px-4 py-3 text-right">Encargos</th>
                   <th className="px-4 py-3 text-right">Custo real</th>
                   <th className="px-4 py-3"></th>
                 </tr>
@@ -206,14 +225,14 @@ function FuncPage() {
               <tbody>
                 {isLoading && (
                   <tr>
-                    <td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={12} className="px-4 py-8 text-center text-muted-foreground">
                       Carregando…
                     </td>
                   </tr>
                 )}
                 {!isLoading && filtrados.length === 0 && (
                   <tr>
-                    <td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">
+                    <td colSpan={12} className="px-4 py-12 text-center text-muted-foreground">
                       Sem funcionários neste filtro.
                     </td>
                   </tr>
@@ -227,15 +246,19 @@ function FuncPage() {
                       <td className="px-4 py-3 text-muted-foreground">{f.cpf ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.cargo ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.lojas?.nome ?? "—"}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {f.data_admissao
-                          ? new Date(f.data_admissao + "T00:00:00").toLocaleDateString("pt-BR")
-                          : "—"}
+                      <td className="px-4 py-3 text-xs">
+                        {f.regime_tributario === "lucro_real" ? "Lucro Real" : "Simples"}
                       </td>
                       <td className="px-4 py-3 text-center">{f.dependentes ?? 0}</td>
                       <td className="px-4 py-3 text-right">{fmtBRL(c.salario)}</td>
+                      <td className="px-4 py-3 text-right">{fmtBRL(c.sf)}</td>
                       <td className="px-4 py-3 text-right">{fmtBRL(beneficios)}</td>
-                      <td className="px-4 py-3 text-right">{fmtBRL(c.encargos)}</td>
+                      <td className="px-4 py-3 text-right">
+                        {fmtBRL(c.encargos)}
+                        <span className="ml-1 text-xs text-muted-foreground">
+                          ({Math.round(c.rate * 100)}%)
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-right font-semibold">{fmtBRL(c.total)}</td>
                       <td className="px-4 py-3 text-right">
                         <Button size="icon" variant="ghost" onClick={() => openEdit(f)}>
@@ -275,20 +298,26 @@ function FuncForm({
   saving: boolean;
 }) {
   const [lojaId, setLojaId] = useState(initial?.loja_id ?? "");
+  const [regime, setRegime] = useState<"simples" | "lucro_real">(
+    (initial?.regime_tributario as any) ?? "simples",
+  );
   const [salario, setSalario] = useState<number>(Number(initial?.salario_base ?? 0));
   const [vt, setVt] = useState<number>(Number(initial?.vale_transporte ?? 0));
   const [va, setVa] = useState<number>(Number(initial?.vale_alimentacao ?? 0));
   const [ps, setPs] = useState<number>(Number(initial?.plano_saude ?? 0));
+  const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
 
   const preview = custoReal({
     salario_base: salario,
     vale_transporte: vt,
     vale_alimentacao: va,
     plano_saude: ps,
+    salario_familia: sf,
+    regime_tributario: regime,
   });
 
   return (
-    <DialogContent className="max-w-2xl">
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>{initial ? "Editar funcionário" : "Novo funcionário"}</DialogTitle>
       </DialogHeader>
@@ -298,21 +327,26 @@ function FuncForm({
           e.preventDefault();
           if (!lojaId) return toast.error("Selecione a unidade");
           const fd = new FormData(e.currentTarget);
+          const sal = Number(fd.get("salario") || 0);
+          const _vt = Number(fd.get("vt") || 0);
+          const _va = Number(fd.get("va") || 0);
+          const _ps = Number(fd.get("ps") || 0);
           onSubmit({
             id: initial?.id,
             loja_id: lojaId,
             nome: String(fd.get("nome") || "").trim(),
             cpf: String(fd.get("cpf") || "").trim() || null,
             cargo: String(fd.get("cargo") || "").trim() || null,
-            salario_base: Number(fd.get("salario") || 0),
+            salario_base: sal,
             data_admissao: String(fd.get("admissao") || "") || null,
-            vale_transporte: Number(fd.get("vt") || 0),
-            vale_alimentacao: Number(fd.get("va") || 0),
-            plano_saude: Number(fd.get("ps") || 0),
+            vale_transporte: _vt,
+            vale_alimentacao: _va,
+            plano_saude: _ps,
             dependentes: Number(fd.get("dependentes") || 0),
-            // Mantém compatibilidade: armazena encargos calculados
-            encargos: Number(fd.get("salario") || 0) * ENCARGOS_RATE,
-            beneficios: Number(fd.get("vt") || 0) + Number(fd.get("va") || 0) + Number(fd.get("ps") || 0),
+            salario_familia: Number(fd.get("sf") || 0),
+            regime_tributario: regime,
+            encargos: sal * encargosRate(regime),
+            beneficios: _vt + _va + _ps,
             ativo: true,
           });
         }}
@@ -332,6 +366,22 @@ function FuncForm({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="col-span-2">
+            <Label>Regime tributário da empresa *</Label>
+            <Select value={regime} onValueChange={(v) => setRegime(v as any)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="simples">Simples Nacional (folha desonerada — ~28%)</SelectItem>
+                <SelectItem value="lucro_real">Lucro Real / Presumido (~68%)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Simples Nacional: INSS patronal e RAT/Terceiros recolhidos no DAS. Lucro
+              Real/Presumido: encargos completos sobre a folha.
+            </p>
           </div>
           <div className="col-span-2">
             <Label htmlFor="nome">Nome *</Label>
@@ -403,7 +453,7 @@ function FuncForm({
               onChange={(e) => setVa(Number(e.target.value))}
             />
           </div>
-          <div className="col-span-2">
+          <div>
             <Label htmlFor="ps">Plano de saúde (R$)</Label>
             <Input
               id="ps"
@@ -415,23 +465,44 @@ function FuncForm({
               onChange={(e) => setPs(Number(e.target.value))}
             />
           </div>
+          <div>
+            <Label htmlFor="sf">Salário-família (R$)</Label>
+            <Input
+              id="sf"
+              name="sf"
+              type="number"
+              min="0"
+              step="0.01"
+              value={sf}
+              onChange={(e) => setSf(Number(e.target.value))}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Valor pago ao funcionário por filho elegível (reembolsado pelo INSS).
+            </p>
+          </div>
         </div>
 
         <div className="rounded-md border bg-muted/40 p-3 text-sm">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Custo real do funcionário
+            Custo real do funcionário ({regime === "lucro_real" ? "Lucro Real" : "Simples Nacional"})
           </div>
           <div className="grid grid-cols-2 gap-y-1 sm:grid-cols-4">
             <div className="text-muted-foreground">Salário</div>
             <div className="text-right font-medium">{fmtBRL(preview.salario)}</div>
-            <div className="text-muted-foreground">Encargos (68%)</div>
+            <div className="text-muted-foreground">
+              Encargos ({Math.round(preview.rate * 100)}%)
+            </div>
             <div className="text-right font-medium">{fmtBRL(preview.encargos)}</div>
             <div className="text-muted-foreground">VT + VA + Saúde</div>
             <div className="text-right font-medium">
               {fmtBRL(preview.vt + preview.va + preview.ps)}
             </div>
+            <div className="text-muted-foreground">Salário-família</div>
+            <div className="text-right font-medium">{fmtBRL(preview.sf)}</div>
             <div className="font-semibold">Total</div>
-            <div className="text-right font-bold text-primary">{fmtBRL(preview.total)}</div>
+            <div className="text-right font-bold text-primary sm:col-span-3">
+              {fmtBRL(preview.total)}
+            </div>
           </div>
         </div>
 
