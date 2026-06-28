@@ -14,8 +14,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth, ROLE_LABEL, type AppRole } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { Plus, Pencil, KeyRound, Trash2 } from "lucide-react";
-import { adminCreateUser, adminUpdateUser, adminDeleteUser, adminResetPassword } from "@/lib/admin-users.functions";
+import { Plus, Pencil, KeyRound, Trash2, ShieldCheck, ShieldOff } from "lucide-react";
+import { adminCreateUser, adminUpdateUser, adminDeleteUser, adminResetPassword, adminSetApproved } from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/_authenticated/usuarios")({
   head: () => ({ meta: [{ title: "Usuários · MercadoGest" }] }),
