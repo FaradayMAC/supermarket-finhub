@@ -12,7 +12,6 @@ const ALL_NAV: NavItem[] = [
   { to: "/lojas", label: "Lojas", icon: Store },
   { to: "/despesas", label: "Despesas", icon: Receipt },
   { to: "/funcionarios", label: "Funcionários", icon: Users },
-  { to: "/folha", label: "Folha", icon: Wallet },
   { to: "/impostos", label: "Impostos", icon: Landmark },
   { to: "/metas", label: "Metas", icon: Target },
   { to: "/comparativo", label: "Compar.", icon: Scale },
