@@ -26,7 +26,7 @@ const monthLabel = (key: string) => {
 };
 
 function Dashboard() {
-  const [periodo, setPeriodo] = useState<"3m" | "6m" | "12m" | "all">("6m");
+  const [periodo, setPeriodo] = useState<"1m" | "3m" | "6m" | "12m" | "all">("6m");
 
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
@@ -58,7 +58,7 @@ function Dashboard() {
   const mov = data?.mov ?? [];
 
   // janela de meses
-  const monthsBack = periodo === "3m" ? 3 : periodo === "6m" ? 6 : periodo === "12m" ? 12 : null;
+  const monthsBack = periodo === "1m" ? 1 : periodo === "3m" ? 3 : periodo === "6m" ? 6 : periodo === "12m" ? 12 : null;
   const cutoff = useMemo(() => {
     if (!monthsBack) return null;
     const d = new Date();
@@ -148,6 +148,7 @@ function Dashboard() {
           <Select value={periodo} onValueChange={(v) => setPeriodo(v as any)}>
             <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="1m">Mês atual</SelectItem>
               <SelectItem value="3m">Últimos 3 meses</SelectItem>
               <SelectItem value="6m">Últimos 6 meses</SelectItem>
               <SelectItem value="12m">Últimos 12 meses</SelectItem>
