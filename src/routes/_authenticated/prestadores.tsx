@@ -299,6 +299,18 @@ function PrestadoresPage() {
                         {p.telefone && <div>{p.telefone}</div>}
                         {p.email && <div className="text-muted-foreground">{p.email}</div>}
                       </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {(() => {
+                          const c = funcCounts[p.id];
+                          if (!c) return <span className="text-muted-foreground">0</span>;
+                          return (
+                            <span>
+                              <span className="font-medium">{c.ativos}</span>
+                              <span className="text-muted-foreground"> / {c.total}</span>
+                            </span>
+                          );
+                        })()}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={p.status === "ativa" ? "default" : "secondary"}>
                           {p.status === "ativa" ? "Ativa" : "Inativa"}
