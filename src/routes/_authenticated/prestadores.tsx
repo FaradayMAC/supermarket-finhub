@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,6 +32,16 @@ type Prestador = {
   telefone: string | null;
   email: string | null;
   status: string;
+  observacoes: string | null;
+};
+
+type DasRow = {
+  id: string;
+  prestador_id: string;
+  competencia: string;
+  valor: number;
+  data_vencimento: string | null;
+  data_pagamento: string | null;
   observacoes: string | null;
 };
 
@@ -54,6 +65,13 @@ const empty = {
   email: "",
   status: "ativa",
   observacoes: "",
+};
+
+const BRL = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n || 0);
+const fmtDate = (s: string | null) => (s ? new Date(s + "T00:00:00").toLocaleDateString("pt-BR") : "—");
+const fmtComp = (s: string) => {
+  const d = new Date(s + "T00:00:00");
+  return d.toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" });
 };
 
 function PrestadoresPage() {
@@ -258,86 +276,325 @@ function PrestadoresPage() {
         </Dialog>
       }
     >
-      <Card>
-        <CardHeader>
-          <CardTitle>Prestadoras cadastradas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-sm text-muted-foreground">Carregando...</div>
-          ) : list.length === 0 ? (
-            <div className="text-sm text-muted-foreground">Nenhuma prestadora cadastrada.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Razão Social</TableHead>
-                    <TableHead>Nome Fantasia</TableHead>
-                    <TableHead>CNPJ</TableHead>
-                    <TableHead>Regime</TableHead>
-                    <TableHead>Anexo</TableHead>
-                    <TableHead className="text-right">DAS %</TableHead>
-                    <TableHead>Responsável</TableHead>
-                    <TableHead>Contato</TableHead>
-                    <TableHead className="text-right">Funcionários</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-24"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {list.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-medium">{p.razao_social}</TableCell>
-                      <TableCell>{p.nome_fantasia ?? "—"}</TableCell>
-                      <TableCell>{p.cnpj ?? "—"}</TableCell>
-                      <TableCell>{REGIMES.find((r) => r.v === p.regime_tributario)?.l ?? p.regime_tributario}</TableCell>
-                      <TableCell>{p.anexo_simples ?? "—"}</TableCell>
-                      <TableCell className="text-right">{Number(p.aliquota_das).toFixed(2)}%</TableCell>
-                      <TableCell>{p.responsavel ?? "—"}</TableCell>
-                      <TableCell className="text-xs">
-                        {p.telefone && <div>{p.telefone}</div>}
-                        {p.email && <div className="text-muted-foreground">{p.email}</div>}
-                      </TableCell>
-                      <TableCell className="text-right text-sm">
-                        {(() => {
-                          const c = funcCounts[p.id];
-                          if (!c) return <span className="text-muted-foreground">0</span>;
-                          return (
-                            <span>
-                              <span className="font-medium">{c.ativos}</span>
-                              <span className="text-muted-foreground"> / {c.total}</span>
-                            </span>
-                          );
-                        })()}
-                      </TableCell>
+      <Tabs defaultValue="empresas">
+        <TabsList>
+          <TabsTrigger value="empresas">Empresas</TabsTrigger>
+          <TabsTrigger value="das">DAS Mensal</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="empresas" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Prestadoras cadastradas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="text-sm text-muted-foreground">Carregando...</div>
+              ) : list.length === 0 ? (
+                <div className="text-sm text-muted-foreground">Nenhuma prestadora cadastrada.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Razão Social</TableHead>
+                        <TableHead>Nome Fantasia</TableHead>
+                        <TableHead>CNPJ</TableHead>
+                        <TableHead>Regime</TableHead>
+                        <TableHead>Anexo</TableHead>
+                        <TableHead className="text-right">DAS %</TableHead>
+                        <TableHead>Responsável</TableHead>
+                        <TableHead>Contato</TableHead>
+                        <TableHead className="text-right">Funcionários</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-24"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {list.map((p) => (
+                        <TableRow key={p.id}>
+                          <TableCell className="font-medium">{p.razao_social}</TableCell>
+                          <TableCell>{p.nome_fantasia ?? "—"}</TableCell>
+                          <TableCell>{p.cnpj ?? "—"}</TableCell>
+                          <TableCell>{REGIMES.find((r) => r.v === p.regime_tributario)?.l ?? p.regime_tributario}</TableCell>
+                          <TableCell>{p.anexo_simples ?? "—"}</TableCell>
+                          <TableCell className="text-right">{Number(p.aliquota_das).toFixed(2)}%</TableCell>
+                          <TableCell>{p.responsavel ?? "—"}</TableCell>
+                          <TableCell className="text-xs">
+                            {p.telefone && <div>{p.telefone}</div>}
+                            {p.email && <div className="text-muted-foreground">{p.email}</div>}
+                          </TableCell>
+                          <TableCell className="text-right text-sm">
+                            {(() => {
+                              const c = funcCounts[p.id];
+                              if (!c) return <span className="text-muted-foreground">0</span>;
+                              return (
+                                <span>
+                                  <span className="font-medium">{c.ativos}</span>
+                                  <span className="text-muted-foreground"> / {c.total}</span>
+                                </span>
+                              );
+                            })()}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={p.status === "ativa" ? "default" : "secondary"}>
+                              {p.status === "ativa" ? "Ativa" : "Inativa"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => { if (confirm(`Remover ${p.razao_social}?`)) del.mutate(p.id); }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="das" className="mt-4">
+          <DasSection prestadores={list} />
+        </TabsContent>
+      </Tabs>
+    </AppShell>
+  );
+}
+
+const dasEmpty = {
+  prestador_id: "",
+  competencia: new Date().toISOString().slice(0, 7),
+  valor: "",
+  data_vencimento: "",
+  data_pagamento: "",
+  observacoes: "",
+};
+
+function DasSection({ prestadores }: { prestadores: Prestador[] }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<DasRow | null>(null);
+  const [form, setForm] = useState(dasEmpty);
+  const [filterPrestador, setFilterPrestador] = useState<string>("all");
+
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ["prestador-das"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prestador_das_mensal" as any)
+        .select("*")
+        .order("competencia", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as DasRow[];
+    },
+  });
+
+  const prestadorMap = Object.fromEntries(prestadores.map((p) => [p.id, p]));
+  const filtered = filterPrestador === "all" ? rows : rows.filter((r) => r.prestador_id === filterPrestador);
+
+  const upsert = useMutation({
+    mutationFn: async () => {
+      if (!form.prestador_id) throw new Error("Selecione uma prestadora");
+      if (!form.competencia) throw new Error("Informe a competência");
+      const payload = {
+        prestador_id: form.prestador_id,
+        competencia: form.competencia + "-01",
+        valor: Number(form.valor) || 0,
+        data_vencimento: form.data_vencimento || null,
+        data_pagamento: form.data_pagamento || null,
+        observacoes: form.observacoes || null,
+      };
+      if (editing) {
+        const { error } = await supabase.from("prestador_das_mensal" as any).update(payload).eq("id", editing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("prestador_das_mensal" as any).insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["prestador-das"] });
+      setOpen(false);
+      setEditing(null);
+      setForm(dasEmpty);
+      toast.success("DAS salvo");
+    },
+    onError: (e: any) => {
+      const msg = e.message?.includes("duplicate") || e.code === "23505"
+        ? "Já existe lançamento para esta prestadora nesta competência"
+        : (e.message ?? "Erro ao salvar");
+      toast.error(msg);
+    },
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("prestador_das_mensal" as any).delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["prestador-das"] });
+      toast.success("Lançamento removido");
+    },
+  });
+
+  function openNew() {
+    setEditing(null);
+    setForm(dasEmpty);
+    setOpen(true);
+  }
+  function openEdit(r: DasRow) {
+    setEditing(r);
+    setForm({
+      prestador_id: r.prestador_id,
+      competencia: r.competencia.slice(0, 7),
+      valor: String(r.valor ?? ""),
+      data_vencimento: r.data_vencimento ?? "",
+      data_pagamento: r.data_pagamento ?? "",
+      observacoes: r.observacoes ?? "",
+    });
+    setOpen(true);
+  }
+
+  const total = filtered.reduce((s, r) => s + Number(r.valor || 0), 0);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-3">
+        <CardTitle>DAS Mensal</CardTitle>
+        <div className="flex items-center gap-2">
+          <Select value={filterPrestador} onValueChange={setFilterPrestador}>
+            <SelectTrigger className="w-56"><SelectValue placeholder="Filtrar prestadora" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as prestadoras</SelectItem>
+              {prestadores.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.nome_fantasia || p.razao_social}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" /> Novo DAS</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-xl">
+              <DialogHeader>
+                <DialogTitle>{editing ? "Editar lançamento" : "Novo lançamento de DAS"}</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Label>Empresa Prestadora *</Label>
+                  <Select value={form.prestador_id} onValueChange={(v) => setForm({ ...form, prestador_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent>
+                      {prestadores.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.nome_fantasia || p.razao_social}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Competência *</Label>
+                  <Input type="month" value={form.competencia} onChange={(e) => setForm({ ...form, competencia: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Valor do DAS</Label>
+                  <Input type="number" step="0.01" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Data de Vencimento</Label>
+                  <Input type="date" value={form.data_vencimento} onChange={(e) => setForm({ ...form, data_vencimento: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Data de Pagamento</Label>
+                  <Input type="date" value={form.data_pagamento} onChange={(e) => setForm({ ...form, data_pagamento: e.target.value })} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Observações</Label>
+                  <Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} rows={3} />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+                <Button onClick={() => upsert.mutate()} disabled={upsert.isPending}>
+                  {editing ? "Salvar" : "Cadastrar"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground">Carregando...</div>
+        ) : filtered.length === 0 ? (
+          <div className="text-sm text-muted-foreground">Nenhum lançamento de DAS registrado.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Competência</TableHead>
+                  <TableHead>Empresa Prestadora</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Pagamento</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Observações</TableHead>
+                  <TableHead className="w-24"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((r) => {
+                  const p = prestadorMap[r.prestador_id];
+                  const pago = !!r.data_pagamento;
+                  return (
+                    <TableRow key={r.id}>
+                      <TableCell className="font-medium">{fmtComp(r.competencia)}</TableCell>
+                      <TableCell>{p?.nome_fantasia || p?.razao_social || "—"}</TableCell>
+                      <TableCell className="text-right">{BRL(Number(r.valor))}</TableCell>
+                      <TableCell>{fmtDate(r.data_vencimento)}</TableCell>
+                      <TableCell>{fmtDate(r.data_pagamento)}</TableCell>
                       <TableCell>
-                        <Badge variant={p.status === "ativa" ? "default" : "secondary"}>
-                          {p.status === "ativa" ? "Ativa" : "Inativa"}
-                        </Badge>
+                        <Badge variant={pago ? "default" : "secondary"}>{pago ? "Pago" : "Em aberto"}</Badge>
                       </TableCell>
+                      <TableCell className="max-w-xs truncate text-xs text-muted-foreground">{r.observacoes ?? "—"}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(r)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => { if (confirm(`Remover ${p.razao_social}?`)) del.mutate(p.id); }}
-                          >
+                          <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover este lançamento?")) del.mutate(r.id); }}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </AppShell>
+                  );
+                })}
+              </TableBody>
+              <tfoot>
+                <tr className="border-t font-medium">
+                  <td className="p-2" colSpan={2}>Total ({filtered.length})</td>
+                  <td className="p-2 text-right">{BRL(total)}</td>
+                  <td colSpan={5}></td>
+                </tr>
+              </tfoot>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
