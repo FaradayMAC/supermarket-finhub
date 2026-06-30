@@ -317,6 +317,7 @@ function FuncForm({
     vale_alimentacao: va,
     plano_saude: ps,
     salario_familia: sf,
+    valor_extra_salarial: ve,
     regime_tributario: regime,
   });
 
