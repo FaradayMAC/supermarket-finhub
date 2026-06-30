@@ -309,6 +309,7 @@ function FuncForm({
   const [va, setVa] = useState<number>(Number(initial?.vale_alimentacao ?? 0));
   const [ps, setPs] = useState<number>(Number(initial?.plano_saude ?? 0));
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
+  const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
 
   const preview = custoReal({
     salario_base: salario,
