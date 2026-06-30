@@ -365,6 +365,7 @@ function FuncForm({
           onSubmit({
             id: initial?.id,
             loja_id: lojaId,
+            prestador_id: prestadorId === "none" ? null : prestadorId,
             nome: String(fd.get("nome") || "").trim(),
             cpf: String(fd.get("cpf") || "").trim() || null,
             cargo: String(fd.get("cargo") || "").trim() || null,
@@ -382,6 +383,7 @@ function FuncForm({
             beneficios: _vt + _va + _ps + _po + _ve,
             ativo: true,
           });
+
         }}
       >
         <div className="grid grid-cols-2 gap-3">
