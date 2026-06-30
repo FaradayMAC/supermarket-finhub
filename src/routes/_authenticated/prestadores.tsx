@@ -599,3 +599,94 @@ function DasSection({ prestadores }: { prestadores: Prestador[] }) {
     </Card>
   );
 }
+
+type RateioRow = {
+  id: string;
+  loja_id: string;
+  folha_unidade: number;
+  folha_total: number;
+  percentual: number;
+  valor_rateado: number;
+  lojas?: { nome: string; codigo: string } | null;
+};
+
+function RateioButton({ dasId, competencia, valor, prestadorNome }: { dasId: string; competencia: string; valor: number; prestadorNome: string }) {
+  const [open, setOpen] = useState(false);
+  const { data = [], isLoading } = useQuery({
+    queryKey: ["das-rateio", dasId],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prestador_das_rateio" as any)
+        .select("id, loja_id, folha_unidade, folha_total, percentual, valor_rateado, lojas(nome, codigo)")
+        .eq("das_id", dasId)
+        .order("valor_rateado", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as RateioRow[];
+    },
+  });
+  const totalRateado = data.reduce((s, r) => s + Number(r.valor_rateado || 0), 0);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="ghost" title="Ver rateio por unidade">
+          <PieChart className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Rateio do DAS por Unidade</DialogTitle>
+        </DialogHeader>
+        <div className="mb-3 text-sm text-muted-foreground">
+          {prestadorNome} · Competência {fmtComp(competencia)} · Valor DAS{" "}
+          <span className="font-semibold text-foreground">{BRL(valor)}</span>
+        </div>
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground">Carregando...</div>
+        ) : data.length === 0 ? (
+          <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+            Nenhum funcionário ativo vinculado a esta empresa prestadora. O rateio é gerado automaticamente quando há folha salarial.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Unidade</TableHead>
+                <TableHead className="text-right">Folha</TableHead>
+                <TableHead className="text-right">%</TableHead>
+                <TableHead className="text-right">Valor rateado</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="font-medium">
+                    {r.lojas?.nome ?? "—"}{" "}
+                    {r.lojas?.codigo && <span className="text-xs text-muted-foreground">({r.lojas.codigo})</span>}
+                  </TableCell>
+                  <TableCell className="text-right">{BRL(Number(r.folha_unidade))}</TableCell>
+                  <TableCell className="text-right">{Number(r.percentual).toFixed(2)}%</TableCell>
+                  <TableCell className="text-right font-semibold">{BRL(Number(r.valor_rateado))}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+            <tfoot>
+              <tr className="border-t font-medium">
+                <td className="p-2">Total</td>
+                <td className="p-2 text-right">{BRL(data[0] ? Number(data[0].folha_total) : 0)}</td>
+                <td className="p-2 text-right">100,00%</td>
+                <td className="p-2 text-right">{BRL(totalRateado)}</td>
+              </tr>
+            </tfoot>
+          </Table>
+        )}
+        <p className="mt-2 text-xs text-muted-foreground">
+          Fórmula: (Folha da Unidade ÷ Folha Total da Empresa) × Valor do DAS. Recalculado
+          automaticamente quando há admissão, desligamento, alteração salarial, mudança de
+          unidade/prestadora ou alteração do valor do DAS.
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
