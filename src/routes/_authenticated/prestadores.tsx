@@ -572,6 +572,7 @@ function DasSection({ prestadores }: { prestadores: Prestador[] }) {
                       <TableCell className="max-w-xs truncate text-xs text-muted-foreground">{r.observacoes ?? "—"}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
+                          <RateioButton dasId={r.id} competencia={r.competencia} valor={Number(r.valor)} prestadorNome={p?.nome_fantasia || p?.razao_social || ""} />
                           <Button size="icon" variant="ghost" onClick={() => openEdit(r)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
