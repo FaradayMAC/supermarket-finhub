@@ -336,6 +336,7 @@ function FuncForm({
           const _vt = Number(fd.get("vt") || 0);
           const _va = Number(fd.get("va") || 0);
           const _ps = Number(fd.get("ps") || 0);
+          const _ve = Number(fd.get("ve") || 0);
           onSubmit({
             id: initial?.id,
             loja_id: lojaId,
@@ -349,9 +350,10 @@ function FuncForm({
             plano_saude: _ps,
             dependentes: Number(fd.get("dependentes") || 0),
             salario_familia: Number(fd.get("sf") || 0),
+            valor_extra_salarial: _ve,
             regime_tributario: regime,
             encargos: sal * encargosRate(regime),
-            beneficios: _vt + _va + _ps,
+            beneficios: _vt + _va + _ps + _ve,
             ativo: true,
           });
         }}
