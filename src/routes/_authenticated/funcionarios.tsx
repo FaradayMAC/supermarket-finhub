@@ -487,6 +487,21 @@ function FuncForm({
               Valor pago ao funcionário por filho elegível (reembolsado pelo INSS).
             </p>
           </div>
+          <div>
+            <Label htmlFor="ve">Valor extra salarial (R$)</Label>
+            <Input
+              id="ve"
+              name="ve"
+              type="number"
+              min="0"
+              step="0.01"
+              value={ve}
+              onChange={(e) => setVe(Number(e.target.value))}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Comissões, gratificações ou outras verbas extras mensais.
+            </p>
+          </div>
         </div>
 
         <div className="rounded-md border bg-muted/40 p-3 text-sm">
