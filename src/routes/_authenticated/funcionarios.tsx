@@ -40,6 +40,7 @@ export function encargosRate(regime: string | null | undefined) {
 type Func = {
   id: string;
   loja_id: string;
+  prestador_id: string | null;
   nome: string;
   cpf: string | null;
   cargo: string | null;
@@ -55,7 +56,9 @@ type Func = {
   regime_tributario: "simples" | "lucro_real";
   ativo: boolean;
   lojas?: { nome: string; codigo: string };
+  prestadores_servico?: { nome_fantasia: string | null; razao_social: string } | null;
 };
+
 
 export function custoReal(f: {
   salario_base: number | string;
@@ -91,17 +94,27 @@ function FuncPage() {
       (await supabase.from("lojas").select("id, nome, codigo").order("nome")).data ?? [],
   });
 
+  const { data: prestadores = [] } = useQuery({
+    queryKey: ["prestadores-min"],
+    queryFn: async () =>
+      (await supabase
+        .from("prestadores_servico")
+        .select("id, razao_social, nome_fantasia, status")
+        .order("razao_social")).data ?? [],
+  });
+
   const { data: funcs = [], isLoading } = useQuery({
     queryKey: ["funcionarios"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("funcionarios")
-        .select("*, lojas(nome, codigo)")
+        .select("*, lojas(nome, codigo), prestadores_servico(nome_fantasia, razao_social)")
         .order("nome");
       if (error) throw error;
       return data as any as Func[];
     },
   });
+
 
   const filtrados = useMemo(
     () => (filtro === "todas" ? funcs : funcs.filter((f) => f.loja_id === filtro)),
@@ -171,10 +184,12 @@ function FuncPage() {
         <FuncForm
           key={editing?.id ?? "new"}
           lojas={lojas as any}
+          prestadores={prestadores as any}
           initial={editing}
           onSubmit={(v) => upsert.mutate(v)}
           saving={upsert.isPending}
         />
+
       </Dialog>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -294,16 +309,20 @@ function FuncPage() {
 
 function FuncForm({
   lojas,
+  prestadores,
   initial,
   onSubmit,
   saving,
 }: {
   lojas: { id: string; nome: string; codigo: string }[];
+  prestadores: { id: string; razao_social: string; nome_fantasia: string | null; status?: string }[];
   initial: Func | null;
   onSubmit: (v: any) => void;
   saving: boolean;
 }) {
   const [lojaId, setLojaId] = useState(initial?.loja_id ?? "");
+  const [prestadorId, setPrestadorId] = useState<string>(initial?.prestador_id ?? "none");
+
   const [regime, setRegime] = useState<"simples" | "lucro_real">(
     (initial?.regime_tributario as any) ?? "simples",
   );
@@ -346,6 +365,7 @@ function FuncForm({
           onSubmit({
             id: initial?.id,
             loja_id: lojaId,
+            prestador_id: prestadorId === "none" ? null : prestadorId,
             nome: String(fd.get("nome") || "").trim(),
             cpf: String(fd.get("cpf") || "").trim() || null,
             cargo: String(fd.get("cargo") || "").trim() || null,
@@ -363,11 +383,12 @@ function FuncForm({
             beneficios: _vt + _va + _ps + _po + _ve,
             ativo: true,
           });
+
         }}
       >
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
-            <Label>Unidade *</Label>
+            <Label>Unidade de Trabalho *</Label>
             <Select value={lojaId} onValueChange={setLojaId}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione a unidade" />
@@ -380,7 +401,30 @@ function FuncForm({
                 ))}
               </SelectContent>
             </Select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Loja onde o funcionário efetivamente trabalha.
+            </p>
           </div>
+          <div className="col-span-2">
+            <Label>Empresa Prestadora de Serviços</Label>
+            <Select value={prestadorId} onValueChange={setPrestadorId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a empresa contratante" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— Sem empresa prestadora —</SelectItem>
+                {prestadores.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.nome_fantasia || p.razao_social}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Empresa responsável pela contratação do funcionário (cadastrada em Prestadores).
+            </p>
+          </div>
+
           <div className="col-span-2">
             <Label>Regime tributário da empresa *</Label>
             <Select value={regime} onValueChange={(v) => setRegime(v as any)}>

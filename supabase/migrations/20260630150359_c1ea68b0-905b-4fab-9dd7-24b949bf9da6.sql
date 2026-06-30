@@ -1,0 +1,2 @@
+ALTER TABLE public.funcionarios ADD COLUMN IF NOT EXISTS prestador_id uuid REFERENCES public.prestadores_servico(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_funcionarios_prestador ON public.funcionarios(prestador_id);
