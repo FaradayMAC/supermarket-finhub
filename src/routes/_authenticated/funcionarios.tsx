@@ -62,6 +62,7 @@ export function custoReal(f: {
   vale_alimentacao: number | string;
   plano_saude: number | string;
   salario_familia?: number | string;
+  valor_extra_salarial?: number | string;
   regime_tributario?: string | null;
 }) {
   const salario = Number(f.salario_base) || 0;
@@ -69,9 +70,10 @@ export function custoReal(f: {
   const va = Number(f.vale_alimentacao) || 0;
   const ps = Number(f.plano_saude) || 0;
   const sf = Number(f.salario_familia) || 0;
+  const ve = Number(f.valor_extra_salarial) || 0;
   const rate = encargosRate(f.regime_tributario);
   const encargos = salario * rate;
-  return { salario, vt, va, ps, sf, encargos, rate, total: salario + encargos + vt + va + ps + sf };
+  return { salario, vt, va, ps, sf, ve, encargos, rate, total: salario + encargos + vt + va + ps + sf + ve };
 }
 
 function FuncPage() {
