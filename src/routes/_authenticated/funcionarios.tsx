@@ -388,7 +388,7 @@ function FuncForm({
       >
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
-            <Label>Unidade *</Label>
+            <Label>Unidade de Trabalho *</Label>
             <Select value={lojaId} onValueChange={setLojaId}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione a unidade" />
@@ -401,7 +401,30 @@ function FuncForm({
                 ))}
               </SelectContent>
             </Select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Loja onde o funcionário efetivamente trabalha.
+            </p>
           </div>
+          <div className="col-span-2">
+            <Label>Empresa Prestadora de Serviços</Label>
+            <Select value={prestadorId} onValueChange={setPrestadorId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a empresa contratante" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— Sem empresa prestadora —</SelectItem>
+                {prestadores.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.nome_fantasia || p.razao_social}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Empresa responsável pela contratação do funcionário (cadastrada em Prestadores).
+            </p>
+          </div>
+
           <div className="col-span-2">
             <Label>Regime tributário da empresa *</Label>
             <Select value={regime} onValueChange={(v) => setRegime(v as any)}>
