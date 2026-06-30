@@ -184,10 +184,12 @@ function FuncPage() {
         <FuncForm
           key={editing?.id ?? "new"}
           lojas={lojas as any}
+          prestadores={prestadores as any}
           initial={editing}
           onSubmit={(v) => upsert.mutate(v)}
           saving={upsert.isPending}
         />
+
       </Dialog>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
