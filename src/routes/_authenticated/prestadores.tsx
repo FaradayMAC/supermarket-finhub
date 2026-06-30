@@ -280,6 +280,7 @@ function PrestadoresPage() {
                     <TableHead className="text-right">DAS %</TableHead>
                     <TableHead>Responsável</TableHead>
                     <TableHead>Contato</TableHead>
+                    <TableHead className="text-right">Funcionários</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-24"></TableHead>
                   </TableRow>
