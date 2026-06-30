@@ -340,6 +340,7 @@ export type Database = {
           id: string
           loja_id: string
           nome: string
+          plano_odontologico: number
           plano_saude: number
           regime_tributario: string
           salario_base: number
@@ -364,6 +365,7 @@ export type Database = {
           id?: string
           loja_id: string
           nome: string
+          plano_odontologico?: number
           plano_saude?: number
           regime_tributario?: string
           salario_base?: number
@@ -388,6 +390,7 @@ export type Database = {
           id?: string
           loja_id?: string
           nome?: string
+          plano_odontologico?: number
           plano_saude?: number
           regime_tributario?: string
           salario_base?: number

@@ -48,6 +48,7 @@ type Func = {
   vale_transporte: number;
   vale_alimentacao: number;
   plano_saude: number;
+  plano_odontologico: number;
   dependentes: number;
   salario_familia: number;
   valor_extra_salarial: number;
@@ -61,6 +62,7 @@ export function custoReal(f: {
   vale_transporte: number | string;
   vale_alimentacao: number | string;
   plano_saude: number | string;
+  plano_odontologico?: number | string;
   salario_familia?: number | string;
   valor_extra_salarial?: number | string;
   regime_tributario?: string | null;
@@ -69,11 +71,12 @@ export function custoReal(f: {
   const vt = Number(f.vale_transporte) || 0;
   const va = Number(f.vale_alimentacao) || 0;
   const ps = Number(f.plano_saude) || 0;
+  const po = Number(f.plano_odontologico) || 0;
   const sf = Number(f.salario_familia) || 0;
   const ve = Number(f.valor_extra_salarial) || 0;
   const rate = encargosRate(f.regime_tributario);
   const encargos = salario * rate;
-  return { salario, vt, va, ps, sf, ve, encargos, rate, total: salario + encargos + vt + va + ps + sf + ve };
+  return { salario, vt, va, ps, po, sf, ve, encargos, rate, total: salario + encargos + vt + va + ps + po + sf + ve };
 }
 
 function FuncPage() {
@@ -242,7 +245,7 @@ function FuncPage() {
                 )}
                 {filtrados.map((f) => {
                   const c = custoReal(f);
-                  const beneficios = c.vt + c.va + c.ps;
+                  const beneficios = c.vt + c.va + c.ps + c.po;
                   return (
                     <tr key={f.id} className="border-b last:border-0">
                       <td className="px-4 py-3 font-medium">{f.nome}</td>
@@ -308,6 +311,7 @@ function FuncForm({
   const [vt, setVt] = useState<number>(Number(initial?.vale_transporte ?? 0));
   const [va, setVa] = useState<number>(Number(initial?.vale_alimentacao ?? 0));
   const [ps, setPs] = useState<number>(Number(initial?.plano_saude ?? 0));
+  const [po, setPo] = useState<number>(Number(initial?.plano_odontologico ?? 0));
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
 
@@ -316,6 +320,7 @@ function FuncForm({
     vale_transporte: vt,
     vale_alimentacao: va,
     plano_saude: ps,
+    plano_odontologico: po,
     salario_familia: sf,
     valor_extra_salarial: ve,
     regime_tributario: regime,
@@ -336,6 +341,7 @@ function FuncForm({
           const _vt = Number(fd.get("vt") || 0);
           const _va = Number(fd.get("va") || 0);
           const _ps = Number(fd.get("ps") || 0);
+          const _po = Number(fd.get("po") || 0);
           const _ve = Number(fd.get("ve") || 0);
           onSubmit({
             id: initial?.id,
@@ -348,12 +354,13 @@ function FuncForm({
             vale_transporte: _vt,
             vale_alimentacao: _va,
             plano_saude: _ps,
+            plano_odontologico: _po,
             dependentes: Number(fd.get("dependentes") || 0),
             salario_familia: Number(fd.get("sf") || 0),
             valor_extra_salarial: _ve,
             regime_tributario: regime,
             encargos: sal * encargosRate(regime),
-            beneficios: _vt + _va + _ps + _ve,
+            beneficios: _vt + _va + _ps + _po + _ve,
             ativo: true,
           });
         }}
@@ -473,6 +480,18 @@ function FuncForm({
             />
           </div>
           <div>
+            <Label htmlFor="po">Plano odontológico (R$)</Label>
+            <Input
+              id="po"
+              name="po"
+              type="number"
+              min="0"
+              step="0.01"
+              value={po}
+              onChange={(e) => setPo(Number(e.target.value))}
+            />
+          </div>
+          <div>
             <Label htmlFor="sf">Salário-família (R$)</Label>
             <Input
               id="sf"
@@ -515,9 +534,9 @@ function FuncForm({
               Encargos ({Math.round(preview.rate * 100)}%)
             </div>
             <div className="text-right font-medium">{fmtBRL(preview.encargos)}</div>
-            <div className="text-muted-foreground">VT + VA + Saúde</div>
+            <div className="text-muted-foreground">VT + VA + Saúde + Odonto</div>
             <div className="text-right font-medium">
-              {fmtBRL(preview.vt + preview.va + preview.ps)}
+              {fmtBRL(preview.vt + preview.va + preview.ps + preview.po)}
             </div>
             <div className="text-muted-foreground">Salário-família</div>
             <div className="text-right font-medium">{fmtBRL(preview.sf)}</div>
