@@ -480,6 +480,18 @@ function FuncForm({
             />
           </div>
           <div>
+            <Label htmlFor="po">Plano odontológico (R$)</Label>
+            <Input
+              id="po"
+              name="po"
+              type="number"
+              min="0"
+              step="0.01"
+              value={po}
+              onChange={(e) => setPo(Number(e.target.value))}
+            />
+          </div>
+          <div>
             <Label htmlFor="sf">Salário-família (R$)</Label>
             <Input
               id="sf"
