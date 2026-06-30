@@ -521,6 +521,8 @@ function FuncForm({
             </div>
             <div className="text-muted-foreground">Salário-família</div>
             <div className="text-right font-medium">{fmtBRL(preview.sf)}</div>
+            <div className="text-muted-foreground">Extra salarial</div>
+            <div className="text-right font-medium">{fmtBRL(preview.ve)}</div>
             <div className="font-semibold">Total</div>
             <div className="text-right font-bold text-primary sm:col-span-3">
               {fmtBRL(preview.total)}
