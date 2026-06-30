@@ -1,0 +1,1 @@
+ALTER VIEW public.vw_prestador_funcionarios SET (security_invoker = true);
