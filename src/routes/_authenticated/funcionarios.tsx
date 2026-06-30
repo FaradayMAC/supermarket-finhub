@@ -94,17 +94,27 @@ function FuncPage() {
       (await supabase.from("lojas").select("id, nome, codigo").order("nome")).data ?? [],
   });
 
+  const { data: prestadores = [] } = useQuery({
+    queryKey: ["prestadores-min"],
+    queryFn: async () =>
+      (await supabase
+        .from("prestadores_servico")
+        .select("id, razao_social, nome_fantasia, status")
+        .order("razao_social")).data ?? [],
+  });
+
   const { data: funcs = [], isLoading } = useQuery({
     queryKey: ["funcionarios"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("funcionarios")
-        .select("*, lojas(nome, codigo)")
+        .select("*, lojas(nome, codigo), prestadores_servico(nome_fantasia, razao_social)")
         .order("nome");
       if (error) throw error;
       return data as any as Func[];
     },
   });
+
 
   const filtrados = useMemo(
     () => (filtro === "todas" ? funcs : funcs.filter((f) => f.loja_id === filtro)),
