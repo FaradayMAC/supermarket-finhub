@@ -48,6 +48,7 @@ type Func = {
   vale_transporte: number;
   vale_alimentacao: number;
   plano_saude: number;
+  plano_odontologico: number;
   dependentes: number;
   salario_familia: number;
   valor_extra_salarial: number;
