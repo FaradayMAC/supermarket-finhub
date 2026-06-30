@@ -716,6 +716,57 @@ export type Database = {
           },
         ]
       }
+      prestador_das_mensal: {
+        Row: {
+          competencia: string
+          created_at: string
+          data_pagamento: string | null
+          data_vencimento: string | null
+          id: string
+          observacoes: string | null
+          prestador_id: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          competencia: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          id?: string
+          observacoes?: string | null
+          prestador_id: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          competencia?: string
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          id?: string
+          observacoes?: string | null
+          prestador_id?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prestador_das_mensal_prestador_id_fkey"
+            columns: ["prestador_id"]
+            isOneToOne: false
+            referencedRelation: "prestadores_servico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prestador_das_mensal_prestador_id_fkey"
+            columns: ["prestador_id"]
+            isOneToOne: false
+            referencedRelation: "vw_prestador_funcionarios"
+            referencedColumns: ["prestador_id"]
+          },
+        ]
+      }
       prestadores_servico: {
         Row: {
           aliquota_das: number
