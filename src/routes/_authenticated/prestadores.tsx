@@ -74,6 +74,25 @@ function PrestadoresPage() {
     },
   });
 
+  const { data: funcCounts = {} } = useQuery({
+    queryKey: ["prestadores", "func-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("funcionarios")
+        .select("prestador_id, ativo");
+      if (error) throw error;
+      const map: Record<string, { total: number; ativos: number }> = {};
+      for (const row of (data ?? []) as { prestador_id: string | null; ativo: boolean }[]) {
+        if (!row.prestador_id) continue;
+        const cur = map[row.prestador_id] ?? { total: 0, ativos: 0 };
+        cur.total += 1;
+        if (row.ativo) cur.ativos += 1;
+        map[row.prestador_id] = cur;
+      }
+      return map;
+    },
+  });
+
   const upsert = useMutation({
     mutationFn: async () => {
       if (!form.razao_social.trim()) throw new Error("Razão Social é obrigatória");
@@ -261,6 +280,7 @@ function PrestadoresPage() {
                     <TableHead className="text-right">DAS %</TableHead>
                     <TableHead>Responsável</TableHead>
                     <TableHead>Contato</TableHead>
+                    <TableHead className="text-right">Funcionários</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-24"></TableHead>
                   </TableRow>
@@ -278,6 +298,18 @@ function PrestadoresPage() {
                       <TableCell className="text-xs">
                         {p.telefone && <div>{p.telefone}</div>}
                         {p.email && <div className="text-muted-foreground">{p.email}</div>}
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {(() => {
+                          const c = funcCounts[p.id];
+                          if (!c) return <span className="text-muted-foreground">0</span>;
+                          return (
+                            <span>
+                              <span className="font-medium">{c.ativos}</span>
+                              <span className="text-muted-foreground"> / {c.total}</span>
+                            </span>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell>
                         <Badge variant={p.status === "ativa" ? "default" : "secondary"}>
