@@ -74,6 +74,25 @@ function PrestadoresPage() {
     },
   });
 
+  const { data: funcCounts = {} } = useQuery({
+    queryKey: ["prestadores", "func-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("funcionarios")
+        .select("prestador_id, ativo");
+      if (error) throw error;
+      const map: Record<string, { total: number; ativos: number }> = {};
+      for (const row of (data ?? []) as { prestador_id: string | null; ativo: boolean }[]) {
+        if (!row.prestador_id) continue;
+        const cur = map[row.prestador_id] ?? { total: 0, ativos: 0 };
+        cur.total += 1;
+        if (row.ativo) cur.ativos += 1;
+        map[row.prestador_id] = cur;
+      }
+      return map;
+    },
+  });
+
   const upsert = useMutation({
     mutationFn: async () => {
       if (!form.razao_social.trim()) throw new Error("Razão Social é obrigatória");
