@@ -767,6 +767,80 @@ export type Database = {
           },
         ]
       }
+      prestador_das_rateio: {
+        Row: {
+          competencia: string
+          created_at: string
+          das_id: string
+          folha_total: number
+          folha_unidade: number
+          id: string
+          loja_id: string
+          percentual: number
+          prestador_id: string
+          updated_at: string
+          valor_das: number
+          valor_rateado: number
+        }
+        Insert: {
+          competencia: string
+          created_at?: string
+          das_id: string
+          folha_total?: number
+          folha_unidade?: number
+          id?: string
+          loja_id: string
+          percentual?: number
+          prestador_id: string
+          updated_at?: string
+          valor_das?: number
+          valor_rateado?: number
+        }
+        Update: {
+          competencia?: string
+          created_at?: string
+          das_id?: string
+          folha_total?: number
+          folha_unidade?: number
+          id?: string
+          loja_id?: string
+          percentual?: number
+          prestador_id?: string
+          updated_at?: string
+          valor_das?: number
+          valor_rateado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prestador_das_rateio_das_id_fkey"
+            columns: ["das_id"]
+            isOneToOne: false
+            referencedRelation: "prestador_das_mensal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prestador_das_rateio_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prestador_das_rateio_prestador_id_fkey"
+            columns: ["prestador_id"]
+            isOneToOne: false
+            referencedRelation: "prestadores_servico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prestador_das_rateio_prestador_id_fkey"
+            columns: ["prestador_id"]
+            isOneToOne: false
+            referencedRelation: "vw_prestador_funcionarios"
+            referencedColumns: ["prestador_id"]
+          },
+        ]
+      }
       prestadores_servico: {
         Row: {
           aliquota_das: number
@@ -954,6 +1028,11 @@ export type Database = {
         Returns: boolean
       }
       is_manager_of: { Args: { _loja_id: string }; Returns: boolean }
+      recalc_das_rateio: { Args: { _das_id: string }; Returns: undefined }
+      recalc_das_rateio_prestador: {
+        Args: { _prestador: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "diretoria" | "controladoria" | "gerente"
