@@ -40,6 +40,7 @@ export function encargosRate(regime: string | null | undefined) {
 type Func = {
   id: string;
   loja_id: string;
+  prestador_id: string | null;
   nome: string;
   cpf: string | null;
   cargo: string | null;
@@ -55,7 +56,9 @@ type Func = {
   regime_tributario: "simples" | "lucro_real";
   ativo: boolean;
   lojas?: { nome: string; codigo: string };
+  prestadores_servico?: { nome_fantasia: string | null; razao_social: string } | null;
 };
+
 
 export function custoReal(f: {
   salario_base: number | string;
