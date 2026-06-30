@@ -426,6 +426,13 @@ export type Database = {
             referencedRelation: "prestadores_servico"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "funcionarios_prestador_id_fkey"
+            columns: ["prestador_id"]
+            isOneToOne: false
+            referencedRelation: "vw_prestador_funcionarios"
+            referencedColumns: ["prestador_id"]
+          },
         ]
       }
       impostos: {
@@ -868,7 +875,21 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vw_prestador_funcionarios: {
+        Row: {
+          aliquota_das: number | null
+          anexo_simples: string | null
+          funcionarios_ativos: number | null
+          nome_fantasia: string | null
+          prestador_id: string | null
+          razao_social: string | null
+          regime_tributario: string | null
+          salario_bruto_ativos: number | null
+          status: string | null
+          total_funcionarios: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_edit_all: { Args: never; Returns: boolean }
