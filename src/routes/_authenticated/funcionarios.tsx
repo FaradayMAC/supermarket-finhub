@@ -534,9 +534,9 @@ function FuncForm({
               Encargos ({Math.round(preview.rate * 100)}%)
             </div>
             <div className="text-right font-medium">{fmtBRL(preview.encargos)}</div>
-            <div className="text-muted-foreground">VT + VA + Saúde</div>
+            <div className="text-muted-foreground">VT + VA + Saúde + Odonto</div>
             <div className="text-right font-medium">
-              {fmtBRL(preview.vt + preview.va + preview.ps)}
+              {fmtBRL(preview.vt + preview.va + preview.ps + preview.po)}
             </div>
             <div className="text-muted-foreground">Salário-família</div>
             <div className="text-right font-medium">{fmtBRL(preview.sf)}</div>
