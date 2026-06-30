@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
+import { Route as AuthenticatedPrestadoresRouteImport } from './routes/_authenticated/prestadores'
 import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedLojasRouteImport } from './routes/_authenticated/lojas'
 import { Route as AuthenticatedImpostosRouteImport } from './routes/_authenticated/impostos'
@@ -42,6 +43,12 @@ const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPrestadoresRoute =
+  AuthenticatedPrestadoresRouteImport.update({
+    id: '/prestadores',
+    path: '/prestadores',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMetasRoute = AuthenticatedMetasRouteImport.update({
   id: '/metas',
   path: '/metas',
@@ -103,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/impostos': typeof AuthenticatedImpostosRoute
   '/lojas': typeof AuthenticatedLojasRoute
   '/metas': typeof AuthenticatedMetasRoute
+  '/prestadores': typeof AuthenticatedPrestadoresRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
 }
 export interface FileRoutesByTo {
@@ -116,6 +124,7 @@ export interface FileRoutesByTo {
   '/impostos': typeof AuthenticatedImpostosRoute
   '/lojas': typeof AuthenticatedLojasRoute
   '/metas': typeof AuthenticatedMetasRoute
+  '/prestadores': typeof AuthenticatedPrestadoresRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/': typeof AuthenticatedIndexRoute
 }
@@ -132,6 +141,7 @@ export interface FileRoutesById {
   '/_authenticated/impostos': typeof AuthenticatedImpostosRoute
   '/_authenticated/lojas': typeof AuthenticatedLojasRoute
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
+  '/_authenticated/prestadores': typeof AuthenticatedPrestadoresRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
 }
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/impostos'
     | '/lojas'
     | '/metas'
+    | '/prestadores'
     | '/usuarios'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/impostos'
     | '/lojas'
     | '/metas'
+    | '/prestadores'
     | '/usuarios'
     | '/'
   id:
@@ -177,6 +189,7 @@ export interface FileRouteTypes {
     | '/_authenticated/impostos'
     | '/_authenticated/lojas'
     | '/_authenticated/metas'
+    | '/_authenticated/prestadores'
     | '/_authenticated/usuarios'
     | '/_authenticated/'
   fileRoutesById: FileRoutesById
@@ -214,6 +227,13 @@ declare module '@tanstack/react-router' {
       path: '/usuarios'
       fullPath: '/usuarios'
       preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/prestadores': {
+      id: '/_authenticated/prestadores'
+      path: '/prestadores'
+      fullPath: '/prestadores'
+      preLoaderRoute: typeof AuthenticatedPrestadoresRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/metas': {
@@ -292,6 +312,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedImpostosRoute: typeof AuthenticatedImpostosRoute
   AuthenticatedLojasRoute: typeof AuthenticatedLojasRoute
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
+  AuthenticatedPrestadoresRoute: typeof AuthenticatedPrestadoresRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
@@ -306,6 +327,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedImpostosRoute: AuthenticatedImpostosRoute,
   AuthenticatedLojasRoute: AuthenticatedLojasRoute,
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
+  AuthenticatedPrestadoresRoute: AuthenticatedPrestadoresRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
