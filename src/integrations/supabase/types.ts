@@ -699,6 +699,57 @@ export type Database = {
           },
         ]
       }
+      prestadores_servico: {
+        Row: {
+          aliquota_das: number
+          anexo_simples: string | null
+          cnpj: string | null
+          created_at: string
+          email: string | null
+          id: string
+          nome_fantasia: string | null
+          observacoes: string | null
+          razao_social: string
+          regime_tributario: string
+          responsavel: string | null
+          status: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          aliquota_das?: number
+          anexo_simples?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          observacoes?: string | null
+          razao_social: string
+          regime_tributario?: string
+          responsavel?: string | null
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aliquota_das?: number
+          anexo_simples?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          observacoes?: string | null
+          razao_social?: string
+          regime_tributario?: string
+          responsavel?: string | null
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           approved: boolean
