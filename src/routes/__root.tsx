@@ -117,8 +117,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <RealtimeBridge />
       <Outlet />
       <Toaster richColors position="top-right" />
     </QueryClientProvider>
   );
+}
+
+function RealtimeBridge() {
+  useRealtimeInvalidator();
+  return null;
 }
