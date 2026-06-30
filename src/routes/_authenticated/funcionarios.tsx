@@ -50,6 +50,7 @@ type Func = {
   plano_saude: number;
   dependentes: number;
   salario_familia: number;
+  valor_extra_salarial: number;
   regime_tributario: "simples" | "lucro_real";
   ativo: boolean;
   lojas?: { nome: string; codigo: string };
