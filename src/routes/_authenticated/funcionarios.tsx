@@ -311,6 +311,7 @@ function FuncForm({
   const [vt, setVt] = useState<number>(Number(initial?.vale_transporte ?? 0));
   const [va, setVa] = useState<number>(Number(initial?.vale_alimentacao ?? 0));
   const [ps, setPs] = useState<number>(Number(initial?.plano_saude ?? 0));
+  const [po, setPo] = useState<number>(Number(initial?.plano_odontologico ?? 0));
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
 
@@ -319,6 +320,7 @@ function FuncForm({
     vale_transporte: vt,
     vale_alimentacao: va,
     plano_saude: ps,
+    plano_odontologico: po,
     salario_familia: sf,
     valor_extra_salarial: ve,
     regime_tributario: regime,
