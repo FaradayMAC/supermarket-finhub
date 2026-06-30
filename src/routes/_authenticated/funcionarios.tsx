@@ -50,6 +50,7 @@ type Func = {
   plano_saude: number;
   dependentes: number;
   salario_familia: number;
+  valor_extra_salarial: number;
   regime_tributario: "simples" | "lucro_real";
   ativo: boolean;
   lojas?: { nome: string; codigo: string };
@@ -61,6 +62,7 @@ export function custoReal(f: {
   vale_alimentacao: number | string;
   plano_saude: number | string;
   salario_familia?: number | string;
+  valor_extra_salarial?: number | string;
   regime_tributario?: string | null;
 }) {
   const salario = Number(f.salario_base) || 0;
@@ -68,9 +70,10 @@ export function custoReal(f: {
   const va = Number(f.vale_alimentacao) || 0;
   const ps = Number(f.plano_saude) || 0;
   const sf = Number(f.salario_familia) || 0;
+  const ve = Number(f.valor_extra_salarial) || 0;
   const rate = encargosRate(f.regime_tributario);
   const encargos = salario * rate;
-  return { salario, vt, va, ps, sf, encargos, rate, total: salario + encargos + vt + va + ps + sf };
+  return { salario, vt, va, ps, sf, ve, encargos, rate, total: salario + encargos + vt + va + ps + sf + ve };
 }
 
 function FuncPage() {
@@ -306,6 +309,7 @@ function FuncForm({
   const [va, setVa] = useState<number>(Number(initial?.vale_alimentacao ?? 0));
   const [ps, setPs] = useState<number>(Number(initial?.plano_saude ?? 0));
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
+  const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
 
   const preview = custoReal({
     salario_base: salario,
@@ -313,6 +317,7 @@ function FuncForm({
     vale_alimentacao: va,
     plano_saude: ps,
     salario_familia: sf,
+    valor_extra_salarial: ve,
     regime_tributario: regime,
   });
 
@@ -331,6 +336,7 @@ function FuncForm({
           const _vt = Number(fd.get("vt") || 0);
           const _va = Number(fd.get("va") || 0);
           const _ps = Number(fd.get("ps") || 0);
+          const _ve = Number(fd.get("ve") || 0);
           onSubmit({
             id: initial?.id,
             loja_id: lojaId,
@@ -344,9 +350,10 @@ function FuncForm({
             plano_saude: _ps,
             dependentes: Number(fd.get("dependentes") || 0),
             salario_familia: Number(fd.get("sf") || 0),
+            valor_extra_salarial: _ve,
             regime_tributario: regime,
             encargos: sal * encargosRate(regime),
-            beneficios: _vt + _va + _ps,
+            beneficios: _vt + _va + _ps + _ve,
             ativo: true,
           });
         }}
@@ -480,6 +487,21 @@ function FuncForm({
               Valor pago ao funcionário por filho elegível (reembolsado pelo INSS).
             </p>
           </div>
+          <div>
+            <Label htmlFor="ve">Valor extra salarial (R$)</Label>
+            <Input
+              id="ve"
+              name="ve"
+              type="number"
+              min="0"
+              step="0.01"
+              value={ve}
+              onChange={(e) => setVe(Number(e.target.value))}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Comissões, gratificações ou outras verbas extras mensais.
+            </p>
+          </div>
         </div>
 
         <div className="rounded-md border bg-muted/40 p-3 text-sm">
@@ -499,6 +521,8 @@ function FuncForm({
             </div>
             <div className="text-muted-foreground">Salário-família</div>
             <div className="text-right font-medium">{fmtBRL(preview.sf)}</div>
+            <div className="text-muted-foreground">Extra salarial</div>
+            <div className="text-right font-medium">{fmtBRL(preview.ve)}</div>
             <div className="font-semibold">Total</div>
             <div className="text-right font-bold text-primary sm:col-span-3">
               {fmtBRL(preview.total)}

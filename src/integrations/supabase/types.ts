@@ -348,6 +348,7 @@ export type Database = {
           updated_at: string
           vale_alimentacao: number
           vale_transporte: number
+          valor_extra_salarial: number
         }
         Insert: {
           ativo?: boolean
@@ -371,6 +372,7 @@ export type Database = {
           updated_at?: string
           vale_alimentacao?: number
           vale_transporte?: number
+          valor_extra_salarial?: number
         }
         Update: {
           ativo?: boolean
@@ -394,6 +396,7 @@ export type Database = {
           updated_at?: string
           vale_alimentacao?: number
           vale_transporte?: number
+          valor_extra_salarial?: number
         }
         Relationships: [
           {

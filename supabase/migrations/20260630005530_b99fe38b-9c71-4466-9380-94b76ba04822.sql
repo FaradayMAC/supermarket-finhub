@@ -1,0 +1,1 @@
+ALTER TABLE public.funcionarios ADD COLUMN valor_extra_salarial NUMERIC(12,2) NOT NULL DEFAULT 0;
