@@ -309,16 +309,20 @@ function FuncPage() {
 
 function FuncForm({
   lojas,
+  prestadores,
   initial,
   onSubmit,
   saving,
 }: {
   lojas: { id: string; nome: string; codigo: string }[];
+  prestadores: { id: string; razao_social: string; nome_fantasia: string | null; status?: string }[];
   initial: Func | null;
   onSubmit: (v: any) => void;
   saving: boolean;
 }) {
   const [lojaId, setLojaId] = useState(initial?.loja_id ?? "");
+  const [prestadorId, setPrestadorId] = useState<string>(initial?.prestador_id ?? "none");
+
   const [regime, setRegime] = useState<"simples" | "lucro_real">(
     (initial?.regime_tributario as any) ?? "simples",
   );
