@@ -342,6 +342,7 @@ export type Database = {
           nome: string
           plano_odontologico: number
           plano_saude: number
+          prestador_id: string | null
           regime_tributario: string
           salario_base: number
           salario_familia: number
@@ -367,6 +368,7 @@ export type Database = {
           nome: string
           plano_odontologico?: number
           plano_saude?: number
+          prestador_id?: string | null
           regime_tributario?: string
           salario_base?: number
           salario_familia?: number
@@ -392,6 +394,7 @@ export type Database = {
           nome?: string
           plano_odontologico?: number
           plano_saude?: number
+          prestador_id?: string | null
           regime_tributario?: string
           salario_base?: number
           salario_familia?: number
@@ -414,6 +417,13 @@ export type Database = {
             columns: ["loja_id"]
             isOneToOne: false
             referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funcionarios_prestador_id_fkey"
+            columns: ["prestador_id"]
+            isOneToOne: false
+            referencedRelation: "prestadores_servico"
             referencedColumns: ["id"]
           },
         ]
