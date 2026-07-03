@@ -79,6 +79,44 @@ function PrestadoresPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Prestador | null>(null);
   const [form, setForm] = useState(empty);
+  const [cnpjLoading, setCnpjLoading] = useState(false);
+
+  const formatCnpj = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 14);
+    return d
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  };
+
+  const lookupCnpj = async () => {
+    const digits = (form.cnpj || "").replace(/\D/g, "");
+    if (digits.length !== 14) {
+      toast.error("Informe um CNPJ com 14 dígitos");
+      return;
+    }
+    setCnpjLoading(true);
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+      if (!res.ok) throw new Error("CNPJ não encontrado na Receita");
+      const d = await res.json();
+      const tel = d.ddd_telefone_1 ? String(d.ddd_telefone_1).replace(/^(\d{2})(\d)/, "($1) $2") : "";
+      setForm((f) => ({
+        ...f,
+        razao_social: d.razao_social || f.razao_social,
+        nome_fantasia: d.nome_fantasia || f.nome_fantasia,
+        telefone: tel || f.telefone,
+        email: (d.email || f.email || "").toLowerCase(),
+        regime_tributario: d.opcao_pelo_simples ? "simples_nacional" : f.regime_tributario,
+      }));
+      toast.success("Dados carregados da Receita Federal");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao consultar CNPJ");
+    } finally {
+      setCnpjLoading(false);
+    }
+  };
 
   const { data: list = [], isLoading } = useQuery({
     queryKey: ["prestadores"],
