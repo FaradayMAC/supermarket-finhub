@@ -243,7 +243,17 @@ function PrestadoresPage() {
               </div>
               <div>
                 <Label>CNPJ</Label>
-                <Input value={form.cnpj} onChange={(e) => setForm({ ...form, cnpj: e.target.value })} placeholder="00.000.000/0000-00" />
+                <div className="flex gap-2">
+                  <Input
+                    value={form.cnpj}
+                    onChange={(e) => setForm({ ...form, cnpj: formatCnpj(e.target.value) })}
+                    onBlur={() => { if ((form.cnpj || "").replace(/\D/g, "").length === 14 && !form.razao_social) lookupCnpj(); }}
+                    placeholder="00.000.000/0000-00"
+                  />
+                  <Button type="button" variant="outline" size="icon" onClick={lookupCnpj} disabled={cnpjLoading} title="Buscar dados na Receita">
+                    {cnpjLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
               <div>
                 <Label>Regime Tributário</Label>
