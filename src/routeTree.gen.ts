@@ -21,7 +21,6 @@ import { Route as AuthenticatedFuncionariosRouteImport } from './routes/_authent
 import { Route as AuthenticatedDreRouteImport } from './routes/_authenticated/dre'
 import { Route as AuthenticatedDespesasRouteImport } from './routes/_authenticated/despesas'
 import { Route as AuthenticatedComparativoRouteImport } from './routes/_authenticated/comparativo'
-import { Route as AuthenticatedCalculadoraRouteImport } from './routes/_authenticated/calculadora'
 import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
 
 const AuthRoute = AuthRouteImport.update({
@@ -86,12 +85,6 @@ const AuthenticatedComparativoRoute =
     path: '/comparativo',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedCalculadoraRoute =
-  AuthenticatedCalculadoraRouteImport.update({
-    id: '/calculadora',
-    path: '/calculadora',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedCaixaRoute = AuthenticatedCaixaRouteImport.update({
   id: '/caixa',
   path: '/caixa',
@@ -102,7 +95,6 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/caixa': typeof AuthenticatedCaixaRoute
-  '/calculadora': typeof AuthenticatedCalculadoraRoute
   '/comparativo': typeof AuthenticatedComparativoRoute
   '/despesas': typeof AuthenticatedDespesasRoute
   '/dre': typeof AuthenticatedDreRoute
@@ -116,7 +108,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/caixa': typeof AuthenticatedCaixaRoute
-  '/calculadora': typeof AuthenticatedCalculadoraRoute
   '/comparativo': typeof AuthenticatedComparativoRoute
   '/despesas': typeof AuthenticatedDespesasRoute
   '/dre': typeof AuthenticatedDreRoute
@@ -133,7 +124,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/caixa': typeof AuthenticatedCaixaRoute
-  '/_authenticated/calculadora': typeof AuthenticatedCalculadoraRoute
   '/_authenticated/comparativo': typeof AuthenticatedComparativoRoute
   '/_authenticated/despesas': typeof AuthenticatedDespesasRoute
   '/_authenticated/dre': typeof AuthenticatedDreRoute
@@ -151,7 +141,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/caixa'
-    | '/calculadora'
     | '/comparativo'
     | '/despesas'
     | '/dre'
@@ -165,7 +154,6 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/caixa'
-    | '/calculadora'
     | '/comparativo'
     | '/despesas'
     | '/dre'
@@ -181,7 +169,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/caixa'
-    | '/_authenticated/calculadora'
     | '/_authenticated/comparativo'
     | '/_authenticated/despesas'
     | '/_authenticated/dre'
@@ -285,13 +272,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComparativoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/calculadora': {
-      id: '/_authenticated/calculadora'
-      path: '/calculadora'
-      fullPath: '/calculadora'
-      preLoaderRoute: typeof AuthenticatedCalculadoraRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/caixa': {
       id: '/_authenticated/caixa'
       path: '/caixa'
@@ -304,7 +284,6 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCaixaRoute: typeof AuthenticatedCaixaRoute
-  AuthenticatedCalculadoraRoute: typeof AuthenticatedCalculadoraRoute
   AuthenticatedComparativoRoute: typeof AuthenticatedComparativoRoute
   AuthenticatedDespesasRoute: typeof AuthenticatedDespesasRoute
   AuthenticatedDreRoute: typeof AuthenticatedDreRoute
@@ -319,7 +298,6 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCaixaRoute: AuthenticatedCaixaRoute,
-  AuthenticatedCalculadoraRoute: AuthenticatedCalculadoraRoute,
   AuthenticatedComparativoRoute: AuthenticatedComparativoRoute,
   AuthenticatedDespesasRoute: AuthenticatedDespesasRoute,
   AuthenticatedDreRoute: AuthenticatedDreRoute,
