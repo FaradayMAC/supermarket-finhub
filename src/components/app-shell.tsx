@@ -18,7 +18,7 @@ const ALL_NAV: NavItem[] = [
   { to: "/caixa", label: "Caixa", icon: Wallet },
   { to: "/dre", label: "DRE", icon: FileBarChart },
   { to: "/comparativo", label: "Compar.", icon: Scale },
-  { to: "/calculadora", label: "Calc.", icon: Calculator },
+  { to: "/faltas-rh", label: "Faltas RH", icon: CalendarX },
   { to: "/usuarios", label: "Usuários", icon: Shield, admin: true },
 ];
 
