@@ -228,6 +228,54 @@ export type Database = {
         }
         Relationships: []
       }
+      faltas_rh: {
+        Row: {
+          created_at: string
+          funcionario_id: string
+          id: string
+          loja_id: string
+          mes_referencia: string
+          observacoes: string | null
+          quantidade: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          funcionario_id: string
+          id?: string
+          loja_id: string
+          mes_referencia: string
+          observacoes?: string | null
+          quantidade: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          funcionario_id?: string
+          id?: string
+          loja_id?: string
+          mes_referencia?: string
+          observacoes?: string | null
+          quantidade?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faltas_rh_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faltas_rh_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       folha_pagamento: {
         Row: {
           beneficios: number
