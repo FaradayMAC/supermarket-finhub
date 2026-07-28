@@ -624,7 +624,79 @@ function FuncForm({
               Comissões, gratificações ou outras verbas extras mensais.
             </p>
           </div>
+
+          <div className="col-span-2 mt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Adicionais (% sobre o salário)
+          </div>
+          <div>
+            <Label htmlFor="insal">Insalubridade (%)</Label>
+            <Input
+              id="insal"
+              name="insal"
+              type="number"
+              min="0"
+              step="0.01"
+              value={insal}
+              onChange={(e) => setInsal(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="peric">Periculosidade (%)</Label>
+            <Input
+              id="peric"
+              name="peric"
+              type="number"
+              min="0"
+              step="0.01"
+              value={peric}
+              onChange={(e) => setPeric(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="qc">Quebra de caixa (%)</Label>
+            <Input
+              id="qc"
+              name="qc"
+              type="number"
+              min="0"
+              step="0.01"
+              value={qc}
+              onChange={(e) => setQc(Number(e.target.value))}
+            />
+          </div>
+          <div className="flex items-end gap-2 pb-2">
+            <input
+              id="desconto_vt"
+              type="checkbox"
+              className="h-4 w-4 accent-primary"
+              checked={descontoVt}
+              onChange={(e) => setDescontoVt(e.target.checked)}
+            />
+            <Label htmlFor="desconto_vt" className="cursor-pointer">
+              Desconta vale transporte
+            </Label>
+          </div>
+          <div>
+            <Label htmlFor="situacao">Situação</Label>
+            <Input
+              id="situacao"
+              name="situacao"
+              maxLength={60}
+              placeholder="Férias, Afastado INSS…"
+              defaultValue={initial?.situacao ?? ""}
+            />
+          </div>
+          <div>
+            <Label htmlFor="observacoes">Observações</Label>
+            <Input
+              id="observacoes"
+              name="observacoes"
+              maxLength={200}
+              defaultValue={initial?.observacoes ?? ""}
+            />
+          </div>
         </div>
+
 
         <div className="rounded-md border bg-muted/40 p-3 text-sm">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
