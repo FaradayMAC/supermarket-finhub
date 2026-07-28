@@ -53,6 +53,12 @@ type Func = {
   dependentes: number;
   salario_familia: number;
   valor_extra_salarial: number;
+  insalubridade_pct: number;
+  periculosidade_pct: number;
+  quebra_caixa_pct: number;
+  desconto_vt: boolean;
+  situacao: string | null;
+  observacoes: string | null;
   regime_tributario: "simples" | "lucro_real";
   ativo: boolean;
   lojas?: { nome: string; codigo: string };
@@ -68,6 +74,9 @@ export function custoReal(f: {
   plano_odontologico?: number | string;
   salario_familia?: number | string;
   valor_extra_salarial?: number | string;
+  insalubridade_pct?: number | string;
+  periculosidade_pct?: number | string;
+  quebra_caixa_pct?: number | string;
   regime_tributario?: string | null;
 }) {
   const salario = Number(f.salario_base) || 0;
@@ -77,10 +86,29 @@ export function custoReal(f: {
   const po = Number(f.plano_odontologico) || 0;
   const sf = Number(f.salario_familia) || 0;
   const ve = Number(f.valor_extra_salarial) || 0;
+  const pctAdic =
+    (Number(f.insalubridade_pct) || 0) +
+    (Number(f.periculosidade_pct) || 0) +
+    (Number(f.quebra_caixa_pct) || 0);
+  const adicionais = (salario * pctAdic) / 100;
   const rate = encargosRate(f.regime_tributario);
-  const encargos = salario * rate;
-  return { salario, vt, va, ps, po, sf, ve, encargos, rate, total: salario + encargos + vt + va + ps + po + sf + ve };
+  const encargos = (salario + adicionais) * rate;
+  return {
+    salario,
+    vt,
+    va,
+    ps,
+    po,
+    sf,
+    ve,
+    adicionais,
+    pctAdic,
+    encargos,
+    rate,
+    total: salario + adicionais + encargos + vt + va + ps + po + sf + ve,
+  };
 }
+
 
 function FuncPage() {
   const qc = useQueryClient();
