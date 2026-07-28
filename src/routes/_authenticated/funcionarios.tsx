@@ -430,10 +430,17 @@ function FuncForm({
             dependentes: Number(fd.get("dependentes") || 0),
             salario_familia: Number(fd.get("sf") || 0),
             valor_extra_salarial: _ve,
+            insalubridade_pct: Number(fd.get("insal") || 0),
+            periculosidade_pct: Number(fd.get("peric") || 0),
+            quebra_caixa_pct: Number(fd.get("qc") || 0),
+            desconto_vt: descontoVt,
+            situacao: String(fd.get("situacao") || "").trim() || null,
+            observacoes: String(fd.get("observacoes") || "").trim() || null,
             regime_tributario: regime,
-            encargos: sal * encargosRate(regime),
+            encargos: Math.round(preview.encargos * 100) / 100,
             beneficios: _vt + _va + _ps + _po + _ve,
             ativo: true,
+
           });
 
         }}
