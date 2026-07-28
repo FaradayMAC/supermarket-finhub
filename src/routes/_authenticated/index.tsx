@@ -134,21 +134,7 @@ function Dashboard() {
   return (
     <AppShell
       title="Dashboard executivo"
-      actions={
-        <div className="flex items-center gap-2">
-          <Label className="hidden text-xs uppercase text-muted-foreground sm:inline">Período:</Label>
-          <Select value={periodo} onValueChange={(v) => setPeriodo(v as any)}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1m">Mês atual</SelectItem>
-              <SelectItem value="3m">Últimos 3 meses</SelectItem>
-              <SelectItem value="6m">Últimos 6 meses</SelectItem>
-              <SelectItem value="12m">Últimos 12 meses</SelectItem>
-              <SelectItem value="all">Tudo</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      }
+      actions={<PeriodFilter state={periodoState} />}
     >
       {isLoading ? (
         <div className="text-muted-foreground">Carregando…</div>
