@@ -53,6 +53,12 @@ type Func = {
   dependentes: number;
   salario_familia: number;
   valor_extra_salarial: number;
+  insalubridade_pct: number;
+  periculosidade_pct: number;
+  quebra_caixa_pct: number;
+  desconto_vt: boolean;
+  situacao: string | null;
+  observacoes: string | null;
   regime_tributario: "simples" | "lucro_real";
   ativo: boolean;
   lojas?: { nome: string; codigo: string };
@@ -68,6 +74,9 @@ export function custoReal(f: {
   plano_odontologico?: number | string;
   salario_familia?: number | string;
   valor_extra_salarial?: number | string;
+  insalubridade_pct?: number | string;
+  periculosidade_pct?: number | string;
+  quebra_caixa_pct?: number | string;
   regime_tributario?: string | null;
 }) {
   const salario = Number(f.salario_base) || 0;
@@ -77,10 +86,29 @@ export function custoReal(f: {
   const po = Number(f.plano_odontologico) || 0;
   const sf = Number(f.salario_familia) || 0;
   const ve = Number(f.valor_extra_salarial) || 0;
+  const pctAdic =
+    (Number(f.insalubridade_pct) || 0) +
+    (Number(f.periculosidade_pct) || 0) +
+    (Number(f.quebra_caixa_pct) || 0);
+  const adicionais = (salario * pctAdic) / 100;
   const rate = encargosRate(f.regime_tributario);
-  const encargos = salario * rate;
-  return { salario, vt, va, ps, po, sf, ve, encargos, rate, total: salario + encargos + vt + va + ps + po + sf + ve };
+  const encargos = (salario + adicionais) * rate;
+  return {
+    salario,
+    vt,
+    va,
+    ps,
+    po,
+    sf,
+    ve,
+    adicionais,
+    pctAdic,
+    encargos,
+    rate,
+    total: salario + adicionais + encargos + vt + va + ps + po + sf + ve,
+  };
 }
+
 
 function FuncPage() {
   const qc = useQueryClient();
@@ -237,7 +265,9 @@ function FuncPage() {
                   <th className="px-4 py-3 text-center">Dep.</th>
                   <th className="px-4 py-3 text-right">Salário</th>
                   <th className="px-4 py-3 text-right">Sal. família</th>
+                  <th className="px-4 py-3 text-right">Adicionais</th>
                   <th className="px-4 py-3 text-right">Benefícios</th>
+
                   <th className="px-4 py-3 text-right">Encargos</th>
                   <th className="px-4 py-3 text-right">Custo real</th>
                   <th className="px-4 py-3"></th>
@@ -246,14 +276,14 @@ function FuncPage() {
               <tbody>
                 {isLoading && (
                   <tr>
-                    <td colSpan={12} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={13} className="px-4 py-8 text-center text-muted-foreground">
                       Carregando…
                     </td>
                   </tr>
                 )}
                 {!isLoading && filtrados.length === 0 && (
                   <tr>
-                    <td colSpan={12} className="px-4 py-12 text-center text-muted-foreground">
+                    <td colSpan={13} className="px-4 py-12 text-center text-muted-foreground">
                       Sem funcionários neste filtro.
                     </td>
                   </tr>
@@ -263,7 +293,14 @@ function FuncPage() {
                   const beneficios = c.vt + c.va + c.ps + c.po;
                   return (
                     <tr key={f.id} className="border-b last:border-0">
-                      <td className="px-4 py-3 font-medium">{f.nome}</td>
+                      <td className="px-4 py-3 font-medium">
+                        {f.nome}
+                        {f.situacao && (
+                          <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">
+                            {f.situacao}
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground">{f.cpf ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.cargo ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.lojas?.nome ?? "—"}</td>
@@ -273,7 +310,14 @@ function FuncPage() {
                       <td className="px-4 py-3 text-center">{f.dependentes ?? 0}</td>
                       <td className="px-4 py-3 text-right">{fmtBRL(c.salario)}</td>
                       <td className="px-4 py-3 text-right">{fmtBRL(c.sf)}</td>
+                      <td className="px-4 py-3 text-right">
+                        {fmtBRL(c.adicionais)}
+                        {c.pctAdic > 0 && (
+                          <span className="ml-1 text-xs text-muted-foreground">({c.pctAdic}%)</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-right">{fmtBRL(beneficios)}</td>
+
                       <td className="px-4 py-3 text-right">
                         {fmtBRL(c.encargos)}
                         <span className="ml-1 text-xs text-muted-foreground">
@@ -333,6 +377,10 @@ function FuncForm({
   const [po, setPo] = useState<number>(Number(initial?.plano_odontologico ?? 0));
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
+  const [insal, setInsal] = useState<number>(Number(initial?.insalubridade_pct ?? 0));
+  const [peric, setPeric] = useState<number>(Number(initial?.periculosidade_pct ?? 0));
+  const [qc, setQc] = useState<number>(Number(initial?.quebra_caixa_pct ?? 0));
+  const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
 
   const preview = custoReal({
     salario_base: salario,
@@ -342,8 +390,12 @@ function FuncForm({
     plano_odontologico: po,
     salario_familia: sf,
     valor_extra_salarial: ve,
+    insalubridade_pct: insal,
+    periculosidade_pct: peric,
+    quebra_caixa_pct: qc,
     regime_tributario: regime,
   });
+
 
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -378,10 +430,17 @@ function FuncForm({
             dependentes: Number(fd.get("dependentes") || 0),
             salario_familia: Number(fd.get("sf") || 0),
             valor_extra_salarial: _ve,
+            insalubridade_pct: Number(fd.get("insal") || 0),
+            periculosidade_pct: Number(fd.get("peric") || 0),
+            quebra_caixa_pct: Number(fd.get("qc") || 0),
+            desconto_vt: descontoVt,
+            situacao: String(fd.get("situacao") || "").trim() || null,
+            observacoes: String(fd.get("observacoes") || "").trim() || null,
             regime_tributario: regime,
-            encargos: sal * encargosRate(regime),
+            encargos: Math.round(preview.encargos * 100) / 100,
             beneficios: _vt + _va + _ps + _po + _ve,
             ativo: true,
+
           });
 
         }}
@@ -565,7 +624,79 @@ function FuncForm({
               Comissões, gratificações ou outras verbas extras mensais.
             </p>
           </div>
+
+          <div className="col-span-2 mt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Adicionais (% sobre o salário)
+          </div>
+          <div>
+            <Label htmlFor="insal">Insalubridade (%)</Label>
+            <Input
+              id="insal"
+              name="insal"
+              type="number"
+              min="0"
+              step="0.01"
+              value={insal}
+              onChange={(e) => setInsal(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="peric">Periculosidade (%)</Label>
+            <Input
+              id="peric"
+              name="peric"
+              type="number"
+              min="0"
+              step="0.01"
+              value={peric}
+              onChange={(e) => setPeric(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="qc">Quebra de caixa (%)</Label>
+            <Input
+              id="qc"
+              name="qc"
+              type="number"
+              min="0"
+              step="0.01"
+              value={qc}
+              onChange={(e) => setQc(Number(e.target.value))}
+            />
+          </div>
+          <div className="flex items-end gap-2 pb-2">
+            <input
+              id="desconto_vt"
+              type="checkbox"
+              className="h-4 w-4 accent-primary"
+              checked={descontoVt}
+              onChange={(e) => setDescontoVt(e.target.checked)}
+            />
+            <Label htmlFor="desconto_vt" className="cursor-pointer">
+              Desconta vale transporte
+            </Label>
+          </div>
+          <div>
+            <Label htmlFor="situacao">Situação</Label>
+            <Input
+              id="situacao"
+              name="situacao"
+              maxLength={60}
+              placeholder="Férias, Afastado INSS…"
+              defaultValue={initial?.situacao ?? ""}
+            />
+          </div>
+          <div>
+            <Label htmlFor="observacoes">Observações</Label>
+            <Input
+              id="observacoes"
+              name="observacoes"
+              maxLength={200}
+              defaultValue={initial?.observacoes ?? ""}
+            />
+          </div>
         </div>
+
 
         <div className="rounded-md border bg-muted/40 p-3 text-sm">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -574,10 +705,13 @@ function FuncForm({
           <div className="grid grid-cols-2 gap-y-1 sm:grid-cols-4">
             <div className="text-muted-foreground">Salário</div>
             <div className="text-right font-medium">{fmtBRL(preview.salario)}</div>
+            <div className="text-muted-foreground">Adicionais ({preview.pctAdic}%)</div>
+            <div className="text-right font-medium">{fmtBRL(preview.adicionais)}</div>
             <div className="text-muted-foreground">
               Encargos ({Math.round(preview.rate * 100)}%)
             </div>
             <div className="text-right font-medium">{fmtBRL(preview.encargos)}</div>
+
             <div className="text-muted-foreground">VT + VA + Saúde + Odonto</div>
             <div className="text-right font-medium">
               {fmtBRL(preview.vt + preview.va + preview.ps + preview.po)}
