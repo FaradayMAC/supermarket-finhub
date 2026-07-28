@@ -265,7 +265,9 @@ function FuncPage() {
                   <th className="px-4 py-3 text-center">Dep.</th>
                   <th className="px-4 py-3 text-right">Salário</th>
                   <th className="px-4 py-3 text-right">Sal. família</th>
+                  <th className="px-4 py-3 text-right">Adicionais</th>
                   <th className="px-4 py-3 text-right">Benefícios</th>
+
                   <th className="px-4 py-3 text-right">Encargos</th>
                   <th className="px-4 py-3 text-right">Custo real</th>
                   <th className="px-4 py-3"></th>
