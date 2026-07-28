@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell, fmtBRL } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { PeriodFilter, usePeriodo } from "@/components/period-filter";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
@@ -17,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/comparativo")({
 });
 
 function Comparativo() {
-  const [periodo, setPeriodo] = useState<"1m" | "3m" | "6m" | "12m" | "all">("6m");
+  const periodoState = usePeriodo("1m");
 
   const { data, isLoading } = useQuery({
     queryKey: ["comparativo"],
@@ -41,16 +40,7 @@ function Comparativo() {
     },
   });
 
-  const monthsBack = periodo === "1m" ? 1 : periodo === "3m" ? 3 : periodo === "6m" ? 6 : periodo === "12m" ? 12 : null;
-  const cutoff = useMemo(() => {
-    if (!monthsBack) return null;
-    const d = new Date();
-    d.setDate(1);
-    d.setMonth(d.getMonth() - (monthsBack - 1));
-    return d.toISOString().slice(0, 10);
-  }, [monthsBack]);
-  const inWindow = (iso?: string | null) => !!iso && (!cutoff || iso >= cutoff);
-  const meses = monthsBack ?? 12;
+  const { inWindow, meses } = periodoState;
 
   const lojas = data?.lojas ?? [];
   const porLoja = lojas.map((l: any) => {
@@ -88,21 +78,7 @@ function Comparativo() {
   return (
     <AppShell
       title="Comparativo entre unidades"
-      actions={
-        <div className="flex items-center gap-2">
-          <Label className="hidden text-xs uppercase text-muted-foreground sm:inline">Período:</Label>
-          <Select value={periodo} onValueChange={(v) => setPeriodo(v as any)}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1m">Mês atual</SelectItem>
-              <SelectItem value="3m">Últimos 3 meses</SelectItem>
-              <SelectItem value="6m">Últimos 6 meses</SelectItem>
-              <SelectItem value="12m">Últimos 12 meses</SelectItem>
-              <SelectItem value="all">Tudo</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      }
+      actions={<PeriodFilter state={periodoState} />}
     >
       {isLoading ? (
         <div className="text-muted-foreground">Carregando…</div>

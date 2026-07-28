@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PeriodFilter, usePeriodo } from "@/components/period-filter";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, ArrowUpRight, ArrowDownRight, Wallet, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
@@ -47,7 +48,7 @@ function CaixaPage() {
   const [open, setOpen] = useState(false);
   const [filtroLoja, setFiltroLoja] = useState<string>("todas");
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
-  const [periodo, setPeriodo] = useState<"1m" | "3m" | "6m" | "12m" | "all">("3m");
+  const periodoState = usePeriodo("1m");
 
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas-min"],
@@ -66,23 +67,16 @@ function CaixaPage() {
     },
   });
 
-  const monthsBack = periodo === "1m" ? 1 : periodo === "3m" ? 3 : periodo === "6m" ? 6 : periodo === "12m" ? 12 : null;
-  const cutoff = useMemo(() => {
-    if (!monthsBack) return null;
-    const d = new Date();
-    d.setDate(1);
-    d.setMonth(d.getMonth() - (monthsBack - 1));
-    return d.toISOString().slice(0, 10);
-  }, [monthsBack]);
+  const { inWindow, meses: monthsBack } = periodoState;
 
   const filtradas = useMemo(() => {
     return movs.filter((m) => {
       if (filtroLoja !== "todas" && m.loja_id !== filtroLoja) return false;
       if (filtroTipo !== "todos" && m.tipo !== filtroTipo) return false;
-      if (cutoff && (m.data_movimentacao ?? "") < cutoff) return false;
+      if (!inWindow(m.data_movimentacao)) return false;
       return true;
     });
-  }, [movs, filtroLoja, filtroTipo, cutoff]);
+  }, [movs, filtroLoja, filtroTipo, periodoState.from, periodoState.to]);
 
   const entradas = filtradas.filter((m) => m.tipo === "entrada").reduce((s, m) => s + Number(m.valor), 0);
   const saidas = filtradas.filter((m) => m.tipo === "saida").reduce((s, m) => s + Number(m.valor), 0);
@@ -90,7 +84,7 @@ function CaixaPage() {
 
   // Evolução mensal
   const monthly = useMemo(() => {
-    const mb = monthsBack ?? 12;
+    const mb = monthsBack;
     const base = new Date();
     base.setDate(1);
     const out: { key: string; label: string; entradas: number; saidas: number; saldo: number; acumulado: number }[] = [];
@@ -269,16 +263,7 @@ function CaixaPage() {
             </div>
             <div>
               <Label className="text-xs uppercase text-muted-foreground">Período</Label>
-              <Select value={periodo} onValueChange={(v) => setPeriodo(v as any)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1m">Último mês</SelectItem>
-                  <SelectItem value="3m">Últimos 3 meses</SelectItem>
-                  <SelectItem value="6m">Últimos 6 meses</SelectItem>
-                  <SelectItem value="12m">Últimos 12 meses</SelectItem>
-                  <SelectItem value="all">Tudo</SelectItem>
-                </SelectContent>
-              </Select>
+              <PeriodFilter state={periodoState} showLabel={false} />
             </div>
           </CardContent>
         </Card>
