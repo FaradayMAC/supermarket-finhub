@@ -26,7 +26,7 @@ const monthLabel = (key: string) => {
 };
 
 function Dashboard() {
-  const [periodo, setPeriodo] = useState<"1m" | "3m" | "6m" | "12m" | "all">("6m");
+  const periodoState = usePeriodo("1m");
 
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
