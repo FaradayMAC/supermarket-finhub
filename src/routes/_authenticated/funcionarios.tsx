@@ -276,14 +276,14 @@ function FuncPage() {
               <tbody>
                 {isLoading && (
                   <tr>
-                    <td colSpan={12} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={13} className="px-4 py-8 text-center text-muted-foreground">
                       Carregando…
                     </td>
                   </tr>
                 )}
                 {!isLoading && filtrados.length === 0 && (
                   <tr>
-                    <td colSpan={12} className="px-4 py-12 text-center text-muted-foreground">
+                    <td colSpan={13} className="px-4 py-12 text-center text-muted-foreground">
                       Sem funcionários neste filtro.
                     </td>
                   </tr>
