@@ -57,17 +57,9 @@ function Dashboard() {
   const folhaLancada = data?.folha ?? [];
   const mov = data?.mov ?? [];
 
-  // janela de meses
-  const monthsBack = periodo === "1m" ? 1 : periodo === "3m" ? 3 : periodo === "6m" ? 6 : periodo === "12m" ? 12 : null;
-  const cutoff = useMemo(() => {
-    if (!monthsBack) return null;
-    const d = new Date();
-    d.setDate(1);
-    d.setMonth(d.getMonth() - (monthsBack - 1));
-    return d.toISOString().slice(0, 10);
-  }, [monthsBack]);
+  // janela de período
+  const { inWindow, meses: mesesJanela, monthsBack } = periodoState;
 
-  const inWindow = (iso?: string | null) => !!iso && (!cutoff || iso >= cutoff);
 
   // KPIs
   const totalDespesas = despesas.filter((d) => inWindow(d.data_competencia)).reduce((s, d) => s + Number(d.valor), 0);
