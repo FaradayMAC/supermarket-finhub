@@ -382,18 +382,24 @@ export type Database = {
           created_at: string
           data_admissao: string | null
           dependentes: number
+          desconto_vt: boolean
           email: string | null
           empresa_id: string | null
           encargos: number
           id: string
+          insalubridade_pct: number
           loja_id: string
           nome: string
+          observacoes: string | null
+          periculosidade_pct: number
           plano_odontologico: number
           plano_saude: number
           prestador_id: string | null
+          quebra_caixa_pct: number
           regime_tributario: string
           salario_base: number
           salario_familia: number
+          situacao: string | null
           telefone: string | null
           updated_at: string
           vale_alimentacao: number
@@ -408,18 +414,24 @@ export type Database = {
           created_at?: string
           data_admissao?: string | null
           dependentes?: number
+          desconto_vt?: boolean
           email?: string | null
           empresa_id?: string | null
           encargos?: number
           id?: string
+          insalubridade_pct?: number
           loja_id: string
           nome: string
+          observacoes?: string | null
+          periculosidade_pct?: number
           plano_odontologico?: number
           plano_saude?: number
           prestador_id?: string | null
+          quebra_caixa_pct?: number
           regime_tributario?: string
           salario_base?: number
           salario_familia?: number
+          situacao?: string | null
           telefone?: string | null
           updated_at?: string
           vale_alimentacao?: number
@@ -434,18 +446,24 @@ export type Database = {
           created_at?: string
           data_admissao?: string | null
           dependentes?: number
+          desconto_vt?: boolean
           email?: string | null
           empresa_id?: string | null
           encargos?: number
           id?: string
+          insalubridade_pct?: number
           loja_id?: string
           nome?: string
+          observacoes?: string | null
+          periculosidade_pct?: number
           plano_odontologico?: number
           plano_saude?: number
           prestador_id?: string | null
+          quebra_caixa_pct?: number
           regime_tributario?: string
           salario_base?: number
           salario_familia?: number
+          situacao?: string | null
           telefone?: string | null
           updated_at?: string
           vale_alimentacao?: number
