@@ -293,7 +293,14 @@ function FuncPage() {
                   const beneficios = c.vt + c.va + c.ps + c.po;
                   return (
                     <tr key={f.id} className="border-b last:border-0">
-                      <td className="px-4 py-3 font-medium">{f.nome}</td>
+                      <td className="px-4 py-3 font-medium">
+                        {f.nome}
+                        {f.situacao && (
+                          <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">
+                            {f.situacao}
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground">{f.cpf ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.cargo ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.lojas?.nome ?? "—"}</td>
@@ -303,7 +310,14 @@ function FuncPage() {
                       <td className="px-4 py-3 text-center">{f.dependentes ?? 0}</td>
                       <td className="px-4 py-3 text-right">{fmtBRL(c.salario)}</td>
                       <td className="px-4 py-3 text-right">{fmtBRL(c.sf)}</td>
+                      <td className="px-4 py-3 text-right">
+                        {fmtBRL(c.adicionais)}
+                        {c.pctAdic > 0 && (
+                          <span className="ml-1 text-xs text-muted-foreground">({c.pctAdic}%)</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-right">{fmtBRL(beneficios)}</td>
+
                       <td className="px-4 py-3 text-right">
                         {fmtBRL(c.encargos)}
                         <span className="ml-1 text-xs text-muted-foreground">
