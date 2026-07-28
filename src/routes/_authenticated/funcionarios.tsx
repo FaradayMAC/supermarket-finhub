@@ -377,6 +377,10 @@ function FuncForm({
   const [po, setPo] = useState<number>(Number(initial?.plano_odontologico ?? 0));
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
+  const [insal, setInsal] = useState<number>(Number(initial?.insalubridade_pct ?? 0));
+  const [peric, setPeric] = useState<number>(Number(initial?.periculosidade_pct ?? 0));
+  const [qc, setQc] = useState<number>(Number(initial?.quebra_caixa_pct ?? 0));
+  const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
 
   const preview = custoReal({
     salario_base: salario,
@@ -386,8 +390,12 @@ function FuncForm({
     plano_odontologico: po,
     salario_familia: sf,
     valor_extra_salarial: ve,
+    insalubridade_pct: insal,
+    periculosidade_pct: peric,
+    quebra_caixa_pct: qc,
     regime_tributario: regime,
   });
+
 
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
