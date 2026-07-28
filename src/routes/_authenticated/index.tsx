@@ -70,7 +70,7 @@ function Dashboard() {
   const custoMensalFuncs = funcionarios
     .filter((f) => f.ativo)
     .reduce((s, f) => s + Number(f.salario_base ?? 0) + Number(f.encargos ?? 0) + Number(f.beneficios ?? 0), 0);
-  const totalFolha0 = 0;
+  
   const totalFolha = folhaPeriodo > 0 ? folhaPeriodo : custoMensalFuncs * mesesJanela;
 
   const receitas = mov
