@@ -23,6 +23,7 @@ import { Route as AuthenticatedLojasRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedPrestadoresRouteImport } from './routes/_authenticated/prestadores'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
+import { Route as ApiPublicHooksSyncDriveRouteImport } from './routes/api/public/hooks/sync-drive'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -96,6 +97,11 @@ const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicHooksSyncDriveRoute = ApiPublicHooksSyncDriveRouteImport.update({
+  id: '/api/public/hooks/sync-drive',
+  path: '/api/public/hooks/sync-drive',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/metas': typeof AuthenticatedMetasRoute
   '/prestadores': typeof AuthenticatedPrestadoresRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/api/public/hooks/sync-drive': typeof ApiPublicHooksSyncDriveRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/prestadores': typeof AuthenticatedPrestadoresRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/': typeof AuthenticatedIndexRoute
+  '/api/public/hooks/sync-drive': typeof ApiPublicHooksSyncDriveRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/_authenticated/prestadores': typeof AuthenticatedPrestadoresRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/api/public/hooks/sync-drive': typeof ApiPublicHooksSyncDriveRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/metas'
     | '/prestadores'
     | '/usuarios'
+    | '/api/public/hooks/sync-drive'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/prestadores'
     | '/usuarios'
     | '/'
+    | '/api/public/hooks/sync-drive'
   id:
     | '__root__'
     | '/_authenticated'
@@ -191,11 +202,13 @@ export interface FileRouteTypes {
     | '/_authenticated/prestadores'
     | '/_authenticated/usuarios'
     | '/_authenticated/'
+    | '/api/public/hooks/sync-drive'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicHooksSyncDriveRoute: typeof ApiPublicHooksSyncDriveRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -298,6 +311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/hooks/sync-drive': {
+      id: '/api/public/hooks/sync-drive'
+      path: '/api/public/hooks/sync-drive'
+      fullPath: '/api/public/hooks/sync-drive'
+      preLoaderRoute: typeof ApiPublicHooksSyncDriveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -337,7 +357,18 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicHooksSyncDriveRoute: ApiPublicHooksSyncDriveRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
