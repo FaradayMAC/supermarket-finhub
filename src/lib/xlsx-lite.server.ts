@@ -44,7 +44,7 @@ function parseSheet(xml: string, shared: string[]): string[][] {
   while ((r = rowRe.exec(xml))) {
     const inner = r[1] ?? "";
     const cells: string[] = [];
-    const cRe = /<c\b([^>]*)(?:\/>|>([\s\S]*?)<\/c>)/g;
+    const cRe = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
     let c: RegExpExecArray | null;
     while ((c = cRe.exec(inner))) {
       const attrs = c[1] ?? "";
