@@ -24,7 +24,7 @@ function colIndex(ref: string): number {
 
 function parseSharedStrings(xml: string): string[] {
   const out: string[] = [];
-  const siRe = /<si\b[^>]*>([\s\S]*?)<\/si>|<si\b[^>]*\/>/g;
+  const siRe = /<si\b[^>]*?\/>|<si\b[^>]*?>([\s\S]*?)<\/si>/g;
   let m: RegExpExecArray | null;
   while ((m = siRe.exec(xml))) {
     const inner = m[1] ?? "";
