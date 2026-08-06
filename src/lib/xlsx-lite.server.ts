@@ -39,7 +39,7 @@ function parseSharedStrings(xml: string): string[] {
 
 function parseSheet(xml: string, shared: string[]): string[][] {
   const rows: string[][] = [];
-  const rowRe = /<row\b[^>]*>([\s\S]*?)<\/row>|<row\b[^>]*\/>/g;
+  const rowRe = /<row\b[^>]*?\/>|<row\b[^>]*?>([\s\S]*?)<\/row>/g;
   let r: RegExpExecArray | null;
   while ((r = rowRe.exec(xml))) {
     const inner = r[1] ?? "";
