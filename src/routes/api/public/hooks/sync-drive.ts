@@ -7,13 +7,18 @@ export const Route = createFileRoute("/api/public/hooks/sync-drive")({
         const apikey =
           request.headers.get("apikey") ??
           request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-        const expected = process.env["SUPABASE_ANON_KEY"];
-        if (!expected || apikey !== expected) {
+        const allowed = [
+          process.env["SUPABASE_ANON_KEY"],
+          process.env["SUPABASE_PUBLISHABLE_KEY"],
+          process.env["VITE_SUPABASE_PUBLISHABLE_KEY"],
+        ].filter((v): v is string => !!v);
+        if (!apikey || !allowed.includes(apikey)) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,
             headers: { "Content-Type": "application/json" },
           });
         }
+
 
         const { runDriveSync } = await import("@/lib/drive-sync.server");
         try {
