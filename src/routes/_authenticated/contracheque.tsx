@@ -127,6 +127,20 @@ function ContrachequePage() {
   const totalConvenio = lista.reduce((s, i) => s + i.cc.convenio, 0);
   const cal = calendarioMes(mes);
 
+  const baixarPdf = async (f: Func) => {
+    try {
+      await gerarContrachequePdf({
+        func: f,
+        loja: lojaMap.get(f.loja_id)?.nome ?? "—",
+        mes,
+        faltas: faltasMap.get(f.id) ?? 0,
+        convenio: Number(convMap.get(f.id)?.valor ?? 0),
+      });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao gerar PDF");
+    }
+  };
+
   const saveConvenio = useMutation({
     mutationFn: async (v: { funcionario: Func; valor: number; observacoes: string }) => {
       const payload = {
