@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, ShoppingBasket } from "lucide-react";
+import { Download, FileText, ShoppingBasket } from "lucide-react";
 import { toast } from "sonner";
 import { calcContracheque, calendarioMes, type FuncionarioCC } from "@/lib/contracheque";
+import { gerarContrachequePdf } from "@/lib/contracheque-pdf";
 
 export const Route = createFileRoute("/_authenticated/contracheque")({
   head: () => ({
@@ -126,6 +127,20 @@ function ContrachequePage() {
   const totalConvenio = lista.reduce((s, i) => s + i.cc.convenio, 0);
   const cal = calendarioMes(mes);
 
+  const baixarPdf = async (f: Func) => {
+    try {
+      await gerarContrachequePdf({
+        func: f,
+        loja: lojaMap.get(f.loja_id)?.nome ?? "—",
+        mes,
+        faltas: faltasMap.get(f.id) ?? 0,
+        convenio: Number(convMap.get(f.id)?.valor ?? 0),
+      });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao gerar PDF");
+    }
+  };
+
   const saveConvenio = useMutation({
     mutationFn: async (v: { funcionario: Func; valor: number; observacoes: string }) => {
       const payload = {
@@ -223,6 +238,9 @@ function ContrachequePage() {
                     </Button>
                     <Button size="icon" variant="ghost" title="Ver contracheque" onClick={() => setDetalhe(f)}>
                       <FileText className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" title="Baixar contracheque em PDF" onClick={() => baixarPdf(f)}>
+                      <Download className="h-4 w-4" />
                     </Button>
                   </td>
                 </tr>
@@ -349,6 +367,12 @@ function DetalheContracheque({
         <span className="text-sm font-semibold">Líquido a receber</span>
         <span className="text-xl font-bold">{fmtBRL(cc.liquido)}</span>
       </div>
+      <Button
+        className="w-full"
+        onClick={() => gerarContrachequePdf({ func, loja, mes, faltas, convenio })}
+      >
+        <Download className="mr-2 h-4 w-4" /> Baixar PDF
+      </Button>
       <p className="text-[11px] leading-relaxed text-muted-foreground">
         Cálculo conforme CLT e Lei 605/49, com feriados nacionais e estaduais do Espírito Santo
         ({cc.calendario.diasUteis} dias úteis / {cc.calendario.diasRepouso} dias de repouso no mês).
