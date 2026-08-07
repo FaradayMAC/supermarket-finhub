@@ -239,6 +239,9 @@ function ContrachequePage() {
                     <Button size="icon" variant="ghost" title="Ver contracheque" onClick={() => setDetalhe(f)}>
                       <FileText className="h-4 w-4" />
                     </Button>
+                    <Button size="icon" variant="ghost" title="Baixar contracheque em PDF" onClick={() => baixarPdf(f)}>
+                      <Download className="h-4 w-4" />
+                    </Button>
                   </td>
                 </tr>
               ))}
