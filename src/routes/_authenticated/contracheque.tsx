@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, ShoppingBasket } from "lucide-react";
+import { Download, FileText, ShoppingBasket } from "lucide-react";
 import { toast } from "sonner";
 import { calcContracheque, calendarioMes, type FuncionarioCC } from "@/lib/contracheque";
+import { gerarContrachequePdf } from "@/lib/contracheque-pdf";
 
 export const Route = createFileRoute("/_authenticated/contracheque")({
   head: () => ({
