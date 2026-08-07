@@ -7,6 +7,7 @@ export type PdfFunc = FuncionarioCC & {
   id: string;
   nome: string;
   cargo: string | null;
+  regime_tributario?: string;
 };
 
 export async function gerarContrachequePdf(params: {
