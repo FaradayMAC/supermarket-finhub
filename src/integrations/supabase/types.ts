@@ -100,6 +100,54 @@ export type Database = {
           },
         ]
       }
+      convenio_funcionario: {
+        Row: {
+          created_at: string
+          funcionario_id: string
+          id: string
+          loja_id: string
+          mes_referencia: string
+          observacoes: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          funcionario_id: string
+          id?: string
+          loja_id: string
+          mes_referencia: string
+          observacoes?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          funcionario_id?: string
+          id?: string
+          loja_id?: string
+          mes_referencia?: string
+          observacoes?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convenio_funcionario_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convenio_funcionario_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       despesas: {
         Row: {
           categoria_id: string | null
