@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
 import { Route as AuthenticatedComparativoRouteImport } from './routes/_authenticated/comparativo'
+import { Route as AuthenticatedContrachequeRouteImport } from './routes/_authenticated/contracheque'
 import { Route as AuthenticatedDespesasRouteImport } from './routes/_authenticated/despesas'
 import { Route as AuthenticatedDreRouteImport } from './routes/_authenticated/dre'
 import { Route as AuthenticatedFaltasRhRouteImport } from './routes/_authenticated/faltas-rh'
@@ -48,6 +49,12 @@ const AuthenticatedComparativoRoute =
   AuthenticatedComparativoRouteImport.update({
     id: '/comparativo',
     path: '/comparativo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedContrachequeRoute =
+  AuthenticatedContrachequeRouteImport.update({
+    id: '/contracheque',
+    path: '/contracheque',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedDespesasRoute = AuthenticatedDespesasRouteImport.update({
@@ -108,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/caixa': typeof AuthenticatedCaixaRoute
   '/comparativo': typeof AuthenticatedComparativoRoute
+  '/contracheque': typeof AuthenticatedContrachequeRoute
   '/despesas': typeof AuthenticatedDespesasRoute
   '/dre': typeof AuthenticatedDreRoute
   '/faltas-rh': typeof AuthenticatedFaltasRhRoute
@@ -123,6 +131,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/caixa': typeof AuthenticatedCaixaRoute
   '/comparativo': typeof AuthenticatedComparativoRoute
+  '/contracheque': typeof AuthenticatedContrachequeRoute
   '/despesas': typeof AuthenticatedDespesasRoute
   '/dre': typeof AuthenticatedDreRoute
   '/faltas-rh': typeof AuthenticatedFaltasRhRoute
@@ -141,6 +150,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/caixa': typeof AuthenticatedCaixaRoute
   '/_authenticated/comparativo': typeof AuthenticatedComparativoRoute
+  '/_authenticated/contracheque': typeof AuthenticatedContrachequeRoute
   '/_authenticated/despesas': typeof AuthenticatedDespesasRoute
   '/_authenticated/dre': typeof AuthenticatedDreRoute
   '/_authenticated/faltas-rh': typeof AuthenticatedFaltasRhRoute
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/caixa'
     | '/comparativo'
+    | '/contracheque'
     | '/despesas'
     | '/dre'
     | '/faltas-rh'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/caixa'
     | '/comparativo'
+    | '/contracheque'
     | '/despesas'
     | '/dre'
     | '/faltas-rh'
@@ -192,6 +204,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/caixa'
     | '/_authenticated/comparativo'
+    | '/_authenticated/contracheque'
     | '/_authenticated/despesas'
     | '/_authenticated/dre'
     | '/_authenticated/faltas-rh'
@@ -246,6 +259,13 @@ declare module '@tanstack/react-router' {
       path: '/comparativo'
       fullPath: '/comparativo'
       preLoaderRoute: typeof AuthenticatedComparativoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/contracheque': {
+      id: '/_authenticated/contracheque'
+      path: '/contracheque'
+      fullPath: '/contracheque'
+      preLoaderRoute: typeof AuthenticatedContrachequeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/despesas': {
@@ -324,6 +344,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCaixaRoute: typeof AuthenticatedCaixaRoute
   AuthenticatedComparativoRoute: typeof AuthenticatedComparativoRoute
+  AuthenticatedContrachequeRoute: typeof AuthenticatedContrachequeRoute
   AuthenticatedDespesasRoute: typeof AuthenticatedDespesasRoute
   AuthenticatedDreRoute: typeof AuthenticatedDreRoute
   AuthenticatedFaltasRhRoute: typeof AuthenticatedFaltasRhRoute
@@ -339,6 +360,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCaixaRoute: AuthenticatedCaixaRoute,
   AuthenticatedComparativoRoute: AuthenticatedComparativoRoute,
+  AuthenticatedContrachequeRoute: AuthenticatedContrachequeRoute,
   AuthenticatedDespesasRoute: AuthenticatedDespesasRoute,
   AuthenticatedDreRoute: AuthenticatedDreRoute,
   AuthenticatedFaltasRhRoute: AuthenticatedFaltasRhRoute,
