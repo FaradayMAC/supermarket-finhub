@@ -367,6 +367,12 @@ function DetalheContracheque({
         <span className="text-sm font-semibold">Líquido a receber</span>
         <span className="text-xl font-bold">{fmtBRL(cc.liquido)}</span>
       </div>
+      <Button
+        className="w-full"
+        onClick={() => gerarContrachequePdf({ func, loja, mes, faltas, convenio })}
+      >
+        <Download className="mr-2 h-4 w-4" /> Baixar PDF
+      </Button>
       <p className="text-[11px] leading-relaxed text-muted-foreground">
         Cálculo conforme CLT e Lei 605/49, com feriados nacionais e estaduais do Espírito Santo
         ({cc.calendario.diasUteis} dias úteis / {cc.calendario.diasRepouso} dias de repouso no mês).
