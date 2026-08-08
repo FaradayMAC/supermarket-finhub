@@ -153,7 +153,9 @@ function Comparativo() {
                   <tr>
                     <td className="px-4 py-3">Total</td>
                     <td className="px-4 py-3 text-right">{fmtBRL(totais.faturamento)}</td>
+                    <td className="px-4 py-3 text-right">{fmtBRL(totais.cmv)}</td>
                     <td className="px-4 py-3 text-right">{fmtBRL(totais.despesas)}</td>
+
                     <td className="px-4 py-3 text-right">{fmtBRL(totais.folha)}</td>
                     <td className="px-4 py-3 text-right">{fmtBRL(totais.impostos)}</td>
                     <td className={`px-4 py-3 text-right ${totais.resultado >= 0 ? "text-success" : "text-destructive"}`}>{fmtBRL(totais.resultado)}</td>
