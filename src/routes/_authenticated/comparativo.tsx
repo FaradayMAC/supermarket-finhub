@@ -122,7 +122,9 @@ function Comparativo() {
                   <tr>
                     <th className="px-4 py-3">Unidade</th>
                     <th className="px-4 py-3 text-right">Faturamento</th>
+                    <th className="px-4 py-3 text-right">CMV</th>
                     <th className="px-4 py-3 text-right">Despesas</th>
+
                     <th className="px-4 py-3 text-right">Folha</th>
                     <th className="px-4 py-3 text-right">Impostos</th>
                     <th className="px-4 py-3 text-right">Resultado</th>
