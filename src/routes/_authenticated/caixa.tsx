@@ -280,6 +280,13 @@ function CaixaPage() {
           </CardContent>
         </Card>
 
+        <Tabs defaultValue="realizado">
+          <TabsList>
+            <TabsTrigger value="realizado">Realizado</TabsTrigger>
+            <TabsTrigger value="projetado">Projetado</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="realizado" className="mt-4 space-y-6">
         {/* KPIs */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Kpi icon={<ArrowUpRight className="h-4 w-4" />} label="Entradas" value={fmtBRL(entradas)} accent="success" />
