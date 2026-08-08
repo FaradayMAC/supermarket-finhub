@@ -24,6 +24,7 @@ import { Route as AuthenticatedImpostosRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedLojasRouteImport } from './routes/_authenticated/lojas'
 import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedPrestadoresRouteImport } from './routes/_authenticated/prestadores'
+import { Route as AuthenticatedTitulosRouteImport } from './routes/_authenticated/titulos'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedVendasRouteImport } from './routes/_authenticated/vendas'
 import { Route as ApiPublicHooksSyncDriveRouteImport } from './routes/api/public/hooks/sync-drive'
@@ -106,6 +107,11 @@ const AuthenticatedPrestadoresRoute =
     path: '/prestadores',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTitulosRoute = AuthenticatedTitulosRouteImport.update({
+  id: '/titulos',
+  path: '/titulos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   id: '/usuarios',
   path: '/usuarios',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/lojas': typeof AuthenticatedLojasRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/prestadores': typeof AuthenticatedPrestadoresRoute
+  '/titulos': typeof AuthenticatedTitulosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/vendas': typeof AuthenticatedVendasRoute
   '/api/public/hooks/sync-drive': typeof ApiPublicHooksSyncDriveRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/lojas': typeof AuthenticatedLojasRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/prestadores': typeof AuthenticatedPrestadoresRoute
+  '/titulos': typeof AuthenticatedTitulosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/vendas': typeof AuthenticatedVendasRoute
   '/': typeof AuthenticatedIndexRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/_authenticated/lojas': typeof AuthenticatedLojasRoute
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/prestadores': typeof AuthenticatedPrestadoresRoute
+  '/_authenticated/titulos': typeof AuthenticatedTitulosRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/lojas'
     | '/metas'
     | '/prestadores'
+    | '/titulos'
     | '/usuarios'
     | '/vendas'
     | '/api/public/hooks/sync-drive'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/lojas'
     | '/metas'
     | '/prestadores'
+    | '/titulos'
     | '/usuarios'
     | '/vendas'
     | '/'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/_authenticated/lojas'
     | '/_authenticated/metas'
     | '/_authenticated/prestadores'
+    | '/_authenticated/titulos'
     | '/_authenticated/usuarios'
     | '/_authenticated/vendas'
     | '/_authenticated/'
@@ -355,6 +367,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPrestadoresRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/titulos': {
+      id: '/_authenticated/titulos'
+      path: '/titulos'
+      fullPath: '/titulos'
+      preLoaderRoute: typeof AuthenticatedTitulosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/usuarios': {
       id: '/_authenticated/usuarios'
       path: '/usuarios'
@@ -392,6 +411,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLojasRoute: typeof AuthenticatedLojasRoute
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedPrestadoresRoute: typeof AuthenticatedPrestadoresRoute
+  AuthenticatedTitulosRoute: typeof AuthenticatedTitulosRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedVendasRoute: typeof AuthenticatedVendasRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -410,6 +430,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLojasRoute: AuthenticatedLojasRoute,
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedPrestadoresRoute: AuthenticatedPrestadoresRoute,
+  AuthenticatedTitulosRoute: AuthenticatedTitulosRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedVendasRoute: AuthenticatedVendasRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
