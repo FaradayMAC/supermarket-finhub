@@ -103,8 +103,10 @@ function Comparativo() {
                   <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
                   <Legend />
                   <Bar dataKey="faturamento" fill="var(--color-chart-2)" name="Faturamento" />
+                  <Bar dataKey="cmv" fill="var(--color-chart-6, var(--color-primary))" name="CMV" />
                   <Bar dataKey="despesas" fill="var(--color-chart-1)" name="Despesas" />
                   <Bar dataKey="folha" fill="var(--color-chart-3)" name="Folha" />
+
                   <Bar dataKey="impostos" fill="var(--color-chart-4)" name="Impostos" />
                   <Bar dataKey="resultado" fill="var(--color-chart-5)" name="Resultado" />
                 </BarChart>
