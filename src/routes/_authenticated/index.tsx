@@ -67,6 +67,7 @@ function Dashboard() {
   // KPIs
   const totalDespesas = despesas.filter((d) => inWindow(d.data_competencia)).reduce((s, d) => s + Number(d.valor), 0);
   const totalImpostos = impostos.filter((i) => inWindow(i.competencia)).reduce((s, i) => s + Number(i.valor), 0);
+  const totalCMV = compras.filter((c) => inWindow(c.data_compra)).reduce((s, c) => s + Number(c.valor_total), 0);
 
   // Folha: usa lançamentos de folha_pagamento no período; se vazio, cai pro cálculo mensal de funcionários ativos × meses
   const folhaPeriodo = folhaLancada.filter((f) => inWindow(f.competencia)).reduce((s, f) => s + Number(f.custo_total ?? 0), 0);
@@ -80,24 +81,25 @@ function Dashboard() {
     .filter((m) => m.tipo === "entrada" && inWindow(m.data_movimentacao))
     .reduce((s, m) => s + Number(m.valor), 0);
 
-  const custoTotalFuncs = custoMensalFuncs; // por mês (referência atual)
-  const custoOperacional = totalDespesas + totalImpostos + totalFolha;
+  const custoOperacional = totalDespesas + totalImpostos + totalFolha + totalCMV;
   const resultado = receitas - custoOperacional;
 
   // Por loja (janela)
   const porLoja = lojas
     .map((l: any) => {
       const desp = despesas.filter((d) => d.loja_id === l.id && inWindow(d.data_competencia)).reduce((s, d) => s + Number(d.valor), 0);
+      const cmv = compras.filter((c) => c.loja_id === l.id && inWindow(c.data_compra)).reduce((s, c) => s + Number(c.valor_total), 0);
       const imp = impostos.filter((i) => i.loja_id === l.id && inWindow(i.competencia)).reduce((s, i) => s + Number(i.valor), 0);
       const funcsLoja = funcionarios.filter((f) => f.loja_id === l.id && f.ativo);
       const folhaLoja = funcsLoja.reduce((s, f) => s + Number(f.salario_base ?? 0) + Number(f.encargos ?? 0) + Number(f.beneficios ?? 0), 0) * mesesJanela;
       const rec = mov.filter((m) => m.loja_id === l.id && m.tipo === "entrada" && inWindow(m.data_movimentacao)).reduce((s, m) => s + Number(m.valor), 0);
-      const custo = desp + imp + folhaLoja;
+      const custo = desp + cmv + imp + folhaLoja;
       return {
         id: l.id,
         nome: l.nome,
         codigo: l.codigo,
         despesas: desp,
+        cmv,
         impostos: imp,
         folha: folhaLoja,
         receita: rec,
@@ -115,24 +117,26 @@ function Dashboard() {
   const monthly = useMemo(() => {
     const base = new Date();
     base.setDate(1);
-    const out: { key: string; label: string; despesas: number; impostos: number; folha: number; receita: number; resultado: number }[] = [];
+    const out: { key: string; label: string; despesas: number; cmv: number; impostos: number; folha: number; receita: number; resultado: number }[] = [];
     for (let i = evoMeses - 1; i >= 0; i--) {
       const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      out.push({ key, label: monthLabel(key), despesas: 0, impostos: 0, folha: 0, receita: 0, resultado: 0 });
+      out.push({ key, label: monthLabel(key), despesas: 0, cmv: 0, impostos: 0, folha: 0, receita: 0, resultado: 0 });
     }
     const idx = new Map(out.map((m, i) => [m.key, i]));
     despesas.forEach((d) => { const i = idx.get((d.data_competencia ?? "").slice(0, 7)); if (i != null) out[i].despesas += Number(d.valor); });
+    compras.forEach((c) => { const i = idx.get((c.data_compra ?? "").slice(0, 7)); if (i != null) out[i].cmv += Number(c.valor_total); });
     impostos.forEach((i2) => { const i = idx.get((i2.competencia ?? "").slice(0, 7)); if (i != null) out[i].impostos += Number(i2.valor); });
     folhaLancada.forEach((f) => { const i = idx.get((f.competencia ?? "").slice(0, 7)); if (i != null) out[i].folha += Number(f.custo_total ?? 0); });
     mov.filter((m) => m.tipo === "entrada").forEach((m) => { const i = idx.get((m.data_movimentacao ?? "").slice(0, 7)); if (i != null) out[i].receita += Number(m.valor); });
     // Fallback de folha por mês (funcionários ativos) quando não há lançamentos no mês
     out.forEach((row) => {
       if (row.folha === 0) row.folha = custoMensalFuncs;
-      row.resultado = row.receita - (row.despesas + row.impostos + row.folha);
+      row.resultado = row.receita - (row.despesas + row.cmv + row.impostos + row.folha);
     });
     return out;
-  }, [despesas, impostos, folhaLancada, mov, evoMeses, custoMensalFuncs]);
+  }, [despesas, compras, impostos, folhaLancada, mov, evoMeses, custoMensalFuncs]);
+
 
   return (
     <AppShell
