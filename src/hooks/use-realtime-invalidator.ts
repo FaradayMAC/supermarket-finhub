@@ -13,6 +13,8 @@ const TABLES = [
   "compras_mercadoria_itens",
   "titulos_financeiros",
   "titulo_parcelas",
+  "extratos_bancarios",
+
 
 
   "funcionarios",
