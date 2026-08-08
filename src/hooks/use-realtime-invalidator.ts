@@ -8,11 +8,13 @@ const TABLES = [
   "impostos",
   "folha_pagamento",
   "movimentacoes_financeiras",
+  "vendas_diarias",
   "funcionarios",
   "metas",
   "lojas",
   "categorias_despesa",
 ] as const;
+
 
 /**
  * Motor de recálculo automático baseado em eventos.
