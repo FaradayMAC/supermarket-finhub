@@ -137,6 +137,7 @@ function DespesasPage() {
                   <th className="px-4 py-3">Data</th>
                   <th className="px-4 py-3">Loja</th>
                   <th className="px-4 py-3">Categoria</th>
+                  <th className="px-4 py-3">Fornecedor</th>
                   <th className="px-4 py-3">Descrição</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Valor</th>
@@ -144,16 +145,18 @@ function DespesasPage() {
                 </tr>
               </thead>
               <tbody>
-                {isLoading && <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>}
+                {isLoading && <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>}
                 {!isLoading && filtradas.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">Sem despesas neste filtro.</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">Sem despesas neste filtro.</td></tr>
                 )}
                 {filtradas.map((d) => (
                   <tr key={d.id} className="border-b last:border-0">
                     <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">{new Date(d.data_competencia).toLocaleDateString("pt-BR")}</td>
                     <td className="px-4 py-3">{d.lojas?.nome ?? "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{d.categorias_despesa?.nome ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{d.fornecedores?.nome_fantasia ?? d.fornecedores?.razao_social ?? "—"}</td>
                     <td className="px-4 py-3">{d.descricao}</td>
+
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${d.status === "pago" ? "bg-success/15 text-success" : d.status === "pendente" ? "bg-warning/20 text-warning-foreground" : "bg-muted text-muted-foreground"}`}>
                         {d.status}
