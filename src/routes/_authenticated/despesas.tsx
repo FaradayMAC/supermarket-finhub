@@ -21,6 +21,7 @@ type Despesa = {
   id: string;
   loja_id: string;
   categoria_id: string | null;
+  fornecedor_id: string | null;
   descricao: string;
   valor: number;
   data_competencia: string;
@@ -28,6 +29,7 @@ type Despesa = {
   status: string;
   lojas?: { nome: string; codigo: string };
   categorias_despesa?: { nome: string };
+  fornecedores?: { razao_social: string; nome_fantasia: string | null } | null;
 };
 
 function DespesasPage() {
@@ -43,17 +45,22 @@ function DespesasPage() {
     queryKey: ["categorias"],
     queryFn: async () => (await supabase.from("categorias_despesa").select("id, nome").order("nome")).data ?? [],
   });
+  const { data: fornecedores = [] } = useQuery({
+    queryKey: ["fornecedores"],
+    queryFn: async () => (await supabase.from("fornecedores").select("*").order("razao_social")).data ?? [],
+  });
   const { data: despesas = [], isLoading } = useQuery({
     queryKey: ["despesas"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("despesas")
-        .select("*, lojas(nome, codigo), categorias_despesa(nome)")
+        .select("*, lojas(nome, codigo), categorias_despesa(nome), fornecedores(razao_social, nome_fantasia)")
         .order("data_competencia", { ascending: false });
       if (error) throw error;
       return (data as any) as Despesa[];
     },
   });
+
 
   const filtradas = useMemo(
     () => (filtroLoja === "todas" ? despesas : despesas.filter((d) => d.loja_id === filtroLoja)),
