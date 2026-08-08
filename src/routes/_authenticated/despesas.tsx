@@ -21,6 +21,7 @@ type Despesa = {
   id: string;
   loja_id: string;
   categoria_id: string | null;
+  fornecedor_id: string | null;
   descricao: string;
   valor: number;
   data_competencia: string;
@@ -28,6 +29,7 @@ type Despesa = {
   status: string;
   lojas?: { nome: string; codigo: string };
   categorias_despesa?: { nome: string };
+  fornecedores?: { razao_social: string; nome_fantasia: string | null } | null;
 };
 
 function DespesasPage() {
@@ -43,17 +45,22 @@ function DespesasPage() {
     queryKey: ["categorias"],
     queryFn: async () => (await supabase.from("categorias_despesa").select("id, nome").order("nome")).data ?? [],
   });
+  const { data: fornecedores = [] } = useQuery({
+    queryKey: ["fornecedores"],
+    queryFn: async () => (await supabase.from("fornecedores").select("*").order("razao_social")).data ?? [],
+  });
   const { data: despesas = [], isLoading } = useQuery({
     queryKey: ["despesas"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("despesas")
-        .select("*, lojas(nome, codigo), categorias_despesa(nome)")
+        .select("*, lojas(nome, codigo), categorias_despesa(nome), fornecedores(razao_social, nome_fantasia)")
         .order("data_competencia", { ascending: false });
       if (error) throw error;
       return (data as any) as Despesa[];
     },
   });
+
 
   const filtradas = useMemo(
     () => (filtroLoja === "todas" ? despesas : despesas.filter((d) => d.loja_id === filtroLoja)),
@@ -95,7 +102,7 @@ function DespesasPage() {
           <DialogTrigger asChild>
             <Button disabled={lojas.length === 0}><Plus className="h-4 w-4" /> Nova despesa</Button>
           </DialogTrigger>
-          <DespesaForm lojas={lojas as any} categorias={cats as any} onSubmit={(v) => create.mutate(v)} saving={create.isPending} />
+          <DespesaForm lojas={lojas as any} categorias={cats as any} fornecedores={fornecedores as any} onSubmit={(v) => create.mutate(v)} saving={create.isPending} />
         </Dialog>
       }
     >
@@ -130,6 +137,7 @@ function DespesasPage() {
                   <th className="px-4 py-3">Data</th>
                   <th className="px-4 py-3">Loja</th>
                   <th className="px-4 py-3">Categoria</th>
+                  <th className="px-4 py-3">Fornecedor</th>
                   <th className="px-4 py-3">Descrição</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Valor</th>
@@ -137,16 +145,18 @@ function DespesasPage() {
                 </tr>
               </thead>
               <tbody>
-                {isLoading && <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>}
+                {isLoading && <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>}
                 {!isLoading && filtradas.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">Sem despesas neste filtro.</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">Sem despesas neste filtro.</td></tr>
                 )}
                 {filtradas.map((d) => (
                   <tr key={d.id} className="border-b last:border-0">
                     <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">{new Date(d.data_competencia).toLocaleDateString("pt-BR")}</td>
                     <td className="px-4 py-3">{d.lojas?.nome ?? "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{d.categorias_despesa?.nome ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{d.fornecedores?.nome_fantasia ?? d.fornecedores?.razao_social ?? "—"}</td>
                     <td className="px-4 py-3">{d.descricao}</td>
+
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${d.status === "pago" ? "bg-success/15 text-success" : d.status === "pendente" ? "bg-warning/20 text-warning-foreground" : "bg-muted text-muted-foreground"}`}>
                         {d.status}
@@ -168,16 +178,19 @@ function DespesasPage() {
 }
 
 function DespesaForm({
-  lojas, categorias, onSubmit, saving,
+  lojas, categorias, fornecedores, onSubmit, saving,
 }: {
   lojas: { id: string; nome: string; codigo: string }[];
   categorias: { id: string; nome: string }[];
+  fornecedores: { id: string; razao_social: string; nome_fantasia: string | null; condicao_pagamento_padrao?: string | null }[];
   onSubmit: (v: any) => void;
   saving: boolean;
 }) {
   const [lojaId, setLojaId] = useState("");
   const [catId, setCatId] = useState("");
+  const [fornecedorId, setFornecedorId] = useState("");
   const [status, setStatus] = useState("pago");
+  const fornecedorSel = fornecedores.find((x) => x.id === fornecedorId);
   return (
     <DialogContent>
       <DialogHeader><DialogTitle>Nova despesa</DialogTitle></DialogHeader>
@@ -190,6 +203,7 @@ function DespesaForm({
           onSubmit({
             loja_id: lojaId,
             categoria_id: catId || null,
+            fornecedor_id: fornecedorId || null,
             descricao: String(fd.get("descricao") || "").trim(),
             valor: Number(fd.get("valor")),
             data_competencia: String(fd.get("data") || ""),
@@ -208,6 +222,20 @@ function DespesaForm({
               </SelectContent>
             </Select>
           </div>
+          <div className="col-span-2">
+            <Label>Fornecedor</Label>
+            <Select value={fornecedorId} onValueChange={setFornecedorId}>
+              <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
+              <SelectContent>
+                {fornecedores.map((x) => (
+                  <SelectItem key={x.id} value={x.id}>{x.nome_fantasia || x.razao_social}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {fornecedorSel?.condicao_pagamento_padrao && (
+              <p className="mt-1 text-xs text-muted-foreground">Condição padrão: {fornecedorSel.condicao_pagamento_padrao}</p>
+            )}
+          </div>
           <div>
             <Label>Categoria</Label>
             <Select value={catId} onValueChange={setCatId}>
@@ -217,6 +245,7 @@ function DespesaForm({
               </SelectContent>
             </Select>
           </div>
+
           <div>
             <Label>Status</Label>
             <Select value={status} onValueChange={setStatus}>
