@@ -22,6 +22,7 @@ import { Route as AuthenticatedDreRouteImport } from './routes/_authenticated/dr
 import { Route as AuthenticatedFaltasRhRouteImport } from './routes/_authenticated/faltas-rh'
 import { Route as AuthenticatedFuncionariosRouteImport } from './routes/_authenticated/funcionarios'
 import { Route as AuthenticatedImpostosRouteImport } from './routes/_authenticated/impostos'
+import { Route as AuthenticatedIndicadoresRouteImport } from './routes/_authenticated/indicadores'
 import { Route as AuthenticatedLojasRouteImport } from './routes/_authenticated/lojas'
 import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedPrestadoresRouteImport } from './routes/_authenticated/prestadores'
@@ -98,6 +99,12 @@ const AuthenticatedImpostosRoute = AuthenticatedImpostosRouteImport.update({
   path: '/impostos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedIndicadoresRoute =
+  AuthenticatedIndicadoresRouteImport.update({
+    id: '/indicadores',
+    path: '/indicadores',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLojasRoute = AuthenticatedLojasRouteImport.update({
   id: '/lojas',
   path: '/lojas',
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/faltas-rh': typeof AuthenticatedFaltasRhRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/impostos': typeof AuthenticatedImpostosRoute
+  '/indicadores': typeof AuthenticatedIndicadoresRoute
   '/lojas': typeof AuthenticatedLojasRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/prestadores': typeof AuthenticatedPrestadoresRoute
@@ -168,6 +176,7 @@ export interface FileRoutesByTo {
   '/faltas-rh': typeof AuthenticatedFaltasRhRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/impostos': typeof AuthenticatedImpostosRoute
+  '/indicadores': typeof AuthenticatedIndicadoresRoute
   '/lojas': typeof AuthenticatedLojasRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/prestadores': typeof AuthenticatedPrestadoresRoute
@@ -191,6 +200,7 @@ export interface FileRoutesById {
   '/_authenticated/faltas-rh': typeof AuthenticatedFaltasRhRoute
   '/_authenticated/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/_authenticated/impostos': typeof AuthenticatedImpostosRoute
+  '/_authenticated/indicadores': typeof AuthenticatedIndicadoresRoute
   '/_authenticated/lojas': typeof AuthenticatedLojasRoute
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/prestadores': typeof AuthenticatedPrestadoresRoute
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/faltas-rh'
     | '/funcionarios'
     | '/impostos'
+    | '/indicadores'
     | '/lojas'
     | '/metas'
     | '/prestadores'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/faltas-rh'
     | '/funcionarios'
     | '/impostos'
+    | '/indicadores'
     | '/lojas'
     | '/metas'
     | '/prestadores'
@@ -257,6 +269,7 @@ export interface FileRouteTypes {
     | '/_authenticated/faltas-rh'
     | '/_authenticated/funcionarios'
     | '/_authenticated/impostos'
+    | '/_authenticated/indicadores'
     | '/_authenticated/lojas'
     | '/_authenticated/metas'
     | '/_authenticated/prestadores'
@@ -366,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedImpostosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/indicadores': {
+      id: '/_authenticated/indicadores'
+      path: '/indicadores'
+      fullPath: '/indicadores'
+      preLoaderRoute: typeof AuthenticatedIndicadoresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/lojas': {
       id: '/_authenticated/lojas'
       path: '/lojas'
@@ -429,6 +449,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFaltasRhRoute: typeof AuthenticatedFaltasRhRoute
   AuthenticatedFuncionariosRoute: typeof AuthenticatedFuncionariosRoute
   AuthenticatedImpostosRoute: typeof AuthenticatedImpostosRoute
+  AuthenticatedIndicadoresRoute: typeof AuthenticatedIndicadoresRoute
   AuthenticatedLojasRoute: typeof AuthenticatedLojasRoute
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedPrestadoresRoute: typeof AuthenticatedPrestadoresRoute
@@ -449,6 +470,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFaltasRhRoute: AuthenticatedFaltasRhRoute,
   AuthenticatedFuncionariosRoute: AuthenticatedFuncionariosRoute,
   AuthenticatedImpostosRoute: AuthenticatedImpostosRoute,
+  AuthenticatedIndicadoresRoute: AuthenticatedIndicadoresRoute,
   AuthenticatedLojasRoute: AuthenticatedLojasRoute,
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedPrestadoresRoute: AuthenticatedPrestadoresRoute,
