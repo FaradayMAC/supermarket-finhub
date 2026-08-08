@@ -421,3 +421,186 @@ function Kpi({
     </Card>
   );
 }
+
+type Titulo = {
+  id: string;
+  tipo: string;
+  loja_id: string | null;
+  descricao: string;
+  valor: number;
+  valor_pago: number;
+  data_vencimento: string;
+  status: string;
+  numero_parcela: number;
+  total_parcelas: number;
+  lojas?: { nome: string } | null;
+};
+
+function Projecao({ lojaId, saldoAtual }: { lojaId: string; saldoAtual: number }) {
+  const [horizonte, setHorizonte] = useState("6");
+  const hoje = new Date().toISOString().slice(0, 10);
+
+  const { data: titulos = [], isLoading } = useQuery({
+    queryKey: ["titulos-projecao", hoje],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("titulos_financeiros")
+        .select("id, tipo, loja_id, descricao, valor, valor_pago, data_vencimento, status, numero_parcela, total_parcelas, lojas(nome)")
+        .in("status", ["aberto", "parcial"])
+        .gte("data_vencimento", hoje)
+        .order("data_vencimento");
+      if (error) throw error;
+      return (data as any) as Titulo[];
+    },
+  });
+
+  const meses = Number(horizonte);
+
+  const filtrados = useMemo(
+    () => titulos.filter((t) => lojaId === "todas" || t.loja_id === lojaId),
+    [titulos, lojaId],
+  );
+
+  const saldoAberto = (t: Titulo) => Math.max(0, Number(t.valor) - Number(t.valor_pago ?? 0));
+
+  const projecao = useMemo(() => {
+    const base = new Date();
+    base.setDate(1);
+    const out: { key: string; label: string; receber: number; pagar: number; liquido: number; acumulado: number }[] = [];
+    for (let i = 0; i < meses; i++) {
+      const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
+      out.push({
+        key: monthKey(d),
+        label: d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }),
+        receber: 0, pagar: 0, liquido: 0, acumulado: 0,
+      });
+    }
+    const idx = new Map(out.map((m, i) => [m.key, i]));
+    filtrados.forEach((t) => {
+      const i = idx.get((t.data_vencimento ?? "").slice(0, 7));
+      if (i == null) return;
+      if (t.tipo === "receber") out[i].receber += saldoAberto(t);
+      else out[i].pagar += saldoAberto(t);
+    });
+    let acc = saldoAtual;
+    out.forEach((r) => { r.liquido = r.receber - r.pagar; acc += r.liquido; r.acumulado = acc; });
+    return out;
+  }, [filtrados, meses, saldoAtual]);
+
+  const dentroHorizonte = useMemo(() => {
+    const chaves = new Set(projecao.map((p) => p.key));
+    return filtrados.filter((t) => chaves.has((t.data_vencimento ?? "").slice(0, 7)));
+  }, [filtrados, projecao]);
+
+  const totalReceber = projecao.reduce((s, p) => s + p.receber, 0);
+  const totalPagar = projecao.reduce((s, p) => s + p.pagar, 0);
+  const saldoFinal = projecao.length ? projecao[projecao.length - 1].acumulado : saldoAtual;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          Projeção baseada em títulos em aberto ou parciais com vencimento a partir de hoje.
+        </p>
+        <Select value={horizonte} onValueChange={setHorizonte}>
+          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="3">Próximos 3 meses</SelectItem>
+            <SelectItem value="6">Próximos 6 meses</SelectItem>
+            <SelectItem value="12">Próximos 12 meses</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Kpi icon={<Wallet className="h-4 w-4" />} label="Saldo atual" value={fmtBRL(saldoAtual)} accent={saldoAtual >= 0 ? "success" : "destructive"} />
+        <Kpi icon={<ArrowUpRight className="h-4 w-4" />} label="A receber" value={fmtBRL(totalReceber)} accent="success" />
+        <Kpi icon={<ArrowDownRight className="h-4 w-4" />} label="A pagar" value={fmtBRL(totalPagar)} accent="destructive" />
+        <Kpi icon={<CalendarClock className="h-4 w-4" />} label="Saldo projetado" value={fmtBRL(saldoFinal)} accent={saldoFinal >= 0 ? "success" : "destructive"} />
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle>Projeção mensal</CardTitle></CardHeader>
+        <CardContent className="h-80">
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Carregando…</div>
+          ) : projecao.every((p) => p.receber === 0 && p.pagar === 0) ? (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Nenhum título em aberto no horizonte</div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={projecao}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="label" stroke="var(--color-muted-foreground)" fontSize={12} />
+                <YAxis stroke="var(--color-muted-foreground)" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
+                <Legend />
+                <Bar dataKey="receber" fill="var(--color-chart-2)" name="A receber" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="pagar" fill="var(--color-chart-1)" name="A pagar" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Saldo projetado acumulado</CardTitle></CardHeader>
+        <CardContent className="h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={projecao}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis dataKey="label" stroke="var(--color-muted-foreground)" fontSize={12} />
+              <YAxis stroke="var(--color-muted-foreground)" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+              <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
+              <Line type="monotone" dataKey="acumulado" stroke="var(--color-chart-5)" strokeWidth={2} name="Saldo projetado" />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Títulos previstos</CardTitle></CardHeader>
+        <CardContent className="overflow-x-auto p-0">
+          <table className="w-full text-sm">
+            <thead className="border-y bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3">Vencimento</th>
+                <th className="px-4 py-3">Tipo</th>
+                <th className="px-4 py-3">Descrição</th>
+                <th className="px-4 py-3">Unidade</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Em aberto</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading && (<tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>)}
+              {!isLoading && dentroHorizonte.length === 0 && (
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhum título previsto.</td></tr>
+              )}
+              {dentroHorizonte.map((t) => (
+                <tr key={t.id} className="border-b last:border-0">
+                  <td className="px-4 py-3 text-muted-foreground">{new Date(t.data_vencimento).toLocaleDateString("pt-BR")}</td>
+                  <td className="px-4 py-3">
+                    {t.tipo === "receber"
+                      ? <Badge className="bg-success/10 text-success hover:bg-success/10">A receber</Badge>
+                      : <Badge className="bg-destructive/10 text-destructive hover:bg-destructive/10">A pagar</Badge>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="font-medium">{t.descricao}</div>
+                    {t.total_parcelas > 1 && (
+                      <div className="text-xs text-muted-foreground">parcela {t.numero_parcela}/{t.total_parcelas}</div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{t.lojas?.nome ?? "—"}</td>
+                  <td className="px-4 py-3"><Badge variant="outline">{t.status}</Badge></td>
+                  <td className={`px-4 py-3 text-right font-semibold ${t.tipo === "receber" ? "text-success" : "text-destructive"}`}>
+                    {fmtBRL(saldoAberto(t))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
