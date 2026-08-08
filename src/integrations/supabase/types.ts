@@ -1094,6 +1094,63 @@ export type Database = {
           },
         ]
       }
+      perdas_estoque: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          created_by: string | null
+          data: string
+          empresa_id: string | null
+          id: string
+          loja_id: string
+          motivo: string
+          observacoes: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          empresa_id?: string | null
+          id?: string
+          loja_id: string
+          motivo?: string
+          observacoes?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          empresa_id?: string | null
+          id?: string
+          loja_id?: string
+          motivo?: string
+          observacoes?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perdas_estoque_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "perdas_estoque_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prestador_das_mensal: {
         Row: {
           competencia: string
