@@ -73,11 +73,13 @@ function Comparativo() {
 
   const totais = porLoja.reduce((acc, r) => ({
     faturamento: acc.faturamento + r.faturamento,
+    cmv: acc.cmv + r.cmv,
     despesas: acc.despesas + r.despesas,
     folha: acc.folha + r.folha,
     impostos: acc.impostos + r.impostos,
     resultado: acc.resultado + r.resultado,
-  }), { faturamento: 0, despesas: 0, folha: 0, impostos: 0, resultado: 0 });
+  }), { faturamento: 0, cmv: 0, despesas: 0, folha: 0, impostos: 0, resultado: 0 });
+
 
   return (
     <AppShell
