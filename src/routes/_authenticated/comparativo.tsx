@@ -21,13 +21,14 @@ function Comparativo() {
   const { data, isLoading } = useQuery({
     queryKey: ["comparativo"],
     queryFn: async () => {
-      const [lojas, despesas, funcionarios, impostos, folha, mov] = await Promise.all([
+      const [lojas, despesas, funcionarios, impostos, folha, mov, compras] = await Promise.all([
         supabase.from("lojas").select("id, nome, codigo, ativo"),
         supabase.from("despesas").select("loja_id, valor, data_competencia"),
         supabase.from("funcionarios").select("loja_id, salario_base, encargos, beneficios, ativo"),
         supabase.from("impostos").select("loja_id, valor, competencia"),
         supabase.from("folha_pagamento").select("funcionario_id, custo_total, competencia"),
         supabase.from("movimentacoes_financeiras").select("loja_id, tipo, valor, data_movimentacao"),
+        supabase.from("compras_mercadoria").select("loja_id, valor_total, data_compra"),
       ]);
       return {
         lojas: lojas.data ?? [],
@@ -36,6 +37,7 @@ function Comparativo() {
         impostos: (impostos.data ?? []) as any[],
         folha: (folha.data ?? []) as any[],
         mov: (mov.data ?? []) as any[],
+        compras: (compras.data ?? []) as any[],
       };
     },
   });
@@ -45,6 +47,7 @@ function Comparativo() {
   const lojas = data?.lojas ?? [];
   const porLoja = lojas.map((l: any) => {
     const desp = (data?.despesas ?? []).filter((d) => d.loja_id === l.id && inWindow(d.data_competencia)).reduce((s, d) => s + Number(d.valor), 0);
+    const cmv = (data?.compras ?? []).filter((c) => c.loja_id === l.id && inWindow(c.data_compra)).reduce((s, c) => s + Number(c.valor_total), 0);
     const imp = (data?.impostos ?? []).filter((i) => i.loja_id === l.id && inWindow(i.competencia)).reduce((s, i) => s + Number(i.valor), 0);
     const funcsLoja = (data?.funcionarios ?? []).filter((f) => f.loja_id === l.id && f.ativo);
     const custoMensalFuncs = funcsLoja.reduce((s, f) => s + Number(f.salario_base ?? 0) + Number(f.encargos ?? 0) + Number(f.beneficios ?? 0), 0);
@@ -56,16 +59,17 @@ function Comparativo() {
       ? folhaLanc.reduce((s, f) => s + Number(f.custo_total ?? 0), 0)
       : custoMensalFuncs * meses;
     const receita = (data?.mov ?? []).filter((m) => m.loja_id === l.id && m.tipo === "entrada" && inWindow(m.data_movimentacao)).reduce((s, m) => s + Number(m.valor), 0);
-    const custo = desp + imp + folhaTotal;
+    const custo = desp + cmv + imp + folhaTotal;
     const resultado = receita - custo;
     const nFuncs = funcsLoja.length;
     const custoPorFunc = nFuncs > 0 ? folhaTotal / nFuncs : 0;
     return {
       id: l.id, nome: l.nome, codigo: l.codigo,
-      faturamento: receita, despesas: desp, folha: folhaTotal,
+      faturamento: receita, despesas: desp, cmv, folha: folhaTotal,
       impostos: imp, resultado, custoPorFunc, nFuncs,
     };
   });
+
 
   const totais = porLoja.reduce((acc, r) => ({
     faturamento: acc.faturamento + r.faturamento,
