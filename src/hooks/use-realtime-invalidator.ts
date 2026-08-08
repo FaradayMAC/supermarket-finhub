@@ -11,6 +11,9 @@ const TABLES = [
   "vendas_diarias",
   "compras_mercadoria",
   "compras_mercadoria_itens",
+  "titulos_financeiros",
+  "titulo_parcelas",
+
 
   "funcionarios",
   "metas",

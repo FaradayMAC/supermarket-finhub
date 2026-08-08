@@ -282,6 +282,7 @@ export type Database = {
           id: string
           loja_id: string
           observacoes: string | null
+          parcela_id: string | null
           status: string
           updated_at: string
           valor: number
@@ -301,6 +302,7 @@ export type Database = {
           id?: string
           loja_id: string
           observacoes?: string | null
+          parcela_id?: string | null
           status?: string
           updated_at?: string
           valor: number
@@ -320,6 +322,7 @@ export type Database = {
           id?: string
           loja_id?: string
           observacoes?: string | null
+          parcela_id?: string | null
           status?: string
           updated_at?: string
           valor?: number
@@ -358,6 +361,13 @@ export type Database = {
             columns: ["loja_id"]
             isOneToOne: false
             referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesas_parcela_id_fkey"
+            columns: ["parcela_id"]
+            isOneToOne: false
+            referencedRelation: "titulo_parcelas"
             referencedColumns: ["id"]
           },
         ]
@@ -1254,6 +1264,152 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      titulo_parcelas: {
+        Row: {
+          created_at: string
+          data_pagamento: string | null
+          data_vencimento: string
+          forma_pagamento: string | null
+          id: string
+          numero: number
+          observacoes: string | null
+          status: string
+          titulo_id: string
+          updated_at: string
+          valor: number
+          valor_pago: number
+        }
+        Insert: {
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento: string
+          forma_pagamento?: string | null
+          id?: string
+          numero: number
+          observacoes?: string | null
+          status?: string
+          titulo_id: string
+          updated_at?: string
+          valor: number
+          valor_pago?: number
+        }
+        Update: {
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string
+          forma_pagamento?: string | null
+          id?: string
+          numero?: number
+          observacoes?: string | null
+          status?: string
+          titulo_id?: string
+          updated_at?: string
+          valor?: number
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "titulo_parcelas_titulo_id_fkey"
+            columns: ["titulo_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      titulos_financeiros: {
+        Row: {
+          categoria_id: string | null
+          centro_custo_id: string | null
+          created_at: string
+          data_emissao: string
+          descricao: string
+          empresa_id: string | null
+          fornecedor_id: string | null
+          id: string
+          loja_id: string | null
+          num_parcelas: number
+          numero_documento: string | null
+          observacoes: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          categoria_id?: string | null
+          centro_custo_id?: string | null
+          created_at?: string
+          data_emissao?: string
+          descricao: string
+          empresa_id?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          loja_id?: string | null
+          num_parcelas?: number
+          numero_documento?: string | null
+          observacoes?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          valor_total: number
+        }
+        Update: {
+          categoria_id?: string | null
+          centro_custo_id?: string | null
+          created_at?: string
+          data_emissao?: string
+          descricao?: string
+          empresa_id?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          loja_id?: string | null
+          num_parcelas?: number
+          numero_documento?: string | null
+          observacoes?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "titulos_financeiros_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_despesa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_financeiros_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "centros_custo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_financeiros_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_financeiros_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "titulos_financeiros_loja_id_fkey"
             columns: ["loja_id"]
             isOneToOne: false
             referencedRelation: "lojas"
