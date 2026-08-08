@@ -390,6 +390,12 @@ function CaixaPage() {
             </table>
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="projetado" className="mt-4">
+            <Projecao lojaId={filtroLoja} saldoAtual={saldoAtual} />
+          </TabsContent>
+        </Tabs>
       </div>
     </AppShell>
   );
