@@ -24,6 +24,7 @@ import { Route as AuthenticatedLojasRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedPrestadoresRouteImport } from './routes/_authenticated/prestadores'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
+import { Route as AuthenticatedVendasRouteImport } from './routes/_authenticated/vendas'
 import { Route as ApiPublicHooksSyncDriveRouteImport } from './routes/api/public/hooks/sync-drive'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -104,6 +105,11 @@ const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedVendasRoute = AuthenticatedVendasRouteImport.update({
+  id: '/vendas',
+  path: '/vendas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiPublicHooksSyncDriveRoute = ApiPublicHooksSyncDriveRouteImport.update({
   id: '/api/public/hooks/sync-drive',
   path: '/api/public/hooks/sync-drive',
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/metas': typeof AuthenticatedMetasRoute
   '/prestadores': typeof AuthenticatedPrestadoresRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/vendas': typeof AuthenticatedVendasRoute
   '/api/public/hooks/sync-drive': typeof ApiPublicHooksSyncDriveRoute
 }
 export interface FileRoutesByTo {
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/metas': typeof AuthenticatedMetasRoute
   '/prestadores': typeof AuthenticatedPrestadoresRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/vendas': typeof AuthenticatedVendasRoute
   '/': typeof AuthenticatedIndexRoute
   '/api/public/hooks/sync-drive': typeof ApiPublicHooksSyncDriveRoute
 }
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/prestadores': typeof AuthenticatedPrestadoresRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
+  '/_authenticated/vendas': typeof AuthenticatedVendasRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/api/public/hooks/sync-drive': typeof ApiPublicHooksSyncDriveRoute
 }
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/metas'
     | '/prestadores'
     | '/usuarios'
+    | '/vendas'
     | '/api/public/hooks/sync-drive'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/metas'
     | '/prestadores'
     | '/usuarios'
+    | '/vendas'
     | '/'
     | '/api/public/hooks/sync-drive'
   id:
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/_authenticated/metas'
     | '/_authenticated/prestadores'
     | '/_authenticated/usuarios'
+    | '/_authenticated/vendas'
     | '/_authenticated/'
     | '/api/public/hooks/sync-drive'
   fileRoutesById: FileRoutesById
@@ -331,6 +343,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/vendas': {
+      id: '/_authenticated/vendas'
+      path: '/vendas'
+      fullPath: '/vendas'
+      preLoaderRoute: typeof AuthenticatedVendasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/hooks/sync-drive': {
       id: '/api/public/hooks/sync-drive'
       path: '/api/public/hooks/sync-drive'
@@ -354,6 +373,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedPrestadoresRoute: typeof AuthenticatedPrestadoresRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
+  AuthenticatedVendasRoute: typeof AuthenticatedVendasRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
@@ -370,6 +390,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedPrestadoresRoute: AuthenticatedPrestadoresRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
+  AuthenticatedVendasRoute: AuthenticatedVendasRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
@@ -384,13 +405,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
