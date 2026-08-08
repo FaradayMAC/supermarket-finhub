@@ -178,16 +178,19 @@ function DespesasPage() {
 }
 
 function DespesaForm({
-  lojas, categorias, onSubmit, saving,
+  lojas, categorias, fornecedores, onSubmit, saving,
 }: {
   lojas: { id: string; nome: string; codigo: string }[];
   categorias: { id: string; nome: string }[];
+  fornecedores: { id: string; razao_social: string; nome_fantasia: string | null; condicao_pagamento_padrao?: string | null }[];
   onSubmit: (v: any) => void;
   saving: boolean;
 }) {
   const [lojaId, setLojaId] = useState("");
   const [catId, setCatId] = useState("");
+  const [fornecedorId, setFornecedorId] = useState("");
   const [status, setStatus] = useState("pago");
+  const fornecedorSel = fornecedores.find((x) => x.id === fornecedorId);
   return (
     <DialogContent>
       <DialogHeader><DialogTitle>Nova despesa</DialogTitle></DialogHeader>
@@ -200,6 +203,7 @@ function DespesaForm({
           onSubmit({
             loja_id: lojaId,
             categoria_id: catId || null,
+            fornecedor_id: fornecedorId || null,
             descricao: String(fd.get("descricao") || "").trim(),
             valor: Number(fd.get("valor")),
             data_competencia: String(fd.get("data") || ""),
@@ -218,6 +222,20 @@ function DespesaForm({
               </SelectContent>
             </Select>
           </div>
+          <div className="col-span-2">
+            <Label>Fornecedor</Label>
+            <Select value={fornecedorId} onValueChange={setFornecedorId}>
+              <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
+              <SelectContent>
+                {fornecedores.map((x) => (
+                  <SelectItem key={x.id} value={x.id}>{x.nome_fantasia || x.razao_social}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {fornecedorSel?.condicao_pagamento_padrao && (
+              <p className="mt-1 text-xs text-muted-foreground">Condição padrão: {fornecedorSel.condicao_pagamento_padrao}</p>
+            )}
+          </div>
           <div>
             <Label>Categoria</Label>
             <Select value={catId} onValueChange={setCatId}>
@@ -227,6 +245,7 @@ function DespesaForm({
               </SelectContent>
             </Select>
           </div>
+
           <div>
             <Label>Status</Label>
             <Select value={status} onValueChange={setStatus}>
