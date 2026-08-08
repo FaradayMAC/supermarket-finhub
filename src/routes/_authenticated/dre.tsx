@@ -141,8 +141,9 @@ function DREPage() {
               </tbody>
             </table>
             <div className="border-t bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-              CMV = despesas em categorias com "CMV/Mercadoria/Revenda". Despesas operacionais = demais categorias. Faturamento = entradas em movimentações financeiras. Folha usa lançamentos de folha quando existem; caso contrário, o custo mensal dos funcionários ativos × meses do período.
+              CMV = compras de mercadoria registradas no período (módulo Compras). Despesas operacionais = todas as despesas lançadas. Faturamento = vendas diárias do período. Folha usa lançamentos de folha quando existem; caso contrário, o custo mensal dos funcionários ativos × meses do período.
             </div>
+
           </CardContent>
         </Card>
       )}
