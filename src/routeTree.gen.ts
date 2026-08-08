@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
 import { Route as AuthenticatedComparativoRouteImport } from './routes/_authenticated/comparativo'
+import { Route as AuthenticatedComprasRouteImport } from './routes/_authenticated/compras'
 import { Route as AuthenticatedContrachequeRouteImport } from './routes/_authenticated/contracheque'
 import { Route as AuthenticatedDespesasRouteImport } from './routes/_authenticated/despesas'
 import { Route as AuthenticatedDreRouteImport } from './routes/_authenticated/dre'
@@ -52,6 +53,11 @@ const AuthenticatedComparativoRoute =
     path: '/comparativo',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedComprasRoute = AuthenticatedComprasRouteImport.update({
+  id: '/compras',
+  path: '/compras',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedContrachequeRoute =
   AuthenticatedContrachequeRouteImport.update({
     id: '/contracheque',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/caixa': typeof AuthenticatedCaixaRoute
   '/comparativo': typeof AuthenticatedComparativoRoute
+  '/compras': typeof AuthenticatedComprasRoute
   '/contracheque': typeof AuthenticatedContrachequeRoute
   '/despesas': typeof AuthenticatedDespesasRoute
   '/dre': typeof AuthenticatedDreRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/caixa': typeof AuthenticatedCaixaRoute
   '/comparativo': typeof AuthenticatedComparativoRoute
+  '/compras': typeof AuthenticatedComprasRoute
   '/contracheque': typeof AuthenticatedContrachequeRoute
   '/despesas': typeof AuthenticatedDespesasRoute
   '/dre': typeof AuthenticatedDreRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/caixa': typeof AuthenticatedCaixaRoute
   '/_authenticated/comparativo': typeof AuthenticatedComparativoRoute
+  '/_authenticated/compras': typeof AuthenticatedComprasRoute
   '/_authenticated/contracheque': typeof AuthenticatedContrachequeRoute
   '/_authenticated/despesas': typeof AuthenticatedDespesasRoute
   '/_authenticated/dre': typeof AuthenticatedDreRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/caixa'
     | '/comparativo'
+    | '/compras'
     | '/contracheque'
     | '/despesas'
     | '/dre'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/caixa'
     | '/comparativo'
+    | '/compras'
     | '/contracheque'
     | '/despesas'
     | '/dre'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/caixa'
     | '/_authenticated/comparativo'
+    | '/_authenticated/compras'
     | '/_authenticated/contracheque'
     | '/_authenticated/despesas'
     | '/_authenticated/dre'
@@ -271,6 +283,13 @@ declare module '@tanstack/react-router' {
       path: '/comparativo'
       fullPath: '/comparativo'
       preLoaderRoute: typeof AuthenticatedComparativoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/compras': {
+      id: '/_authenticated/compras'
+      path: '/compras'
+      fullPath: '/compras'
+      preLoaderRoute: typeof AuthenticatedComprasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/contracheque': {
@@ -363,6 +382,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCaixaRoute: typeof AuthenticatedCaixaRoute
   AuthenticatedComparativoRoute: typeof AuthenticatedComparativoRoute
+  AuthenticatedComprasRoute: typeof AuthenticatedComprasRoute
   AuthenticatedContrachequeRoute: typeof AuthenticatedContrachequeRoute
   AuthenticatedDespesasRoute: typeof AuthenticatedDespesasRoute
   AuthenticatedDreRoute: typeof AuthenticatedDreRoute
@@ -380,6 +400,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCaixaRoute: AuthenticatedCaixaRoute,
   AuthenticatedComparativoRoute: AuthenticatedComparativoRoute,
+  AuthenticatedComprasRoute: AuthenticatedComprasRoute,
   AuthenticatedContrachequeRoute: AuthenticatedContrachequeRoute,
   AuthenticatedDespesasRoute: AuthenticatedDespesasRoute,
   AuthenticatedDreRoute: AuthenticatedDreRoute,
