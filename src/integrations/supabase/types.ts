@@ -100,6 +100,124 @@ export type Database = {
           },
         ]
       }
+      compras_mercadoria: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_compra: string
+          data_pagamento: string | null
+          empresa_id: string | null
+          fornecedor_id: string | null
+          id: string
+          loja_id: string
+          numero_nf: string | null
+          observacoes: string | null
+          status: string
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_compra: string
+          data_pagamento?: string | null
+          empresa_id?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          loja_id: string
+          numero_nf?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_compra?: string
+          data_pagamento?: string | null
+          empresa_id?: string | null
+          fornecedor_id?: string | null
+          id?: string
+          loja_id?: string
+          numero_nf?: string | null
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compras_mercadoria_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compras_mercadoria_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compras_mercadoria_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compras_mercadoria_itens: {
+        Row: {
+          compra_id: string
+          created_at: string
+          descricao: string | null
+          id: string
+          produto_id: string | null
+          quantidade: number
+          valor_total: number | null
+          valor_unitario: number
+        }
+        Insert: {
+          compra_id: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          produto_id?: string | null
+          quantidade?: number
+          valor_total?: number | null
+          valor_unitario?: number
+        }
+        Update: {
+          compra_id?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          produto_id?: string | null
+          quantidade?: number
+          valor_total?: number | null
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compras_mercadoria_itens_compra_id_fkey"
+            columns: ["compra_id"]
+            isOneToOne: false
+            referencedRelation: "compras_mercadoria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compras_mercadoria_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       convenio_funcionario: {
         Row: {
           created_at: string
@@ -420,6 +538,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fornecedores: {
+        Row: {
+          ativo: boolean
+          cnpj: string | null
+          created_at: string
+          email: string | null
+          id: string
+          nome_fantasia: string | null
+          observacoes: string | null
+          razao_social: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          observacoes?: string | null
+          razao_social: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome_fantasia?: string | null
+          observacoes?: string | null
+          razao_social?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       funcionarios: {
         Row: {
@@ -1002,6 +1159,39 @@ export type Database = {
           responsavel?: string | null
           status?: string
           telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      produtos: {
+        Row: {
+          ativo: boolean
+          categoria_produto: string | null
+          created_at: string
+          id: string
+          nome: string
+          sku: string | null
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria_produto?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          sku?: string | null
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria_produto?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          sku?: string | null
+          unidade?: string
           updated_at?: string
         }
         Relationships: []

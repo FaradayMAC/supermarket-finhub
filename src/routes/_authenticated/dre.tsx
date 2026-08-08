@@ -12,26 +12,20 @@ export const Route = createFileRoute("/_authenticated/dre")({
   component: DREPage,
 });
 
-const isCMV = (nome?: string | null) => {
-  if (!nome) return false;
-  const n = nome.toLowerCase();
-  return n.includes("cmv") || n.includes("mercadoria") || n.includes("revenda") || n.includes("custo da venda") || n.includes("custo de venda");
-};
-
 function DREPage() {
   const periodoState = usePeriodo("1m");
 
   const { data, isLoading } = useQuery({
     queryKey: ["dre"],
     queryFn: async () => {
-      const [lojas, despesas, funcionarios, impostos, folha, mov, cats] = await Promise.all([
+      const [lojas, despesas, funcionarios, impostos, folha, mov, compras] = await Promise.all([
         supabase.from("lojas").select("id, nome, codigo, ativo"),
         supabase.from("despesas").select("loja_id, categoria_id, valor, data_competencia"),
-        supabase.from("funcionarios").select("loja_id, salario_base, encargos, beneficios, ativo"),
+        supabase.from("funcionarios").select("id, loja_id, salario_base, encargos, beneficios, ativo"),
         supabase.from("impostos").select("loja_id, valor, competencia"),
         supabase.from("folha_pagamento").select("funcionario_id, custo_total, competencia"),
         supabase.from("movimentacoes_financeiras").select("loja_id, tipo, valor, data_movimentacao"),
-        supabase.from("categorias_despesa").select("id, nome"),
+        supabase.from("compras_mercadoria").select("loja_id, valor_total, data_compra"),
       ]);
       return {
         lojas: lojas.data ?? [],
@@ -40,23 +34,20 @@ function DREPage() {
         impostos: (impostos.data ?? []) as any[],
         folha: (folha.data ?? []) as any[],
         mov: (mov.data ?? []) as any[],
-        cats: (cats.data ?? []) as any[],
+        compras: (compras.data ?? []) as any[],
       };
     },
   });
 
   const { inWindow, meses } = periodoState;
 
-  const cmvCatIds = useMemo(() => {
-    const ids = new Set<string>();
-    (data?.cats ?? []).forEach((c) => { if (isCMV(c.nome)) ids.add(c.id); });
-    return ids;
-  }, [data?.cats]);
-
   const linhas = (data?.lojas ?? []).map((l: any) => {
-    const despLoja = (data?.despesas ?? []).filter((d) => d.loja_id === l.id && inWindow(d.data_competencia));
-    const cmv = despLoja.filter((d) => d.categoria_id && cmvCatIds.has(d.categoria_id)).reduce((s, d) => s + Number(d.valor), 0);
-    const despOp = despLoja.filter((d) => !d.categoria_id || !cmvCatIds.has(d.categoria_id)).reduce((s, d) => s + Number(d.valor), 0);
+    const despOp = (data?.despesas ?? [])
+      .filter((d) => d.loja_id === l.id && inWindow(d.data_competencia))
+      .reduce((s, d) => s + Number(d.valor), 0);
+    const cmv = (data?.compras ?? [])
+      .filter((c) => c.loja_id === l.id && inWindow(c.data_compra))
+      .reduce((s, c) => s + Number(c.valor_total), 0);
     const imp = (data?.impostos ?? []).filter((i) => i.loja_id === l.id && inWindow(i.competencia)).reduce((s, i) => s + Number(i.valor), 0);
     const funcsLoja = (data?.funcionarios ?? []).filter((f) => f.loja_id === l.id && f.ativo);
     const funcIds = new Set(funcsLoja.map((f: any) => f.id));
@@ -81,6 +72,7 @@ function DREPage() {
       margemEbitda, margemLiquida,
     };
   });
+
 
   const totais = linhas.reduce((a, r) => ({
     faturamento: a.faturamento + r.faturamento,
@@ -149,8 +141,9 @@ function DREPage() {
               </tbody>
             </table>
             <div className="border-t bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-              CMV = despesas em categorias com "CMV/Mercadoria/Revenda". Despesas operacionais = demais categorias. Faturamento = entradas em movimentações financeiras. Folha usa lançamentos de folha quando existem; caso contrário, o custo mensal dos funcionários ativos × meses do período.
+              CMV = compras de mercadoria registradas no período (módulo Compras). Despesas operacionais = todas as despesas lançadas. Faturamento = vendas diárias do período. Folha usa lançamentos de folha quando existem; caso contrário, o custo mensal dos funcionários ativos × meses do período.
             </div>
+
           </CardContent>
         </Card>
       )}

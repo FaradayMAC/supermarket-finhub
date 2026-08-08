@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Store, Receipt, Users, CalendarX, Landmark, Target, Scale, Shield, LogOut, FileBarChart, Wallet, Briefcase, FileText, ShoppingCart } from "lucide-react";
+import { LayoutDashboard, Store, Receipt, Users, CalendarX, Landmark, Target, Scale, Shield, LogOut, FileBarChart, Wallet, Briefcase, FileText, ShoppingCart, PackageSearch } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth, ROLE_LABEL, signOut } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,9 @@ const ALL_NAV: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/lojas", label: "Lojas", icon: Store },
   { to: "/vendas", label: "Vendas", icon: ShoppingCart },
+  { to: "/compras", label: "Compras", icon: PackageSearch },
   { to: "/despesas", label: "Despesas", icon: Receipt },
+
   { to: "/funcionarios", label: "Funcionários", icon: Users },
   { to: "/prestadores", label: "Prestadoras", icon: Briefcase },
   { to: "/impostos", label: "Impostos", icon: Landmark },

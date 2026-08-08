@@ -9,6 +9,9 @@ const TABLES = [
   "folha_pagamento",
   "movimentacoes_financeiras",
   "vendas_diarias",
+  "compras_mercadoria",
+  "compras_mercadoria_itens",
+
   "funcionarios",
   "metas",
   "lojas",
