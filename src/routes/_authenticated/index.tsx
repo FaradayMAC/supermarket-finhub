@@ -202,7 +202,9 @@ function Dashboard() {
                     <YAxis stroke="var(--color-muted-foreground)" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                     <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
                     <Legend />
+                    <Bar dataKey="cmv" stackId="c" fill="var(--color-chart-2)" name="CMV" />
                     <Bar dataKey="despesas" stackId="c" fill="var(--color-chart-1)" name="Despesas" />
+
                     <Bar dataKey="folha" stackId="c" fill="var(--color-chart-3)" name="Folha" />
                     <Bar dataKey="impostos" stackId="c" fill="var(--color-chart-4)" name="Impostos" radius={[6, 6, 0, 0]} />
                   </BarChart>
