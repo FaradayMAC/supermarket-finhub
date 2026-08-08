@@ -83,6 +83,17 @@ function CaixaPage() {
   const saidas = filtradas.filter((m) => m.tipo === "saida").reduce((s, m) => s + Number(m.valor), 0);
   const saldo = entradas - saidas;
 
+  // Saldo atual da conta (todo o histórico confirmado, respeitando a unidade)
+  const hojeISO = new Date().toISOString().slice(0, 10);
+  const saldoAtual = useMemo(() => {
+    return movs.reduce((s, m) => {
+      if (filtroLoja !== "todas" && m.loja_id !== filtroLoja) return s;
+      if (m.status !== "confirmado") return s;
+      if ((m.data_movimentacao ?? "").slice(0, 10) > hojeISO) return s;
+      return s + (m.tipo === "entrada" ? Number(m.valor) : -Number(m.valor));
+    }, 0);
+  }, [movs, filtroLoja, hojeISO]);
+
   // Evolução mensal
   const monthly = useMemo(() => {
     const mb = monthsBack;
