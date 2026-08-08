@@ -20,6 +20,8 @@ const ALL_NAV: NavItem[] = [
   { to: "/metas", label: "Metas", icon: Target },
   { to: "/titulos", label: "A pagar/receber", icon: CalendarClock },
   { to: "/caixa", label: "Caixa", icon: Wallet },
+  { to: "/conciliacao", label: "Conciliação", icon: Banknote },
+
 
 
   { to: "/dre", label: "DRE", icon: FileBarChart },
