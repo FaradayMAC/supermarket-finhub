@@ -414,6 +414,76 @@ export type Database = {
         }
         Relationships: []
       }
+      extratos_bancarios: {
+        Row: {
+          conciliado: boolean
+          conta: string
+          created_at: string
+          data: string
+          descricao: string
+          empresa_id: string | null
+          id: string
+          loja_id: string | null
+          observacoes: string | null
+          tipo: string
+          titulo_financeiro_id: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          conciliado?: boolean
+          conta: string
+          created_at?: string
+          data: string
+          descricao: string
+          empresa_id?: string | null
+          id?: string
+          loja_id?: string | null
+          observacoes?: string | null
+          tipo: string
+          titulo_financeiro_id?: string | null
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          conciliado?: boolean
+          conta?: string
+          created_at?: string
+          data?: string
+          descricao?: string
+          empresa_id?: string | null
+          id?: string
+          loja_id?: string | null
+          observacoes?: string | null
+          tipo?: string
+          titulo_financeiro_id?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extratos_bancarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extratos_bancarios_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extratos_bancarios_titulo_financeiro_id_fkey"
+            columns: ["titulo_financeiro_id"]
+            isOneToOne: false
+            referencedRelation: "titulos_financeiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faltas_rh: {
         Row: {
           created_at: string
