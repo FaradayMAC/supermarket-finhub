@@ -139,7 +139,9 @@ function Comparativo() {
                         <div className="text-xs text-muted-foreground">{r.codigo} · {r.nFuncs} func.</div>
                       </td>
                       <td className="px-4 py-3 text-right">{fmtBRL(r.faturamento)}</td>
+                      <td className="px-4 py-3 text-right text-muted-foreground">{fmtBRL(r.cmv)}</td>
                       <td className="px-4 py-3 text-right text-muted-foreground">{fmtBRL(r.despesas)}</td>
+
                       <td className="px-4 py-3 text-right text-muted-foreground">{fmtBRL(r.folha)}</td>
                       <td className="px-4 py-3 text-right text-muted-foreground">{fmtBRL(r.impostos)}</td>
                       <td className={`px-4 py-3 text-right font-semibold ${r.resultado >= 0 ? "text-success" : "text-destructive"}`}>{fmtBRL(r.resultado)}</td>
