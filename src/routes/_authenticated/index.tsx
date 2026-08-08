@@ -148,11 +148,13 @@ function Dashboard() {
       ) : (
         <div className="space-y-6">
           {/* KPIs principais */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+            <Kpi icon={<ShoppingBasket className="h-4 w-4" />} label="CMV (compras)" value={fmtBRL(totalCMV)} hint={`${compras.length} compra(s)`} accent="warning" />
             <Kpi icon={<Receipt className="h-4 w-4" />} label="Despesas" value={fmtBRL(totalDespesas)} hint={`${despesas.length} lançamento(s)`} accent="warning" />
             <Kpi icon={<Landmark className="h-4 w-4" />} label="Impostos" value={fmtBRL(totalImpostos)} hint={`${impostos.length} lançamento(s)`} accent="warning" />
             <Kpi icon={<Wallet className="h-4 w-4" />} label="Folha" value={fmtBRL(totalFolha)} hint={folhaPeriodo > 0 ? "lançamentos da folha" : `${mesesJanela}× custo mensal`} accent="warning" />
-            <Kpi icon={<Users className="h-4 w-4" />} label="Custo de funcionários (mês)" value={fmtBRL(custoTotalFuncs)} hint={`${funcionarios.filter((f: any) => f.ativo).length} ativos`} />
+            <Kpi icon={<Users className="h-4 w-4" />} label="Custo de funcionários (mês)" value={fmtBRL(custoMensalFuncs)} hint={`${funcionarios.filter((f: any) => f.ativo).length} ativos`} />
+
             <Kpi
               icon={resultado >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
               label="Resultado operacional"
