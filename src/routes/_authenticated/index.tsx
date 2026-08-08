@@ -30,13 +30,14 @@ function Dashboard() {
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
     queryFn: async () => {
-      const [lojas, despesas, funcionarios, impostos, folha, mov] = await Promise.all([
+      const [lojas, despesas, funcionarios, impostos, folha, mov, compras] = await Promise.all([
         supabase.from("lojas").select("id, nome, codigo, ativo"),
         supabase.from("despesas").select("id, loja_id, valor, data_competencia"),
         supabase.from("funcionarios").select("id, loja_id, salario_base, encargos, beneficios, ativo"),
         supabase.from("impostos").select("id, loja_id, valor, competencia"),
         supabase.from("folha_pagamento").select("id, funcionario_id, custo_total, competencia"),
         supabase.from("movimentacoes_financeiras").select("loja_id, tipo, valor, data_movimentacao"),
+        supabase.from("compras_mercadoria").select("id, loja_id, valor_total, data_compra"),
       ]);
       return {
         lojas: lojas.data ?? [],
@@ -45,6 +46,7 @@ function Dashboard() {
         impostos: (impostos.data ?? []) as any[],
         folha: (folha.data ?? []) as any[],
         mov: (mov.data ?? []) as any[],
+        compras: (compras.data ?? []) as any[],
       };
     },
   });
@@ -55,6 +57,8 @@ function Dashboard() {
   const impostos = data?.impostos ?? [];
   const folhaLancada = data?.folha ?? [];
   const mov = data?.mov ?? [];
+  const compras = data?.compras ?? [];
+
 
   // janela de período
   const { inWindow, meses: mesesJanela, monthsBack } = periodoState;
