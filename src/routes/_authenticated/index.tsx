@@ -11,8 +11,9 @@ import {
 } from "recharts";
 import {
   Receipt, Wallet, Landmark, Users, TrendingUp, TrendingDown,
-  Trophy, ArrowDownRight,
+  Trophy, ArrowDownRight, ShoppingBasket,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({ meta: [{ title: "Dashboard Executivo · MercadoGest" }] }),
