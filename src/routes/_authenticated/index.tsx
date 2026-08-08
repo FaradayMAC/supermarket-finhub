@@ -235,8 +235,9 @@ function Dashboard() {
                 </thead>
                 <tbody>
                   {ranking.length === 0 && (
-                    <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">Cadastre lançamentos para ver o ranking.</td></tr>
+                    <tr><td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">Cadastre lançamentos para ver o ranking.</td></tr>
                   )}
+
                   {ranking.map((r, i) => {
                     const margem = r.receita > 0 ? (r.resultado / r.receita) * 100 : null;
                     return (
