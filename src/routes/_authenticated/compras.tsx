@@ -467,8 +467,20 @@ function ItensDialog({
   );
 }
 
+const CATEGORIAS_FORNECEDOR = [
+  { v: "mercadoria", label: "Mercadoria" },
+  { v: "servico", label: "Serviço" },
+  { v: "manutencao", label: "Manutenção" },
+  { v: "outros", label: "Outros" },
+] as const;
+
+const emptyFornecedor = {
+  razao_social: "", nome_fantasia: "", cnpj: "", telefone: "", email: "",
+  categoria: "mercadoria", condicao_pagamento_padrao: "",
+};
+
 function FornecedoresTab({ fornecedores, onChanged }: { fornecedores: any[]; onChanged: () => void }) {
-  const [f, setF] = useState({ razao_social: "", nome_fantasia: "", cnpj: "", telefone: "", email: "" });
+  const [f, setF] = useState({ ...emptyFornecedor });
 
   const add = useMutation({
     mutationFn: async () => {
@@ -479,10 +491,12 @@ function FornecedoresTab({ fornecedores, onChanged }: { fornecedores: any[]; onC
         cnpj: f.cnpj || null,
         telefone: f.telefone || null,
         email: f.email || null,
-      });
+        categoria: f.categoria,
+        condicao_pagamento_padrao: f.condicao_pagamento_padrao || null,
+      } as any);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Fornecedor cadastrado"); setF({ razao_social: "", nome_fantasia: "", cnpj: "", telefone: "", email: "" }); onChanged(); },
+    onSuccess: () => { toast.success("Fornecedor cadastrado"); setF({ ...emptyFornecedor }); onChanged(); },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
@@ -495,15 +509,26 @@ function FornecedoresTab({ fornecedores, onChanged }: { fornecedores: any[]; onC
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
+  const labelCategoria = (v?: string) =>
+    CATEGORIAS_FORNECEDOR.find((c) => c.v === v)?.label ?? "—";
+
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Truck className="h-4 w-4 text-primary" /> Novo fornecedor</CardTitle></CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-5">
+        <CardContent className="grid gap-3 sm:grid-cols-4">
           <Input placeholder="Razão social" value={f.razao_social} onChange={(e) => setF({ ...f, razao_social: e.target.value })} />
           <Input placeholder="Nome fantasia" value={f.nome_fantasia} onChange={(e) => setF({ ...f, nome_fantasia: e.target.value })} />
           <Input placeholder="CNPJ" value={f.cnpj} onChange={(e) => setF({ ...f, cnpj: e.target.value })} />
+          <Select value={f.categoria} onValueChange={(v) => setF({ ...f, categoria: v })}>
+            <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
+            <SelectContent>
+              {CATEGORIAS_FORNECEDOR.map((c) => <SelectItem key={c.v} value={c.v}>{c.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Input placeholder="Telefone" value={f.telefone} onChange={(e) => setF({ ...f, telefone: e.target.value })} />
+          <Input placeholder="E-mail" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
+          <Input placeholder="Condição de pagamento (ex.: 28 dias)" value={f.condicao_pagamento_padrao} onChange={(e) => setF({ ...f, condicao_pagamento_padrao: e.target.value })} />
           <Button onClick={() => add.mutate()} disabled={add.isPending}><Plus className="h-4 w-4" /> Adicionar</Button>
         </CardContent>
       </Card>
@@ -514,14 +539,16 @@ function FornecedoresTab({ fornecedores, onChanged }: { fornecedores: any[]; onC
             <thead className="border-b bg-muted/40 text-left text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Fornecedor</th>
+                <th className="px-4 py-3">Categoria</th>
                 <th className="px-4 py-3">CNPJ</th>
                 <th className="px-4 py-3">Contato</th>
+                <th className="px-4 py-3">Pagamento</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody>
               {fornecedores.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Nenhum fornecedor cadastrado.</td></tr>
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhum fornecedor cadastrado.</td></tr>
               )}
               {fornecedores.map((x) => (
                 <tr key={x.id} className="border-b last:border-0">
@@ -529,8 +556,10 @@ function FornecedoresTab({ fornecedores, onChanged }: { fornecedores: any[]; onC
                     <div className="font-medium">{x.razao_social}</div>
                     {x.nome_fantasia && <div className="text-xs text-muted-foreground">{x.nome_fantasia}</div>}
                   </td>
+                  <td className="px-4 py-3 text-muted-foreground">{labelCategoria(x.categoria)}</td>
                   <td className="px-4 py-3 text-muted-foreground">{x.cnpj ?? "—"}</td>
                   <td className="px-4 py-3 text-muted-foreground">{x.telefone ?? x.email ?? "—"}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{x.condicao_pagamento_padrao ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
                     <Button variant="ghost" size="icon" onClick={() => del.mutate(x.id)} aria-label="Remover fornecedor">
                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -545,6 +574,7 @@ function FornecedoresTab({ fornecedores, onChanged }: { fornecedores: any[]; onC
     </div>
   );
 }
+
 
 function ProdutosTab({ produtos, onChanged }: { produtos: any[]; onChanged: () => void }) {
   const [p, setP] = useState({ sku: "", nome: "", categoria_produto: "", unidade: "UN" });
