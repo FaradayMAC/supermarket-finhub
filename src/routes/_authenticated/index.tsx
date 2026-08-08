@@ -248,7 +248,9 @@ function Dashboard() {
                           <div className="text-xs text-muted-foreground">{r.codigo} · {r.funcionarios} funcionário(s)</div>
                         </td>
                         <td className="px-4 py-3 text-right">{fmtBRL(r.receita)}</td>
+                        <td className="px-4 py-3 text-right text-muted-foreground">{fmtBRL(r.cmv)}</td>
                         <td className="px-4 py-3 text-right text-muted-foreground">{fmtBRL(r.despesas)}</td>
+
                         <td className="px-4 py-3 text-right text-muted-foreground">{fmtBRL(r.folha)}</td>
                         <td className="px-4 py-3 text-right text-muted-foreground">{fmtBRL(r.impostos)}</td>
                         <td className="px-4 py-3 text-right font-medium">{fmtBRL(r.custo)}</td>
