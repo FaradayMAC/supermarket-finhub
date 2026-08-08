@@ -102,7 +102,7 @@ function DespesasPage() {
           <DialogTrigger asChild>
             <Button disabled={lojas.length === 0}><Plus className="h-4 w-4" /> Nova despesa</Button>
           </DialogTrigger>
-          <DespesaForm lojas={lojas as any} categorias={cats as any} onSubmit={(v) => create.mutate(v)} saving={create.isPending} />
+          <DespesaForm lojas={lojas as any} categorias={cats as any} fornecedores={fornecedores as any} onSubmit={(v) => create.mutate(v)} saving={create.isPending} />
         </Dialog>
       }
     >
