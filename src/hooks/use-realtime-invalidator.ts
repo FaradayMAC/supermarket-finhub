@@ -14,6 +14,7 @@ const TABLES = [
   "titulos_financeiros",
   "titulo_parcelas",
   "extratos_bancarios",
+  "perdas_estoque",
 
 
 
