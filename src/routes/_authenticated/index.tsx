@@ -179,7 +179,9 @@ function Dashboard() {
                     <Legend />
                     <Line type="monotone" dataKey="receita" stroke="var(--color-chart-2)" strokeWidth={2} name="Receita" dot={false} />
                     <Line type="monotone" dataKey="despesas" stroke="var(--color-chart-1)" strokeWidth={2} name="Despesas" dot={false} />
+                    <Line type="monotone" dataKey="cmv" stroke="var(--color-chart-6, var(--color-primary))" strokeWidth={2} name="CMV" dot={false} />
                     <Line type="monotone" dataKey="folha" stroke="var(--color-chart-3)" strokeWidth={2} name="Folha" dot={false} />
+
                     <Line type="monotone" dataKey="impostos" stroke="var(--color-chart-4)" strokeWidth={2} name="Impostos" dot={false} />
                     <Line type="monotone" dataKey="resultado" stroke="var(--color-chart-5)" strokeWidth={2} name="Resultado" />
                   </LineChart>
