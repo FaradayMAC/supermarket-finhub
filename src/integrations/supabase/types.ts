@@ -1112,6 +1112,81 @@ export type Database = {
           },
         ]
       }
+      vendas_diarias: {
+        Row: {
+          conferido_caixa: boolean
+          created_at: string
+          created_by: string | null
+          data: string
+          empresa_id: string | null
+          fonte: string
+          id: string
+          loja_id: string
+          observacoes: string | null
+          qtd_cupons: number
+          updated_at: string
+          valor_cartao_credito: number
+          valor_cartao_debito: number
+          valor_dinheiro: number
+          valor_outros: number
+          valor_pix: number
+          valor_total: number | null
+        }
+        Insert: {
+          conferido_caixa?: boolean
+          created_at?: string
+          created_by?: string | null
+          data: string
+          empresa_id?: string | null
+          fonte?: string
+          id?: string
+          loja_id: string
+          observacoes?: string | null
+          qtd_cupons?: number
+          updated_at?: string
+          valor_cartao_credito?: number
+          valor_cartao_debito?: number
+          valor_dinheiro?: number
+          valor_outros?: number
+          valor_pix?: number
+          valor_total?: number | null
+        }
+        Update: {
+          conferido_caixa?: boolean
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          empresa_id?: string | null
+          fonte?: string
+          id?: string
+          loja_id?: string
+          observacoes?: string | null
+          qtd_cupons?: number
+          updated_at?: string
+          valor_cartao_credito?: number
+          valor_cartao_debito?: number
+          valor_dinheiro?: number
+          valor_outros?: number
+          valor_pix?: number
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendas_diarias_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendas_diarias_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       vw_prestador_funcionarios: {
