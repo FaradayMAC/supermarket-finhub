@@ -648,6 +648,11 @@ function FuncForm({
 
           <div className="col-span-2 mt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Adicionais (% sobre o salário)
+            {cargo && (
+              <span className="ml-2 normal-case font-normal">
+                — preenchidos automaticamente pelo cargo <strong>{cargo.nome}</strong>
+              </span>
+            )}
           </div>
           <div>
             <Label htmlFor="insal">Insalubridade (%)</Label>
@@ -658,8 +663,12 @@ function FuncForm({
               min="0"
               step="0.01"
               value={insal}
+              readOnly={!!cargo}
               onChange={(e) => setInsal(Number(e.target.value))}
             />
+            {cargo && auto && (
+              <p className="mt-1 text-xs text-muted-foreground">{fmtBRL(auto.valores.insalubridade)}</p>
+            )}
           </div>
           <div>
             <Label htmlFor="peric">Periculosidade (%)</Label>
@@ -670,8 +679,12 @@ function FuncForm({
               min="0"
               step="0.01"
               value={peric}
+              readOnly={!!cargo}
               onChange={(e) => setPeric(Number(e.target.value))}
             />
+            {cargo && auto && (
+              <p className="mt-1 text-xs text-muted-foreground">{fmtBRL(auto.valores.periculosidade)}</p>
+            )}
           </div>
           <div>
             <Label htmlFor="qc">Quebra de caixa (%)</Label>
@@ -682,9 +695,14 @@ function FuncForm({
               min="0"
               step="0.01"
               value={qc}
+              readOnly={!!cargo}
               onChange={(e) => setQc(Number(e.target.value))}
             />
+            {cargo && auto && (
+              <p className="mt-1 text-xs text-muted-foreground">{fmtBRL(auto.valores.quebraCaixa)}</p>
+            )}
           </div>
+
           <div className="flex items-end gap-2 pb-2">
             <input
               id="desconto_vt"
