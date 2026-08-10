@@ -19,6 +19,7 @@ const TABLES = [
 
 
   "funcionarios",
+  "cargos",
   "metas",
   "lojas",
   "categorias_despesa",
