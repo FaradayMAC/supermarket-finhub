@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Store, Receipt, Users, CalendarX, Landmark, Target, Scale, Shield, LogOut, FileBarChart, Wallet, Briefcase, FileText, ShoppingCart, PackageSearch, CalendarClock, Banknote, Gauge } from "lucide-react";
+import { LayoutDashboard, Store, Receipt, Users, IdCard, CalendarX, Landmark, Target, Scale, Shield, LogOut, FileBarChart, Wallet, Briefcase, FileText, ShoppingCart, PackageSearch, CalendarClock, Banknote, Gauge } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth, ROLE_LABEL, signOut } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
