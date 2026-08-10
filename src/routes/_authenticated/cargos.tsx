@@ -237,10 +237,12 @@ function CargoForm({
   initial,
   onSubmit,
   saving,
+  salarioMinimo,
 }: {
   initial: Cargo | null;
   onSubmit: (v: any) => void;
   saving: boolean;
+  salarioMinimo: number;
 }) {
   const [salario, setSalario] = useState<number>(Number(initial?.salario_base ?? 0));
   const [peric, setPeric] = useState<boolean>(Boolean(initial?.tem_periculosidade));
@@ -254,7 +256,9 @@ function CargoForm({
       insalubridade_grau: Number(insalGrau),
     },
     salario,
+    salarioMinimo,
   );
+
   const bruto = salario + a.total;
   const custo = bruto * (1 + encargosRate("simples"));
 
