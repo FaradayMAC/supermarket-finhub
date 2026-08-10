@@ -17,8 +17,10 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { SALARIO_MINIMO, adicionaisDoCargo, type Cargo } from "@/lib/cargos";
+import { adicionaisDoCargo, type Cargo } from "@/lib/cargos";
+import { useSalarioMinimo, useSalvarSalarioMinimo } from "@/hooks/use-salario-minimo";
 import { encargosRate } from "@/lib/encargos";
+
 
 export const Route = createFileRoute("/_authenticated/cargos")({
   head: () => ({
