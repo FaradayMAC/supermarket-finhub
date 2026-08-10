@@ -108,10 +108,39 @@ function CargosPage() {
         />
       </Dialog>
 
-      <p className="mb-4 text-sm text-muted-foreground">
-        Salário mínimo de referência: <strong>{fmtBRL(SALARIO_MINIMO)}</strong> — base de cálculo da
-        insalubridade e da quebra de caixa. A periculosidade incide sobre o salário base do cargo.
-      </p>
+      <Card className="mb-4">
+        <CardContent className="flex flex-wrap items-end gap-3 p-4">
+          <div className="min-w-[200px]">
+            <Label htmlFor="sm">Salário mínimo de referência (R$)</Label>
+            <Input
+              id="sm"
+              type="number"
+              min="0"
+              step="0.01"
+              value={smInput}
+              onChange={(e) => setSmInput(e.target.value)}
+            />
+          </div>
+          <Button
+            variant="secondary"
+            disabled={salvarSm.isPending || Number(smInput) <= 0}
+            onClick={() =>
+              salvarSm.mutate(Number(smInput), {
+                onSuccess: () => toast.success("Salário mínimo atualizado"),
+                onError: (e: any) => toast.error(e.message ?? "Erro"),
+              })
+            }
+          >
+            {salvarSm.isPending ? "Salvando…" : "Salvar"}
+          </Button>
+          <p className="flex-1 text-sm text-muted-foreground">
+            Base de cálculo da insalubridade e da quebra de caixa em todos os cargos — inclusive os
+            já cadastrados. A periculosidade incide sobre o salário base do cargo. Valor atual:{" "}
+            <strong>{fmtBRL(salarioMinimo)}</strong>.
+          </p>
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardContent className="overflow-x-auto p-0">
