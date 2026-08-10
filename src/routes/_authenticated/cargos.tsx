@@ -157,7 +157,7 @@ function CargosPage() {
             <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Cargo</th>
-                <th className="px-4 py-3">Descrição</th>
+                
                 <th className="px-4 py-3 text-right">Salário base</th>
                 <th className="px-4 py-3 text-right">Periculosidade</th>
                 <th className="px-4 py-3 text-right">Insalubridade</th>
