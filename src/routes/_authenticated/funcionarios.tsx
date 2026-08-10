@@ -512,22 +512,15 @@ function FuncForm({
             </p>
           </div>
 
-          <div className="col-span-2">
-            <Label>Regime tributário da empresa *</Label>
-            <Select value={regime} onValueChange={(v) => setRegime(v as any)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="simples">Simples Nacional (folha desonerada — ~28%)</SelectItem>
-                <SelectItem value="lucro_real">Lucro Real / Presumido (~68%)</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Simples Nacional: INSS patronal e RAT/Terceiros recolhidos no DAS. Lucro
-              Real/Presumido: encargos completos sobre a folha.
-            </p>
+          <div className="col-span-2 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            Regime tributário:{" "}
+            <span className="font-semibold text-foreground">
+              {regime === "lucro_real" ? "Lucro Real / Presumido" : "Simples Nacional"}
+            </span>{" "}
+            — definido automaticamente pela empresa prestadora selecionada. Encargos patronais
+            aplicados: {Math.round(encargosRate(regime) * 100)}%.
           </div>
+
           <div className="col-span-2">
             <Label htmlFor="nome">Nome *</Label>
             <Input id="nome" name="nome" required maxLength={120} defaultValue={initial?.nome ?? ""} />
