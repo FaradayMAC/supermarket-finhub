@@ -38,6 +38,13 @@ function CargosPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Cargo | null>(null);
+  const { salarioMinimo } = useSalarioMinimo();
+  const salvarSm = useSalvarSalarioMinimo();
+  const [smEdit, setSmEdit] = useState<string | null>(null);
+  const smInput = smEdit ?? String(salarioMinimo);
+  const setSmInput = (v: string) => setSmEdit(v);
+
+
 
   const { data: cargos = [], isLoading } = useQuery({
     queryKey: ["cargos"],
