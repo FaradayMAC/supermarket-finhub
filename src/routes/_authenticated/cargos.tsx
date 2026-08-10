@@ -289,10 +289,6 @@ function CargoForm({
           <Input id="nome" name="nome" required maxLength={80} defaultValue={initial?.nome ?? ""} />
         </div>
         <div>
-          <Label htmlFor="descricao">Descrição</Label>
-          <Input id="descricao" name="descricao" maxLength={200} defaultValue={initial?.descricao ?? ""} />
-        </div>
-        <div>
           <Label htmlFor="salario">Base salarial (R$) *</Label>
           <Input
             id="salario"
