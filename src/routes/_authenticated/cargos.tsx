@@ -17,8 +17,10 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { SALARIO_MINIMO, adicionaisDoCargo, type Cargo } from "@/lib/cargos";
+import { adicionaisDoCargo, type Cargo } from "@/lib/cargos";
+import { useSalarioMinimo, useSalvarSalarioMinimo } from "@/hooks/use-salario-minimo";
 import { encargosRate } from "@/lib/encargos";
+
 
 export const Route = createFileRoute("/_authenticated/cargos")({
   head: () => ({
@@ -36,6 +38,13 @@ function CargosPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Cargo | null>(null);
+  const { salarioMinimo } = useSalarioMinimo();
+  const salvarSm = useSalvarSalarioMinimo();
+  const [smEdit, setSmEdit] = useState<string | null>(null);
+  const smInput = smEdit ?? String(salarioMinimo);
+  const setSmInput = (v: string) => setSmEdit(v);
+
+
 
   const { data: cargos = [], isLoading } = useQuery({
     queryKey: ["cargos"],
@@ -101,15 +110,46 @@ function CargosPage() {
         <CargoForm
           key={editing?.id ?? "new"}
           initial={editing}
+          salarioMinimo={salarioMinimo}
           saving={upsert.isPending}
           onSubmit={(v) => upsert.mutate(v)}
         />
+
       </Dialog>
 
-      <p className="mb-4 text-sm text-muted-foreground">
-        Salário mínimo de referência: <strong>{fmtBRL(SALARIO_MINIMO)}</strong> — base de cálculo da
-        insalubridade e da quebra de caixa. A periculosidade incide sobre o salário base do cargo.
-      </p>
+      <Card className="mb-4">
+        <CardContent className="flex flex-wrap items-end gap-3 p-4">
+          <div className="min-w-[200px]">
+            <Label htmlFor="sm">Salário mínimo de referência (R$)</Label>
+            <Input
+              id="sm"
+              type="number"
+              min="0"
+              step="0.01"
+              value={smInput}
+              onChange={(e) => setSmInput(e.target.value)}
+            />
+          </div>
+          <Button
+            variant="secondary"
+            disabled={salvarSm.isPending || Number(smInput) <= 0}
+            onClick={() =>
+              salvarSm.mutate(Number(smInput), {
+                onSuccess: () => toast.success("Salário mínimo atualizado"),
+                onError: (e: any) => toast.error(e.message ?? "Erro"),
+              })
+            }
+          >
+            {salvarSm.isPending ? "Salvando…" : "Salvar"}
+          </Button>
+          <p className="flex-1 text-sm text-muted-foreground">
+            Base de cálculo da insalubridade e da quebra de caixa em todos os cargos — inclusive os
+            já cadastrados. A periculosidade incide sobre o salário base do cargo. Valor atual:{" "}
+            <strong>{fmtBRL(salarioMinimo)}</strong>.
+          </p>
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardContent className="overflow-x-auto p-0">
@@ -117,7 +157,7 @@ function CargosPage() {
             <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Cargo</th>
-                <th className="px-4 py-3">Descrição</th>
+                
                 <th className="px-4 py-3 text-right">Salário base</th>
                 <th className="px-4 py-3 text-right">Periculosidade</th>
                 <th className="px-4 py-3 text-right">Insalubridade</th>
@@ -129,26 +169,25 @@ function CargosPage() {
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                     Carregando…
                   </td>
                 </tr>
               )}
               {!isLoading && cargos.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
                     Nenhum cargo cadastrado ainda.
                   </td>
                 </tr>
               )}
               {cargos.map((c) => {
-                const a = adicionaisDoCargo(c, Number(c.salario_base) || 0);
+                const a = adicionaisDoCargo(c, Number(c.salario_base) || 0, salarioMinimo);
                 const bruto = (Number(c.salario_base) || 0) + a.total;
                 const custo = bruto * (1 + encargosRate("simples"));
                 return (
                   <tr key={c.id} className="border-b last:border-0">
                     <td className="px-4 py-3 font-medium">{c.nome}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.descricao ?? "—"}</td>
                     <td className="px-4 py-3 text-right">{fmtBRL(Number(c.salario_base) || 0)}</td>
                     <td className="px-4 py-3 text-right">
                       {c.tem_periculosidade ? fmtBRL(a.periculosidade) : "—"}
@@ -198,10 +237,12 @@ function CargoForm({
   initial,
   onSubmit,
   saving,
+  salarioMinimo,
 }: {
   initial: Cargo | null;
   onSubmit: (v: any) => void;
   saving: boolean;
+  salarioMinimo: number;
 }) {
   const [salario, setSalario] = useState<number>(Number(initial?.salario_base ?? 0));
   const [peric, setPeric] = useState<boolean>(Boolean(initial?.tem_periculosidade));
@@ -215,7 +256,9 @@ function CargoForm({
       insalubridade_grau: Number(insalGrau),
     },
     salario,
+    salarioMinimo,
   );
+
   const bruto = salario + a.total;
   const custo = bruto * (1 + encargosRate("simples"));
 
@@ -232,7 +275,7 @@ function CargoForm({
           onSubmit({
             id: initial?.id,
             nome: String(fd.get("nome") || "").trim(),
-            descricao: String(fd.get("descricao") || "").trim() || null,
+            
             salario_base: salario,
             tem_periculosidade: peric,
             tem_quebra_caixa: quebra,
@@ -244,10 +287,6 @@ function CargoForm({
         <div>
           <Label htmlFor="nome">Nome do cargo *</Label>
           <Input id="nome" name="nome" required maxLength={80} defaultValue={initial?.nome ?? ""} />
-        </div>
-        <div>
-          <Label htmlFor="descricao">Descrição</Label>
-          <Input id="descricao" name="descricao" maxLength={200} defaultValue={initial?.descricao ?? ""} />
         </div>
         <div>
           <Label htmlFor="salario">Base salarial (R$) *</Label>

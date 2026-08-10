@@ -19,6 +19,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { encargosRate, regimeFromPrestador } from "@/lib/encargos";
 import { adicionaisPct, type Cargo } from "@/lib/cargos";
+import { useSalarioMinimo } from "@/hooks/use-salario-minimo";
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
   head: () => ({ meta: [{ title: "Funcionários · MercadoGest" }] }),
@@ -395,8 +396,10 @@ function FuncForm({
   const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
 
   // Cargo selecionado define automaticamente os adicionais legais.
+  const { salarioMinimo } = useSalarioMinimo();
   const cargo = cargos.find((c) => c.id === cargoId) ?? null;
-  const auto = cargo ? adicionaisPct(cargo, salario) : null;
+  const auto = cargo ? adicionaisPct(cargo, salario, salarioMinimo) : null;
+
   const insal = auto ? auto.insalubridade_pct : insalManual;
   const peric = auto ? auto.periculosidade_pct : pericManual;
   const qc = auto ? auto.quebra_caixa_pct : qcManual;
