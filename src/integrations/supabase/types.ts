@@ -263,6 +263,27 @@ export type Database = {
           },
         ]
       }
+      configuracoes: {
+        Row: {
+          chave: string
+          created_at: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          chave: string
+          created_at?: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          chave?: string
+          created_at?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       convenio_funcionario: {
         Row: {
           created_at: string
