@@ -119,9 +119,16 @@ function FuncPage() {
     queryFn: async () =>
       (await supabase
         .from("prestadores_servico")
-        .select("id, razao_social, nome_fantasia, status")
+        .select("id, razao_social, nome_fantasia, status, regime_tributario")
         .order("razao_social")).data ?? [],
   });
+
+  const { data: cargos = [] } = useQuery({
+    queryKey: ["cargos"],
+    queryFn: async () =>
+      (await supabase.from("cargos").select("*").eq("ativo", true).order("nome")).data ?? [],
+  });
+
 
   const { data: funcs = [], isLoading } = useQuery({
     queryKey: ["funcionarios"],
