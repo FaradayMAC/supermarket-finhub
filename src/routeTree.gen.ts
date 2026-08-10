@@ -13,6 +13,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
+import { Route as AuthenticatedCargosRouteImport } from './routes/_authenticated/cargos'
 import { Route as AuthenticatedComparativoRouteImport } from './routes/_authenticated/comparativo'
 import { Route as AuthenticatedComprasRouteImport } from './routes/_authenticated/compras'
 import { Route as AuthenticatedConciliacaoRouteImport } from './routes/_authenticated/conciliacao'
@@ -48,6 +49,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
 const AuthenticatedCaixaRoute = AuthenticatedCaixaRouteImport.update({
   id: '/caixa',
   path: '/caixa',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCargosRoute = AuthenticatedCargosRouteImport.update({
+  id: '/cargos',
+  path: '/cargos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedComparativoRoute =
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/caixa': typeof AuthenticatedCaixaRoute
+  '/cargos': typeof AuthenticatedCargosRoute
   '/comparativo': typeof AuthenticatedComparativoRoute
   '/compras': typeof AuthenticatedComprasRoute
   '/conciliacao': typeof AuthenticatedConciliacaoRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/caixa': typeof AuthenticatedCaixaRoute
+  '/cargos': typeof AuthenticatedCargosRoute
   '/comparativo': typeof AuthenticatedComparativoRoute
   '/compras': typeof AuthenticatedComprasRoute
   '/conciliacao': typeof AuthenticatedConciliacaoRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/caixa': typeof AuthenticatedCaixaRoute
+  '/_authenticated/cargos': typeof AuthenticatedCargosRoute
   '/_authenticated/comparativo': typeof AuthenticatedComparativoRoute
   '/_authenticated/compras': typeof AuthenticatedComprasRoute
   '/_authenticated/conciliacao': typeof AuthenticatedConciliacaoRoute
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/caixa'
+    | '/cargos'
     | '/comparativo'
     | '/compras'
     | '/conciliacao'
@@ -237,6 +247,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/caixa'
+    | '/cargos'
     | '/comparativo'
     | '/compras'
     | '/conciliacao'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/caixa'
+    | '/_authenticated/cargos'
     | '/_authenticated/comparativo'
     | '/_authenticated/compras'
     | '/_authenticated/conciliacao'
@@ -314,6 +326,13 @@ declare module '@tanstack/react-router' {
       path: '/caixa'
       fullPath: '/caixa'
       preLoaderRoute: typeof AuthenticatedCaixaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cargos': {
+      id: '/_authenticated/cargos'
+      path: '/cargos'
+      fullPath: '/cargos'
+      preLoaderRoute: typeof AuthenticatedCargosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/comparativo': {
@@ -440,6 +459,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCaixaRoute: typeof AuthenticatedCaixaRoute
+  AuthenticatedCargosRoute: typeof AuthenticatedCargosRoute
   AuthenticatedComparativoRoute: typeof AuthenticatedComparativoRoute
   AuthenticatedComprasRoute: typeof AuthenticatedComprasRoute
   AuthenticatedConciliacaoRoute: typeof AuthenticatedConciliacaoRoute
@@ -461,6 +481,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCaixaRoute: AuthenticatedCaixaRoute,
+  AuthenticatedCargosRoute: AuthenticatedCargosRoute,
   AuthenticatedComparativoRoute: AuthenticatedComparativoRoute,
   AuthenticatedComprasRoute: AuthenticatedComprasRoute,
   AuthenticatedConciliacaoRoute: AuthenticatedConciliacaoRoute,
@@ -491,13 +512,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
