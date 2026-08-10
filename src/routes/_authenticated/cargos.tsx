@@ -184,14 +184,14 @@ function CargosPage() {
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">
                     Carregando…
                   </td>
                 </tr>
               )}
               {!isLoading && cargos.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={10} className="px-4 py-12 text-center text-muted-foreground">
                     Nenhum cargo cadastrado ainda.
                   </td>
                 </tr>
@@ -199,7 +199,7 @@ function CargosPage() {
               {cargos.map((c) => {
                 const a = adicionaisDoCargo(c, Number(c.salario_base) || 0, salarioMinimo);
                 const bruto = (Number(c.salario_base) || 0) + a.total;
-                const custo = bruto * (1 + encargosRate("simples"));
+                const res = resumoCargo(bruto);
                 return (
                   <tr key={c.id} className="border-b last:border-0">
                     <td className="px-4 py-3 font-medium">{c.nome}</td>
@@ -215,7 +215,13 @@ function CargosPage() {
                     <td className="px-4 py-3 text-right">
                       {c.tem_quebra_caixa ? fmtBRL(a.quebraCaixa) : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold">{fmtBRL(custo)}</td>
+                    <td className="px-4 py-3 text-right">{fmtBRL(res.fgts)}</td>
+                    <td className="px-4 py-3 text-right text-destructive">- {fmtBRL(res.inss)}</td>
+                    <td className="px-4 py-3 text-right text-destructive">
+                      {res.irrf > 0 ? `- ${fmtBRL(res.irrf)}` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold">{fmtBRL(res.liquido)}</td>
+
                     <td className="px-4 py-3 text-right">
                       <Button
                         size="icon"
@@ -275,7 +281,7 @@ function CargoForm({
   );
 
   const bruto = salario + a.total;
-  const custo = bruto * (1 + encargosRate("simples"));
+  const res = resumoCargo(bruto);
 
   return (
     <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -364,10 +370,19 @@ function CargoForm({
             <div className="text-right font-medium">{fmtBRL(a.total)}</div>
             <div className="text-muted-foreground">Remuneração bruta</div>
             <div className="text-right font-medium">{fmtBRL(bruto)}</div>
-            <div className="font-semibold">Custo estimado (Simples)</div>
-            <div className="text-right font-bold text-primary">{fmtBRL(custo)}</div>
+            <div className="text-muted-foreground">FGTS (8%)</div>
+            <div className="text-right font-medium">{fmtBRL(res.fgts)}</div>
+            <div className="text-muted-foreground">INSS (desconto)</div>
+            <div className="text-right font-medium text-destructive">- {fmtBRL(res.inss)}</div>
+            <div className="text-muted-foreground">IRRF (desconto)</div>
+            <div className="text-right font-medium text-destructive">
+              {res.irrf > 0 ? `- ${fmtBRL(res.irrf)}` : "—"}
+            </div>
+            <div className="font-semibold">Líquido estimado</div>
+            <div className="text-right font-bold text-primary">{fmtBRL(res.liquido)}</div>
           </div>
         </div>
+
 
         <DialogFooter>
           <Button type="submit" disabled={saving}>
