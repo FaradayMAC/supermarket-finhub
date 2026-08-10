@@ -536,9 +536,29 @@ function FuncForm({
             />
           </div>
           <div>
-            <Label htmlFor="cargo">Cargo</Label>
-            <Input id="cargo" name="cargo" maxLength={80} defaultValue={initial?.cargo ?? ""} />
+            <Label>Cargo</Label>
+            {cargos.length > 0 ? (
+              <Select value={cargoId} onValueChange={selecionarCargo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o cargo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Sem cargo cadastrado —</SelectItem>
+                  {cargos.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input id="cargo" name="cargo" maxLength={80} defaultValue={initial?.cargo ?? ""} />
+            )}
+            <p className="mt-1 text-xs text-muted-foreground">
+              Cargos são cadastrados na aba Cargos, com base salarial e adicionais.
+            </p>
           </div>
+
           <div>
             <Label htmlFor="admissao">Data de admissão</Label>
             <Input id="admissao" name="admissao" type="date" defaultValue={initial?.data_admissao ?? ""} />
