@@ -355,22 +355,33 @@ function FuncPage() {
 function FuncForm({
   lojas,
   prestadores,
+  cargos,
   initial,
   onSubmit,
   saving,
 }: {
   lojas: { id: string; nome: string; codigo: string }[];
-  prestadores: { id: string; razao_social: string; nome_fantasia: string | null; status?: string }[];
+  prestadores: {
+    id: string;
+    razao_social: string;
+    nome_fantasia: string | null;
+    status?: string;
+    regime_tributario?: string | null;
+  }[];
+  cargos: Cargo[];
   initial: Func | null;
   onSubmit: (v: any) => void;
   saving: boolean;
 }) {
   const [lojaId, setLojaId] = useState(initial?.loja_id ?? "");
   const [prestadorId, setPrestadorId] = useState<string>(initial?.prestador_id ?? "none");
+  const [cargoId, setCargoId] = useState<string>(initial?.cargo_id ?? "none");
 
-  const [regime, setRegime] = useState<"simples" | "lucro_real">(
-    (initial?.regime_tributario as any) ?? "simples",
-  );
+  const prestador = prestadores.find((p) => p.id === prestadorId) ?? null;
+  const regime: "simples" | "lucro_real" = prestador
+    ? regimeFromPrestador(prestador.regime_tributario)
+    : ((initial?.regime_tributario as any) ?? "simples");
+
   const [salario, setSalario] = useState<number>(Number(initial?.salario_base ?? 0));
   const [vt, setVt] = useState<number>(Number(initial?.vale_transporte ?? 0));
   const [va, setVa] = useState<number>(Number(initial?.vale_alimentacao ?? 0));
@@ -378,10 +389,23 @@ function FuncForm({
   const [po, setPo] = useState<number>(Number(initial?.plano_odontologico ?? 0));
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
-  const [insal, setInsal] = useState<number>(Number(initial?.insalubridade_pct ?? 0));
-  const [peric, setPeric] = useState<number>(Number(initial?.periculosidade_pct ?? 0));
-  const [qc, setQc] = useState<number>(Number(initial?.quebra_caixa_pct ?? 0));
+  const [insalManual, setInsal] = useState<number>(Number(initial?.insalubridade_pct ?? 0));
+  const [pericManual, setPeric] = useState<number>(Number(initial?.periculosidade_pct ?? 0));
+  const [qcManual, setQc] = useState<number>(Number(initial?.quebra_caixa_pct ?? 0));
   const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
+
+  // Cargo selecionado define automaticamente os adicionais legais.
+  const cargo = cargos.find((c) => c.id === cargoId) ?? null;
+  const auto = cargo ? adicionaisPct(cargo, salario) : null;
+  const insal = auto ? auto.insalubridade_pct : insalManual;
+  const peric = auto ? auto.periculosidade_pct : pericManual;
+  const qc = auto ? auto.quebra_caixa_pct : qcManual;
+
+  function selecionarCargo(id: string) {
+    setCargoId(id);
+    const c = cargos.find((x) => x.id === id);
+    if (c && Number(c.salario_base) > 0) setSalario(Number(c.salario_base));
+  }
 
   const preview = custoReal({
     salario_base: salario,
@@ -396,6 +420,7 @@ function FuncForm({
     quebra_caixa_pct: qc,
     regime_tributario: regime,
   });
+
 
 
   return (
