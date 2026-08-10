@@ -439,6 +439,44 @@ function DasSection({ prestadores }: { prestadores: Prestador[] }) {
   const [editing, setEditing] = useState<DasRow | null>(null);
   const [form, setForm] = useState(dasEmpty);
   const [filterPrestador, setFilterPrestador] = useState<string>("all");
+  const [reading, setReading] = useState(false);
+  const [anexoNome, setAnexoNome] = useState<string | null>(null);
+  const parseDas = useServerFn(parseDasDocument);
+
+  async function handleFile(file: File | undefined | null) {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { toast.error("Arquivo muito grande (máx. 10MB)"); return; }
+    setReading(true);
+    setAnexoNome(file.name);
+    try {
+      const buf = new Uint8Array(await file.arrayBuffer());
+      let bin = "";
+      for (let i = 0; i < buf.length; i += 8192) bin += String.fromCharCode(...buf.subarray(i, i + 8192));
+      const fileBase64 = btoa(bin);
+      const r = await parseDas({
+        data: { filename: file.name, fileBase64, mimeType: file.type || "application/pdf" },
+      });
+      const digits = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "");
+      const match = r.cnpj ? prestadores.find((p) => digits(p.cnpj) === r.cnpj) : undefined;
+      setForm((f) => ({
+        ...f,
+        prestador_id: match?.id ?? f.prestador_id,
+        competencia: r.competencia || f.competencia,
+        valor: r.valor_total != null ? String(r.valor_total) : f.valor,
+        data_vencimento: r.data_vencimento || f.data_vencimento,
+        observacoes: [r.numero_documento ? `Documento nº ${r.numero_documento}` : null, r.observacoes]
+          .filter(Boolean)
+          .join(" — ") || f.observacoes,
+      }));
+      if (r.cnpj && !match) toast.warning(`Documento lido, mas nenhuma prestadora com CNPJ ${r.cnpj}. Selecione manualmente.`);
+      else toast.success("Documento lido — confira os dados preenchidos.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Não foi possível ler o documento");
+    } finally {
+      setReading(false);
+    }
+  }
+
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["prestador-das"],
