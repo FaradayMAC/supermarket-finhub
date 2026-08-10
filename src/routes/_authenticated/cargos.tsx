@@ -169,26 +169,25 @@ function CargosPage() {
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                     Carregando…
                   </td>
                 </tr>
               )}
               {!isLoading && cargos.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
                     Nenhum cargo cadastrado ainda.
                   </td>
                 </tr>
               )}
               {cargos.map((c) => {
-                const a = adicionaisDoCargo(c, Number(c.salario_base) || 0);
+                const a = adicionaisDoCargo(c, Number(c.salario_base) || 0, salarioMinimo);
                 const bruto = (Number(c.salario_base) || 0) + a.total;
                 const custo = bruto * (1 + encargosRate("simples"));
                 return (
                   <tr key={c.id} className="border-b last:border-0">
                     <td className="px-4 py-3 font-medium">{c.nome}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{c.descricao ?? "—"}</td>
                     <td className="px-4 py-3 text-right">{fmtBRL(Number(c.salario_base) || 0)}</td>
                     <td className="px-4 py-3 text-right">
                       {c.tem_periculosidade ? fmtBRL(a.periculosidade) : "—"}
