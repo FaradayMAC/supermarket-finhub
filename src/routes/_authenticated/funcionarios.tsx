@@ -17,25 +17,16 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { encargosRate, regimeFromPrestador } from "@/lib/encargos";
+import { adicionaisPct, type Cargo } from "@/lib/cargos";
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
   head: () => ({ meta: [{ title: "Funcionários · MercadoGest" }] }),
   component: FuncPage,
 });
 
-// Encargos patronais por regime tributário.
-// - Lucro Real (regime normal CLT): INSS Patronal 20% + RAT/Terceiros ~8,5% + FGTS 8%
-//   + provisões de férias+1/3 (~11,11%) e 13º (~8,33%) com encargos sobre elas.
-//   Total estimado ≈ 68% do salário.
-// - Simples Nacional: INSS Patronal e RAT/Terceiros são recolhidos no DAS
-//   (desonerados na folha). Restam FGTS 8% + provisões + FGTS sobre provisões.
-//   Total estimado ≈ 28% do salário.
-const ENCARGOS_RATE_LUCRO_REAL = 0.68;
-const ENCARGOS_RATE_SIMPLES = 0.28;
+export { encargosRate };
 
-export function encargosRate(regime: string | null | undefined) {
-  return regime === "lucro_real" ? ENCARGOS_RATE_LUCRO_REAL : ENCARGOS_RATE_SIMPLES;
-}
 
 type Func = {
   id: string;
@@ -44,6 +35,7 @@ type Func = {
   nome: string;
   cpf: string | null;
   cargo: string | null;
+  cargo_id: string | null;
   salario_base: number;
   data_admissao: string | null;
   vale_transporte: number;
@@ -127,9 +119,16 @@ function FuncPage() {
     queryFn: async () =>
       (await supabase
         .from("prestadores_servico")
-        .select("id, razao_social, nome_fantasia, status")
+        .select("id, razao_social, nome_fantasia, status, regime_tributario")
         .order("razao_social")).data ?? [],
   });
+
+  const { data: cargos = [] } = useQuery({
+    queryKey: ["cargos"],
+    queryFn: async () =>
+      (await supabase.from("cargos").select("*").eq("ativo", true).order("nome")).data ?? [],
+  });
+
 
   const { data: funcs = [], isLoading } = useQuery({
     queryKey: ["funcionarios"],
@@ -213,10 +212,12 @@ function FuncPage() {
           key={editing?.id ?? "new"}
           lojas={lojas as any}
           prestadores={prestadores as any}
+          cargos={cargos as any}
           initial={editing}
           onSubmit={(v) => upsert.mutate(v)}
           saving={upsert.isPending}
         />
+
 
       </Dialog>
 
@@ -354,22 +355,33 @@ function FuncPage() {
 function FuncForm({
   lojas,
   prestadores,
+  cargos,
   initial,
   onSubmit,
   saving,
 }: {
   lojas: { id: string; nome: string; codigo: string }[];
-  prestadores: { id: string; razao_social: string; nome_fantasia: string | null; status?: string }[];
+  prestadores: {
+    id: string;
+    razao_social: string;
+    nome_fantasia: string | null;
+    status?: string;
+    regime_tributario?: string | null;
+  }[];
+  cargos: Cargo[];
   initial: Func | null;
   onSubmit: (v: any) => void;
   saving: boolean;
 }) {
   const [lojaId, setLojaId] = useState(initial?.loja_id ?? "");
   const [prestadorId, setPrestadorId] = useState<string>(initial?.prestador_id ?? "none");
+  const [cargoId, setCargoId] = useState<string>(initial?.cargo_id ?? "none");
 
-  const [regime, setRegime] = useState<"simples" | "lucro_real">(
-    (initial?.regime_tributario as any) ?? "simples",
-  );
+  const prestador = prestadores.find((p) => p.id === prestadorId) ?? null;
+  const regime: "simples" | "lucro_real" = prestador
+    ? regimeFromPrestador(prestador.regime_tributario)
+    : ((initial?.regime_tributario as any) ?? "simples");
+
   const [salario, setSalario] = useState<number>(Number(initial?.salario_base ?? 0));
   const [vt, setVt] = useState<number>(Number(initial?.vale_transporte ?? 0));
   const [va, setVa] = useState<number>(Number(initial?.vale_alimentacao ?? 0));
@@ -377,10 +389,23 @@ function FuncForm({
   const [po, setPo] = useState<number>(Number(initial?.plano_odontologico ?? 0));
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
-  const [insal, setInsal] = useState<number>(Number(initial?.insalubridade_pct ?? 0));
-  const [peric, setPeric] = useState<number>(Number(initial?.periculosidade_pct ?? 0));
-  const [qc, setQc] = useState<number>(Number(initial?.quebra_caixa_pct ?? 0));
+  const [insalManual, setInsal] = useState<number>(Number(initial?.insalubridade_pct ?? 0));
+  const [pericManual, setPeric] = useState<number>(Number(initial?.periculosidade_pct ?? 0));
+  const [qcManual, setQc] = useState<number>(Number(initial?.quebra_caixa_pct ?? 0));
   const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
+
+  // Cargo selecionado define automaticamente os adicionais legais.
+  const cargo = cargos.find((c) => c.id === cargoId) ?? null;
+  const auto = cargo ? adicionaisPct(cargo, salario) : null;
+  const insal = auto ? auto.insalubridade_pct : insalManual;
+  const peric = auto ? auto.periculosidade_pct : pericManual;
+  const qc = auto ? auto.quebra_caixa_pct : qcManual;
+
+  function selecionarCargo(id: string) {
+    setCargoId(id);
+    const c = cargos.find((x) => x.id === id);
+    if (c && Number(c.salario_base) > 0) setSalario(Number(c.salario_base));
+  }
 
   const preview = custoReal({
     salario_base: salario,
@@ -395,6 +420,7 @@ function FuncForm({
     quebra_caixa_pct: qc,
     regime_tributario: regime,
   });
+
 
 
   return (
@@ -418,9 +444,10 @@ function FuncForm({
             id: initial?.id,
             loja_id: lojaId,
             prestador_id: prestadorId === "none" ? null : prestadorId,
+            cargo_id: cargoId === "none" ? null : cargoId,
             nome: String(fd.get("nome") || "").trim(),
             cpf: String(fd.get("cpf") || "").trim() || null,
-            cargo: String(fd.get("cargo") || "").trim() || null,
+            cargo: cargo ? cargo.nome : String(fd.get("cargo") || "").trim() || null,
             salario_base: sal,
             data_admissao: String(fd.get("admissao") || "") || null,
             vale_transporte: _vt,
@@ -430,9 +457,9 @@ function FuncForm({
             dependentes: Number(fd.get("dependentes") || 0),
             salario_familia: Number(fd.get("sf") || 0),
             valor_extra_salarial: _ve,
-            insalubridade_pct: Number(fd.get("insal") || 0),
-            periculosidade_pct: Number(fd.get("peric") || 0),
-            quebra_caixa_pct: Number(fd.get("qc") || 0),
+            insalubridade_pct: insal,
+            periculosidade_pct: peric,
+            quebra_caixa_pct: qc,
             desconto_vt: descontoVt,
             situacao: String(fd.get("situacao") || "").trim() || null,
             observacoes: String(fd.get("observacoes") || "").trim() || null,
@@ -442,6 +469,7 @@ function FuncForm({
             ativo: true,
 
           });
+
 
         }}
       >
@@ -484,22 +512,15 @@ function FuncForm({
             </p>
           </div>
 
-          <div className="col-span-2">
-            <Label>Regime tributário da empresa *</Label>
-            <Select value={regime} onValueChange={(v) => setRegime(v as any)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="simples">Simples Nacional (folha desonerada — ~28%)</SelectItem>
-                <SelectItem value="lucro_real">Lucro Real / Presumido (~68%)</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Simples Nacional: INSS patronal e RAT/Terceiros recolhidos no DAS. Lucro
-              Real/Presumido: encargos completos sobre a folha.
-            </p>
+          <div className="col-span-2 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            Regime tributário:{" "}
+            <span className="font-semibold text-foreground">
+              {regime === "lucro_real" ? "Lucro Real / Presumido" : "Simples Nacional"}
+            </span>{" "}
+            — definido automaticamente pela empresa prestadora selecionada. Encargos patronais
+            aplicados: {Math.round(encargosRate(regime) * 100)}%.
           </div>
+
           <div className="col-span-2">
             <Label htmlFor="nome">Nome *</Label>
             <Input id="nome" name="nome" required maxLength={120} defaultValue={initial?.nome ?? ""} />
@@ -515,9 +536,29 @@ function FuncForm({
             />
           </div>
           <div>
-            <Label htmlFor="cargo">Cargo</Label>
-            <Input id="cargo" name="cargo" maxLength={80} defaultValue={initial?.cargo ?? ""} />
+            <Label>Cargo</Label>
+            {cargos.length > 0 ? (
+              <Select value={cargoId} onValueChange={selecionarCargo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o cargo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Sem cargo cadastrado —</SelectItem>
+                  {cargos.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input id="cargo" name="cargo" maxLength={80} defaultValue={initial?.cargo ?? ""} />
+            )}
+            <p className="mt-1 text-xs text-muted-foreground">
+              Cargos são cadastrados na aba Cargos, com base salarial e adicionais.
+            </p>
           </div>
+
           <div>
             <Label htmlFor="admissao">Data de admissão</Label>
             <Input id="admissao" name="admissao" type="date" defaultValue={initial?.data_admissao ?? ""} />
@@ -627,6 +668,11 @@ function FuncForm({
 
           <div className="col-span-2 mt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Adicionais (% sobre o salário)
+            {cargo && (
+              <span className="ml-2 normal-case font-normal">
+                — preenchidos automaticamente pelo cargo <strong>{cargo.nome}</strong>
+              </span>
+            )}
           </div>
           <div>
             <Label htmlFor="insal">Insalubridade (%)</Label>
@@ -637,8 +683,12 @@ function FuncForm({
               min="0"
               step="0.01"
               value={insal}
+              readOnly={!!cargo}
               onChange={(e) => setInsal(Number(e.target.value))}
             />
+            {cargo && auto && (
+              <p className="mt-1 text-xs text-muted-foreground">{fmtBRL(auto.valores.insalubridade)}</p>
+            )}
           </div>
           <div>
             <Label htmlFor="peric">Periculosidade (%)</Label>
@@ -649,8 +699,12 @@ function FuncForm({
               min="0"
               step="0.01"
               value={peric}
+              readOnly={!!cargo}
               onChange={(e) => setPeric(Number(e.target.value))}
             />
+            {cargo && auto && (
+              <p className="mt-1 text-xs text-muted-foreground">{fmtBRL(auto.valores.periculosidade)}</p>
+            )}
           </div>
           <div>
             <Label htmlFor="qc">Quebra de caixa (%)</Label>
@@ -661,9 +715,14 @@ function FuncForm({
               min="0"
               step="0.01"
               value={qc}
+              readOnly={!!cargo}
               onChange={(e) => setQc(Number(e.target.value))}
             />
+            {cargo && auto && (
+              <p className="mt-1 text-xs text-muted-foreground">{fmtBRL(auto.valores.quebraCaixa)}</p>
+            )}
           </div>
+
           <div className="flex items-end gap-2 pb-2">
             <input
               id="desconto_vt"

@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      cargos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          insalubridade_grau: number
+          nome: string
+          periculosidade_pct: number
+          quebra_caixa_pct: number
+          salario_base: number
+          tem_periculosidade: boolean
+          tem_quebra_caixa: boolean
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          insalubridade_grau?: number
+          nome: string
+          periculosidade_pct?: number
+          quebra_caixa_pct?: number
+          salario_base?: number
+          tem_periculosidade?: boolean
+          tem_quebra_caixa?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          insalubridade_grau?: number
+          nome?: string
+          periculosidade_pct?: number
+          quebra_caixa_pct?: number
+          salario_base?: number
+          tem_periculosidade?: boolean
+          tem_quebra_caixa?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categorias_despesa: {
         Row: {
           categoria_pai_id: string | null
@@ -690,6 +735,7 @@ export type Database = {
           ativo: boolean
           beneficios: number
           cargo: string | null
+          cargo_id: string | null
           cpf: string | null
           created_at: string
           data_admissao: string | null
@@ -722,6 +768,7 @@ export type Database = {
           ativo?: boolean
           beneficios?: number
           cargo?: string | null
+          cargo_id?: string | null
           cpf?: string | null
           created_at?: string
           data_admissao?: string | null
@@ -754,6 +801,7 @@ export type Database = {
           ativo?: boolean
           beneficios?: number
           cargo?: string | null
+          cargo_id?: string | null
           cpf?: string | null
           created_at?: string
           data_admissao?: string | null
@@ -783,6 +831,13 @@ export type Database = {
           valor_extra_salarial?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "funcionarios_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "funcionarios_empresa_id_fkey"
             columns: ["empresa_id"]
