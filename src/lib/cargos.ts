@@ -29,14 +29,19 @@ export type CargoAdicionais = Pick<
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Valores em reais dos adicionais de um cargo para um dado salário base. */
-export function adicionaisDoCargo(c: CargoAdicionais, salarioBase: number) {
+export function adicionaisDoCargo(
+  c: CargoAdicionais,
+  salarioBase: number,
+  salarioMinimo: number = SALARIO_MINIMO,
+) {
   const pericPct = Number(c.periculosidade_pct ?? PERICULOSIDADE_PCT) || 0;
   const qcPct = Number(c.quebra_caixa_pct ?? QUEBRA_CAIXA_PCT) || 0;
   const grau = Number(c.insalubridade_grau) || 0;
+  const sm = Number(salarioMinimo) || 0;
 
   const periculosidade = c.tem_periculosidade ? r2((salarioBase * pericPct) / 100) : 0;
-  const quebraCaixa = c.tem_quebra_caixa ? r2((SALARIO_MINIMO * qcPct) / 100) : 0;
-  const insalubridade = grau > 0 ? r2((SALARIO_MINIMO * grau) / 100) : 0;
+  const quebraCaixa = c.tem_quebra_caixa ? r2((sm * qcPct) / 100) : 0;
+  const insalubridade = grau > 0 ? r2((sm * grau) / 100) : 0;
 
   return {
     periculosidade,
@@ -50,8 +55,12 @@ export function adicionaisDoCargo(c: CargoAdicionais, salarioBase: number) {
  * Converte os adicionais do cargo (em R$) para os percentuais sobre o salário
  * base usados no cadastro do funcionário e no contracheque.
  */
-export function adicionaisPct(c: CargoAdicionais, salarioBase: number) {
-  const a = adicionaisDoCargo(c, salarioBase);
+export function adicionaisPct(
+  c: CargoAdicionais,
+  salarioBase: number,
+  salarioMinimo: number = SALARIO_MINIMO,
+) {
+  const a = adicionaisDoCargo(c, salarioBase, salarioMinimo);
   const pct = (v: number) => (salarioBase > 0 ? Math.round((v / salarioBase) * 10000) / 100 : 0);
   return {
     periculosidade_pct: pct(a.periculosidade),
@@ -60,3 +69,4 @@ export function adicionaisPct(c: CargoAdicionais, salarioBase: number) {
     valores: a,
   };
 }
+
