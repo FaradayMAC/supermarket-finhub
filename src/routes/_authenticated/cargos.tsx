@@ -110,9 +110,11 @@ function CargosPage() {
         <CargoForm
           key={editing?.id ?? "new"}
           initial={editing}
+          salarioMinimo={salarioMinimo}
           saving={upsert.isPending}
           onSubmit={(v) => upsert.mutate(v)}
         />
+
       </Dialog>
 
       <Card className="mb-4">
