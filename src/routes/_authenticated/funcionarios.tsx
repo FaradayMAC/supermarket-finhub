@@ -444,9 +444,10 @@ function FuncForm({
             id: initial?.id,
             loja_id: lojaId,
             prestador_id: prestadorId === "none" ? null : prestadorId,
+            cargo_id: cargoId === "none" ? null : cargoId,
             nome: String(fd.get("nome") || "").trim(),
             cpf: String(fd.get("cpf") || "").trim() || null,
-            cargo: String(fd.get("cargo") || "").trim() || null,
+            cargo: cargo ? cargo.nome : String(fd.get("cargo") || "").trim() || null,
             salario_base: sal,
             data_admissao: String(fd.get("admissao") || "") || null,
             vale_transporte: _vt,
@@ -456,9 +457,9 @@ function FuncForm({
             dependentes: Number(fd.get("dependentes") || 0),
             salario_familia: Number(fd.get("sf") || 0),
             valor_extra_salarial: _ve,
-            insalubridade_pct: Number(fd.get("insal") || 0),
-            periculosidade_pct: Number(fd.get("peric") || 0),
-            quebra_caixa_pct: Number(fd.get("qc") || 0),
+            insalubridade_pct: insal,
+            periculosidade_pct: peric,
+            quebra_caixa_pct: qc,
             desconto_vt: descontoVt,
             situacao: String(fd.get("situacao") || "").trim() || null,
             observacoes: String(fd.get("observacoes") || "").trim() || null,
@@ -468,6 +469,7 @@ function FuncForm({
             ativo: true,
 
           });
+
 
         }}
       >
