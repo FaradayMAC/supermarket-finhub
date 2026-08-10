@@ -581,7 +581,31 @@ function DasSection({ prestadores }: { prestadores: Prestador[] }) {
               <DialogHeader>
                 <DialogTitle>{editing ? "Editar lançamento" : "Novo lançamento de DAS"}</DialogTitle>
               </DialogHeader>
+              <div className="rounded-md border border-dashed p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-sm">
+                    <div className="font-medium">Anexar documento do DAS</div>
+                    <div className="text-muted-foreground text-xs">
+                      {anexoNome ? anexoNome : "PDF ou imagem — o app lê e preenche os campos automaticamente."}
+                    </div>
+                  </div>
+                  <Button asChild variant="outline" size="sm" disabled={reading}>
+                    <label className="cursor-pointer">
+                      {reading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                      {reading ? "Lendo..." : "Selecionar arquivo"}
+                      <input
+                        type="file"
+                        accept="application/pdf,image/*"
+                        className="hidden"
+                        disabled={reading}
+                        onChange={(e) => { void handleFile(e.target.files?.[0]); e.target.value = ""; }}
+                      />
+                    </label>
+                  </Button>
+                </div>
+              </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+
                 <div className="sm:col-span-2">
                   <Label>Empresa Prestadora *</Label>
                   <Select value={form.prestador_id} onValueChange={(v) => setForm({ ...form, prestador_id: v })}>
