@@ -35,6 +35,7 @@ type Func = {
   nome: string;
   cpf: string | null;
   cargo: string | null;
+  cargo_id: string | null;
   salario_base: number;
   data_admissao: string | null;
   vale_transporte: number;
