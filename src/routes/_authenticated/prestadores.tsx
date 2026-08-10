@@ -13,8 +13,11 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, PieChart, Search, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, PieChart, Search, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { parseDasDocument } from "@/lib/das-parse.functions";
+
 
 export const Route = createFileRoute("/_authenticated/prestadores")({
   component: PrestadoresPage,
@@ -436,6 +439,44 @@ function DasSection({ prestadores }: { prestadores: Prestador[] }) {
   const [editing, setEditing] = useState<DasRow | null>(null);
   const [form, setForm] = useState(dasEmpty);
   const [filterPrestador, setFilterPrestador] = useState<string>("all");
+  const [reading, setReading] = useState(false);
+  const [anexoNome, setAnexoNome] = useState<string | null>(null);
+  const parseDas = useServerFn(parseDasDocument);
+
+  async function handleFile(file: File | undefined | null) {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { toast.error("Arquivo muito grande (máx. 10MB)"); return; }
+    setReading(true);
+    setAnexoNome(file.name);
+    try {
+      const buf = new Uint8Array(await file.arrayBuffer());
+      let bin = "";
+      for (let i = 0; i < buf.length; i += 8192) bin += String.fromCharCode(...buf.subarray(i, i + 8192));
+      const fileBase64 = btoa(bin);
+      const r = await parseDas({
+        data: { filename: file.name, fileBase64, mimeType: file.type || "application/pdf" },
+      });
+      const digits = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "");
+      const match = r.cnpj ? prestadores.find((p) => digits(p.cnpj) === r.cnpj) : undefined;
+      setForm((f) => ({
+        ...f,
+        prestador_id: match?.id ?? f.prestador_id,
+        competencia: r.competencia || f.competencia,
+        valor: r.valor_total != null ? String(r.valor_total) : f.valor,
+        data_vencimento: r.data_vencimento || f.data_vencimento,
+        observacoes: [r.numero_documento ? `Documento nº ${r.numero_documento}` : null, r.observacoes]
+          .filter(Boolean)
+          .join(" — ") || f.observacoes,
+      }));
+      if (r.cnpj && !match) toast.warning(`Documento lido, mas nenhuma prestadora com CNPJ ${r.cnpj}. Selecione manualmente.`);
+      else toast.success("Documento lido — confira os dados preenchidos.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Não foi possível ler o documento");
+    } finally {
+      setReading(false);
+    }
+  }
+
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["prestador-das"],
@@ -540,7 +581,31 @@ function DasSection({ prestadores }: { prestadores: Prestador[] }) {
               <DialogHeader>
                 <DialogTitle>{editing ? "Editar lançamento" : "Novo lançamento de DAS"}</DialogTitle>
               </DialogHeader>
+              <div className="rounded-md border border-dashed p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-sm">
+                    <div className="font-medium">Anexar documento do DAS</div>
+                    <div className="text-muted-foreground text-xs">
+                      {anexoNome ? anexoNome : "PDF ou imagem — o app lê e preenche os campos automaticamente."}
+                    </div>
+                  </div>
+                  <Button asChild variant="outline" size="sm" disabled={reading}>
+                    <label className="cursor-pointer">
+                      {reading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                      {reading ? "Lendo..." : "Selecionar arquivo"}
+                      <input
+                        type="file"
+                        accept="application/pdf,image/*"
+                        className="hidden"
+                        disabled={reading}
+                        onChange={(e) => { void handleFile(e.target.files?.[0]); e.target.value = ""; }}
+                      />
+                    </label>
+                  </Button>
+                </div>
+              </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+
                 <div className="sm:col-span-2">
                   <Label>Empresa Prestadora *</Label>
                   <Select value={form.prestador_id} onValueChange={(v) => setForm({ ...form, prestador_id: v })}>
