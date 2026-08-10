@@ -15,6 +15,8 @@ const ALL_NAV: NavItem[] = [
   { to: "/despesas", label: "Despesas", icon: Receipt },
 
   { to: "/funcionarios", label: "Funcionários", icon: Users },
+  { to: "/cargos", label: "Cargos", icon: IdCard },
+
   { to: "/prestadores", label: "Prestadoras", icon: Briefcase },
   { to: "/impostos", label: "Impostos", icon: Landmark },
   { to: "/metas", label: "Metas", icon: Target },
