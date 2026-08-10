@@ -19,7 +19,19 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { adicionaisDoCargo, type Cargo } from "@/lib/cargos";
 import { useSalarioMinimo, useSalvarSalarioMinimo } from "@/hooks/use-salario-minimo";
-import { encargosRate } from "@/lib/encargos";
+import { calcInss, calcIrrf } from "@/lib/contracheque";
+
+const FGTS_PCT = 0.08;
+const r2 = (n: number) => Math.round(n * 100) / 100;
+
+/** Bruto do cargo, FGTS (custo empresa), INSS e IRRF descontados e líquido. */
+function resumoCargo(bruto: number) {
+  const fgts = r2(bruto * FGTS_PCT);
+  const inss = calcInss(bruto);
+  const irrf = calcIrrf(bruto, inss, 0);
+  return { fgts, inss, irrf, liquido: r2(bruto - inss - irrf) };
+}
+
 
 
 export const Route = createFileRoute("/_authenticated/cargos")({
