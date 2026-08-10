@@ -174,7 +174,10 @@ function CargosPage() {
                 <th className="px-4 py-3 text-right">Periculosidade</th>
                 <th className="px-4 py-3 text-right">Insalubridade</th>
                 <th className="px-4 py-3 text-right">Quebra de caixa</th>
-                <th className="px-4 py-3 text-right">Custo estimado</th>
+                <th className="px-4 py-3 text-right">FGTS (8%)</th>
+                <th className="px-4 py-3 text-right">INSS</th>
+                <th className="px-4 py-3 text-right">IRRF</th>
+                <th className="px-4 py-3 text-right">Líquido</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
