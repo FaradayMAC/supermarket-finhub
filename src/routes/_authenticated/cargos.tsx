@@ -275,7 +275,7 @@ function CargoForm({
           onSubmit({
             id: initial?.id,
             nome: String(fd.get("nome") || "").trim(),
-            descricao: String(fd.get("descricao") || "").trim() || null,
+            
             salario_base: salario,
             tem_periculosidade: peric,
             tem_quebra_caixa: quebra,
