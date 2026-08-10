@@ -396,8 +396,10 @@ function FuncForm({
   const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
 
   // Cargo selecionado define automaticamente os adicionais legais.
+  const { salarioMinimo } = useSalarioMinimo();
   const cargo = cargos.find((c) => c.id === cargoId) ?? null;
-  const auto = cargo ? adicionaisPct(cargo, salario) : null;
+  const auto = cargo ? adicionaisPct(cargo, salario, salarioMinimo) : null;
+
   const insal = auto ? auto.insalubridade_pct : insalManual;
   const peric = auto ? auto.periculosidade_pct : pericManual;
   const qc = auto ? auto.quebra_caixa_pct : qcManual;
