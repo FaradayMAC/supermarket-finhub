@@ -17,25 +17,16 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { encargosRate, regimeFromPrestador } from "@/lib/encargos";
+import { adicionaisPct, type Cargo } from "@/lib/cargos";
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
   head: () => ({ meta: [{ title: "Funcionários · MercadoGest" }] }),
   component: FuncPage,
 });
 
-// Encargos patronais por regime tributário.
-// - Lucro Real (regime normal CLT): INSS Patronal 20% + RAT/Terceiros ~8,5% + FGTS 8%
-//   + provisões de férias+1/3 (~11,11%) e 13º (~8,33%) com encargos sobre elas.
-//   Total estimado ≈ 68% do salário.
-// - Simples Nacional: INSS Patronal e RAT/Terceiros são recolhidos no DAS
-//   (desonerados na folha). Restam FGTS 8% + provisões + FGTS sobre provisões.
-//   Total estimado ≈ 28% do salário.
-const ENCARGOS_RATE_LUCRO_REAL = 0.68;
-const ENCARGOS_RATE_SIMPLES = 0.28;
+export { encargosRate };
 
-export function encargosRate(regime: string | null | undefined) {
-  return regime === "lucro_real" ? ENCARGOS_RATE_LUCRO_REAL : ENCARGOS_RATE_SIMPLES;
-}
 
 type Func = {
   id: string;
