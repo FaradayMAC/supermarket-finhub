@@ -1,3 +1,9 @@
+import {
+  adicionaisDoCargo,
+  SALARIO_MINIMO_FEDERAL,
+  type CargoAdicionais,
+} from "@/lib/cargos";
+
 // ============================================================================
 // Cálculo do contracheque — legislação trabalhista aplicada ao Espírito Santo
 // ----------------------------------------------------------------------------
