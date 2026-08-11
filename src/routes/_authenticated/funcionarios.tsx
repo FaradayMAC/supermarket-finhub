@@ -204,7 +204,7 @@ function FuncPage() {
           fgts: Math.round(cc.salario * 0.08 * 100) / 100,
           outros_descontos: Math.round((cc.totalDescontos - cc.inss - cc.irrf) * 100) / 100,
           outros_encargos: Math.round(custo.encargos * 100) / 100,
-          total_proventos: cc.totalProventos,
+          total_proventos: cc.proventos,
           total_descontos: cc.totalDescontos,
           liquido: cc.liquido,
           custo_total: Math.round(custo.total * 100) / 100,
