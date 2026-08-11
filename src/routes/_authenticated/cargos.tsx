@@ -32,6 +32,11 @@ import {
   useSalvarReferenciaSalarial,
 } from "@/hooks/use-referencias-salariais";
 import { calcInss, calcIrrf } from "@/lib/contracheque";
+import {
+  CHAVE_PLANO_ODONTO,
+  CHAVE_PLANO_SAUDE_F1,
+  CHAVE_PLANO_SAUDE_F2,
+} from "@/lib/planos";
 
 const FGTS_PCT = 0.08;
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -60,12 +65,21 @@ function CargosPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Cargo | null>(null);
-  const { salarioMinimoFederal, pisoComerciarioEs } = useReferenciasSalariais();
+  const { salarioMinimoFederal, pisoComerciarioEs, planos } = useReferenciasSalariais();
   const salvarRef = useSalvarReferenciaSalarial();
   const [smEdit, setSmEdit] = useState<string | null>(null);
   const [pisoEdit, setPisoEdit] = useState<string | null>(null);
   const smInput = smEdit ?? String(salarioMinimoFederal);
   const pisoInput = pisoEdit ?? String(pisoComerciarioEs);
+  const [odontoEdit, setOdontoEdit] = useState<string | null>(null);
+  const [f1Edit, setF1Edit] = useState<string | null>(null);
+  const [f2Edit, setF2Edit] = useState<string | null>(null);
+  const planoOdonto = odontoEdit ?? String(planos.odontologico);
+  const planoF1 = f1Edit ?? String(planos.saudeFaixa1);
+  const planoF2 = f2Edit ?? String(planos.saudeFaixa2);
+  const setPlanoOdonto = setOdontoEdit;
+  const setPlanoF1 = setF1Edit;
+  const setPlanoF2 = setF2Edit;
 
   const { data: cargos = [], isLoading } = useQuery({
     queryKey: ["cargos"],
@@ -217,7 +231,7 @@ function CargosPage() {
               label="Plano odontológico (R$)"
               valor={planoOdonto}
               onChange={setPlanoOdonto}
-              onSave={(v) => salvar(CHAVE_PLANO_ODONTO, v, "Plano odontológico")}
+              onSave={(v: number) => salvar(CHAVE_PLANO_ODONTO, v, "Plano odontológico")}
               saving={salvarRef.isPending}
               hint="Sem faixa etária — sujeito apenas à carência de 3 meses."
             />
@@ -226,7 +240,7 @@ function CargosPage() {
               label="Plano de saúde — 18 a 43 anos (R$)"
               valor={planoF1}
               onChange={setPlanoF1}
-              onSave={(v) => salvar(CHAVE_PLANO_SAUDE_F1, v, "Plano de saúde (18–43)")}
+              onSave={(v: number) => salvar(CHAVE_PLANO_SAUDE_F1, v, "Plano de saúde (18–43)")}
               saving={salvarRef.isPending}
               hint="Faixa 1 — aplicada a quem tem menos de 44 anos na competência."
             />
@@ -235,7 +249,7 @@ function CargosPage() {
               label="Plano de saúde — 44 anos ou mais (R$)"
               valor={planoF2}
               onChange={setPlanoF2}
-              onSave={(v) => salvar(CHAVE_PLANO_SAUDE_F2, v, "Plano de saúde (44+)")}
+              onSave={(v: number) => salvar(CHAVE_PLANO_SAUDE_F2, v, "Plano de saúde (44+)")}
               saving={salvarRef.isPending}
               hint="Faixa 2 — passa a valer automaticamente no mês em que o funcionário completa 44 anos."
             />
@@ -499,5 +513,47 @@ function CargoForm({
         </DialogFooter>
       </form>
     </DialogContent>
+  );
+}
+
+function CampoConfig({
+  id,
+  label,
+  valor,
+  onChange,
+  onSave,
+  saving,
+  hint,
+}: {
+  id: string;
+  label: string;
+  valor: string;
+  onChange: (v: string) => void;
+  onSave: (v: number) => void;
+  saving: boolean;
+  hint: string;
+}) {
+  return (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex gap-2">
+        <Input
+          id={id}
+          type="number"
+          min="0"
+          step="0.01"
+          value={valor}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <Button
+          variant="secondary"
+          disabled={saving || Number(valor) < 0 || valor === ""}
+          onClick={() => onSave(Number(valor))}
+        >
+          Salvar
+        </Button>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+    </div>
   );
 }
