@@ -1,5 +1,5 @@
 import { adicionaisDoCargo, SALARIO_MINIMO_FEDERAL, type CargoAdicionais } from "@/lib/cargos";
-import { encargosRate } from "@/lib/encargos";
+import { encargosRate, FGTS_PCT } from "@/lib/encargos";
 
 export type RegimeTributario = "simples" | "lucro_real";
 
@@ -74,6 +74,13 @@ export function custoReal(
   const rate = comEncargos ? encargosRate(regimeDoFuncionario(f)) : 0;
   const encargos = (salario + a.total) * rate;
 
+  // FGTS estimado (8% do salário nominal) — referência de custo mensal esperado,
+  // sem considerar faltas. O valor real do mês vive no Contracheque.
+  // Nos regimes com encargos patronais (68%/28%) o FGTS já está embutido na taxa,
+  // por isso ele só é somado ao total quando não há encargos aplicados.
+  const fgtsEstimado = Math.round(salario * FGTS_PCT * 100) / 100;
+  const fgtsNoTotal = comEncargos ? 0 : fgtsEstimado;
+
   return {
     salario,
     vt,
@@ -87,10 +94,13 @@ export function custoReal(
     comEncargos,
     encargos,
     rate,
+    fgtsEstimado,
+    fgtsNoTotal,
     beneficios: vt + va + ps + po,
-    total: salario + a.total + encargos + vt + va + ps + po + sf + ve,
+    total: salario + a.total + encargos + fgtsNoTotal + vt + va + ps + po + sf + ve,
   };
 }
+
 
 /** Campos mínimos que toda tela precisa selecionar para calcular o custo ao vivo. */
 export const CUSTO_SELECT =

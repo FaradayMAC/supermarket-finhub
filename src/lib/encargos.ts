@@ -8,3 +8,6 @@ export const ENCARGOS_RATE_SIMPLES = 0.28;
 export function encargosRate(regime: string | null | undefined) {
   return regime === "lucro_real" ? ENCARGOS_RATE_LUCRO_REAL : ENCARGOS_RATE_SIMPLES;
 }
+
+/** FGTS: 8% sobre a remuneração do mês (Lei 8.036/90, Art. 15). */
+export const FGTS_PCT = 0.08;
