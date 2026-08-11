@@ -29,6 +29,7 @@ import {
 } from "@/lib/cargos";
 import { custoReal, regimeDoFuncionario, type RegimeTributario } from "@/lib/custo-funcionario";
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
+import { VALE_ALIMENTACAO_PADRAO_ES, VALE_TRANSPORTE_DESCONTO_PCT } from "@/lib/beneficios";
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
   head: () => ({ meta: [{ title: "Funcionários · MercadoGest" }] }),
