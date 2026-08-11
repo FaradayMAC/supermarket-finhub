@@ -267,6 +267,7 @@ export function calcContracheque(
   const fgts = r2(baseFgts * FGTS_PCT);
   const irrf = calcIrrf(baseInss, inss, Number(f.dependentes) || 0);
   const descontoVt = f.desconto_vt ? r2(Math.min(salario * 0.06, vtLiquido)) : 0;
+  // Planos de saúde e odontológico: benefício custeado pela empresa — não descontado.
   const planosCalc = planosDoFuncionario(
     f,
     opts.planos ?? PLANOS_CONFIG_ZERO,
@@ -277,7 +278,7 @@ export function calcContracheque(
   const convenio = Math.max(0, Number(opts.convenio) || 0);
 
   const totalDescontos = r2(
-    descFaltas + descDsr + descExtra + inss + irrf + descontoVt + planoSaude + planoOdonto + convenio,
+    descFaltas + descDsr + descExtra + inss + irrf + descontoVt + convenio,
   );
   const liquido = r2(proventos - totalDescontos);
 
