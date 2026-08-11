@@ -160,13 +160,95 @@ function FuncPage() {
     setOpen(true);
   }
 
+  const fecharFolha = useMutation({
+    mutationFn: async () => {
+      const d = new Date();
+      const competencia = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+      const mes = competencia.slice(0, 7);
+      const alvo = filtrados.filter((f) => f.ativo);
+      if (alvo.length === 0) throw new Error("Nenhum funcionário ativo no filtro atual.");
+
+      const { data: faltas } = await supabase
+        .from("faltas_rh")
+        .select("funcionario_id, quantidade")
+        .eq("mes_referencia", competencia);
+      const faltasMap = new Map<string, number>();
+      (faltas ?? []).forEach((f: any) =>
+        faltasMap.set(f.funcionario_id, (faltasMap.get(f.funcionario_id) ?? 0) + Number(f.quantidade || 0)),
+      );
+      const { data: convenios } = await supabase
+        .from("convenio_funcionario")
+        .select("funcionario_id, valor")
+        .eq("mes_referencia", competencia);
+      const convMap = new Map<string, number>(
+        (convenios ?? []).map((c: any) => [c.funcionario_id, Number(c.valor || 0)]),
+      );
+
+      const linhas = alvo.map((f) => {
+        const cc = calcContracheque(f as any, {
+          mes,
+          faltas: faltasMap.get(f.id) ?? 0,
+          convenio: convMap.get(f.id) ?? 0,
+          salarioMinimoFederal,
+        });
+        const custo = custoReal(f, salarioMinimoFederal);
+        return {
+          funcionario_id: f.id,
+          loja_id: f.loja_id,
+          competencia,
+          salario_base: cc.salario,
+          beneficios: custo.beneficios,
+          inss: cc.inss,
+          irrf: cc.irrf,
+          fgts: Math.round(cc.salario * 0.08 * 100) / 100,
+          outros_descontos: Math.round((cc.totalDescontos - cc.inss - cc.irrf) * 100) / 100,
+          outros_encargos: Math.round(custo.encargos * 100) / 100,
+          total_proventos: cc.totalProventos,
+          total_descontos: cc.totalDescontos,
+          liquido: cc.liquido,
+          custo_total: Math.round(custo.total * 100) / 100,
+          status: "fechada",
+        };
+      });
+
+      await supabase
+        .from("folha_pagamento")
+        .delete()
+        .eq("competencia", competencia)
+        .in(
+          "funcionario_id",
+          alvo.map((f) => f.id),
+        );
+      const { error } = await supabase.from("folha_pagamento").insert(linhas as any);
+      if (error) throw error;
+      return linhas.length;
+    },
+    onSuccess: (n) => {
+      toast.success(`Folha do mês fechada para ${n} funcionário(s).`);
+      qc.invalidateQueries();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao fechar a folha"),
+  });
+
   return (
     <AppShell
       title="Funcionários"
       actions={
-        <Button onClick={openNew} disabled={lojas.length === 0}>
-          <Plus className="h-4 w-4" /> Novo funcionário
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            disabled={fecharFolha.isPending || filtrados.length === 0}
+            onClick={() => {
+              if (confirm("Fechar a folha do mês atual com os valores calculados agora?"))
+                fecharFolha.mutate();
+            }}
+          >
+            <Lock className="h-4 w-4" /> {fecharFolha.isPending ? "Fechando…" : "Fechar folha do mês"}
+          </Button>
+          <Button onClick={openNew} disabled={lojas.length === 0}>
+            <Plus className="h-4 w-4" /> Novo funcionário
+          </Button>
+        </div>
       }
     >
       <Dialog
