@@ -472,12 +472,18 @@ function FuncForm({
 
   const [salario, setSalario] = useState<number>(Number(initial?.salario_base ?? 0));
   const [vt, setVt] = useState<number>(Number(initial?.vale_transporte ?? 0));
-  const [va, setVa] = useState<number>(Number(initial?.vale_alimentacao ?? 0));
+  // Vale-alimentação é fixo por convenção coletiva — não editável no cadastro.
+  const va = VALE_ALIMENTACAO_PADRAO_ES;
   const [ps, setPs] = useState<number>(Number(initial?.plano_saude ?? 0));
   const [po, setPo] = useState<number>(Number(initial?.plano_odontologico ?? 0));
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
-  const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
+  // Um único controle: possuir VT já implica o desconto de até 6%.
+  const [temVt, setTemVt] = useState<boolean>(
+    initial ? Number(initial.vale_transporte ?? 0) > 0 : false,
+  );
+  const [descontoVt, setDescontoVt] = useState<boolean>(initial ? Boolean(initial.desconto_vt) : true);
+
   const [calculaEncargos, setCalculaEncargos] = useState<boolean>(initial?.calcula_encargos !== false);
   const [prestadorId, setPrestadorId] = useState<string>((initial as any)?.prestador_id ?? "");
 
