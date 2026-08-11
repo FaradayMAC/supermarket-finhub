@@ -15,18 +15,27 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Lock } from "lucide-react";
+import { calcContracheque } from "@/lib/contracheque";
 import { toast } from "sonner";
 import { encargosRate, regimeFromPrestador } from "@/lib/encargos";
-import { adicionaisPct, type Cargo } from "@/lib/cargos";
-import { useSalarioMinimo } from "@/hooks/use-salario-minimo";
+import {
+  adicionaisDoCargo,
+  MOTIVOS_INSALUBRIDADE,
+  PERICULOSIDADE_PCT_PADRAO,
+  QUEBRA_CAIXA_PCT,
+  type Cargo,
+  type MotivoInsalubridade,
+} from "@/lib/cargos";
+import { custoReal } from "@/lib/custo-funcionario";
+import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
   head: () => ({ meta: [{ title: "Funcionários · MercadoGest" }] }),
   component: FuncPage,
 });
 
-export { encargosRate };
+export { encargosRate, custoReal };
 
 
 type Func = {
@@ -46,9 +55,10 @@ type Func = {
   dependentes: number;
   salario_familia: number;
   valor_extra_salarial: number;
-  insalubridade_pct: number;
+  motivo_insalubridade: MotivoInsalubridade;
+  tem_periculosidade: boolean;
   periculosidade_pct: number;
-  quebra_caixa_pct: number;
+  tem_quebra_caixa: boolean;
   desconto_vt: boolean;
   situacao: string | null;
   observacoes: string | null;
@@ -59,55 +69,13 @@ type Func = {
 };
 
 
-export function custoReal(f: {
-  salario_base: number | string;
-  vale_transporte: number | string;
-  vale_alimentacao: number | string;
-  plano_saude: number | string;
-  plano_odontologico?: number | string;
-  salario_familia?: number | string;
-  valor_extra_salarial?: number | string;
-  insalubridade_pct?: number | string;
-  periculosidade_pct?: number | string;
-  quebra_caixa_pct?: number | string;
-  regime_tributario?: string | null;
-}) {
-  const salario = Number(f.salario_base) || 0;
-  const vt = Number(f.vale_transporte) || 0;
-  const va = Number(f.vale_alimentacao) || 0;
-  const ps = Number(f.plano_saude) || 0;
-  const po = Number(f.plano_odontologico) || 0;
-  const sf = Number(f.salario_familia) || 0;
-  const ve = Number(f.valor_extra_salarial) || 0;
-  const pctAdic =
-    (Number(f.insalubridade_pct) || 0) +
-    (Number(f.periculosidade_pct) || 0) +
-    (Number(f.quebra_caixa_pct) || 0);
-  const adicionais = (salario * pctAdic) / 100;
-  const rate = encargosRate(f.regime_tributario);
-  const encargos = (salario + adicionais) * rate;
-  return {
-    salario,
-    vt,
-    va,
-    ps,
-    po,
-    sf,
-    ve,
-    adicionais,
-    pctAdic,
-    encargos,
-    rate,
-    total: salario + adicionais + encargos + vt + va + ps + po + sf + ve,
-  };
-}
-
 
 function FuncPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Func | null>(null);
   const [filtro, setFiltro] = useState("todas");
+  const { salarioMinimoFederal } = useReferenciasSalariais();
 
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas-min"],
@@ -148,7 +116,7 @@ function FuncPage() {
     () => (filtro === "todas" ? funcs : funcs.filter((f) => f.loja_id === filtro)),
     [funcs, filtro],
   );
-  const totalFolha = filtrados.reduce((s, f) => s + custoReal(f).total, 0);
+  const totalFolha = filtrados.reduce((s, f) => s + custoReal(f, salarioMinimoFederal).total, 0);
 
   const upsert = useMutation({
     mutationFn: async ({ id, ...p }: any) => {
@@ -193,13 +161,95 @@ function FuncPage() {
     setOpen(true);
   }
 
+  const fecharFolha = useMutation({
+    mutationFn: async () => {
+      const d = new Date();
+      const competencia = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+      const mes = competencia.slice(0, 7);
+      const alvo = filtrados.filter((f) => f.ativo);
+      if (alvo.length === 0) throw new Error("Nenhum funcionário ativo no filtro atual.");
+
+      const { data: faltas } = await supabase
+        .from("faltas_rh")
+        .select("funcionario_id, quantidade")
+        .eq("mes_referencia", competencia);
+      const faltasMap = new Map<string, number>();
+      (faltas ?? []).forEach((f: any) =>
+        faltasMap.set(f.funcionario_id, (faltasMap.get(f.funcionario_id) ?? 0) + Number(f.quantidade || 0)),
+      );
+      const { data: convenios } = await supabase
+        .from("convenio_funcionario")
+        .select("funcionario_id, valor")
+        .eq("mes_referencia", competencia);
+      const convMap = new Map<string, number>(
+        (convenios ?? []).map((c: any) => [c.funcionario_id, Number(c.valor || 0)]),
+      );
+
+      const linhas = alvo.map((f) => {
+        const cc = calcContracheque(f as any, {
+          mes,
+          faltas: faltasMap.get(f.id) ?? 0,
+          convenio: convMap.get(f.id) ?? 0,
+          salarioMinimoFederal,
+        });
+        const custo = custoReal(f, salarioMinimoFederal);
+        return {
+          funcionario_id: f.id,
+          loja_id: f.loja_id,
+          competencia,
+          salario_base: cc.salario,
+          beneficios: custo.beneficios,
+          inss: cc.inss,
+          irrf: cc.irrf,
+          fgts: Math.round(cc.salario * 0.08 * 100) / 100,
+          outros_descontos: Math.round((cc.totalDescontos - cc.inss - cc.irrf) * 100) / 100,
+          outros_encargos: Math.round(custo.encargos * 100) / 100,
+          total_proventos: cc.proventos,
+          total_descontos: cc.totalDescontos,
+          liquido: cc.liquido,
+          custo_total: Math.round(custo.total * 100) / 100,
+          status: "fechada",
+        };
+      });
+
+      await supabase
+        .from("folha_pagamento")
+        .delete()
+        .eq("competencia", competencia)
+        .in(
+          "funcionario_id",
+          alvo.map((f) => f.id),
+        );
+      const { error } = await supabase.from("folha_pagamento").insert(linhas as any);
+      if (error) throw error;
+      return linhas.length;
+    },
+    onSuccess: (n) => {
+      toast.success(`Folha do mês fechada para ${n} funcionário(s).`);
+      qc.invalidateQueries();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao fechar a folha"),
+  });
+
   return (
     <AppShell
       title="Funcionários"
       actions={
-        <Button onClick={openNew} disabled={lojas.length === 0}>
-          <Plus className="h-4 w-4" /> Novo funcionário
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            disabled={fecharFolha.isPending || filtrados.length === 0}
+            onClick={() => {
+              if (confirm("Fechar a folha do mês atual com os valores calculados agora?"))
+                fecharFolha.mutate();
+            }}
+          >
+            <Lock className="h-4 w-4" /> {fecharFolha.isPending ? "Fechando…" : "Fechar folha do mês"}
+          </Button>
+          <Button onClick={openNew} disabled={lojas.length === 0}>
+            <Plus className="h-4 w-4" /> Novo funcionário
+          </Button>
+        </div>
       }
     >
       <Dialog
@@ -291,8 +341,8 @@ function FuncPage() {
                   </tr>
                 )}
                 {filtrados.map((f) => {
-                  const c = custoReal(f);
-                  const beneficios = c.vt + c.va + c.ps + c.po;
+                  const c = custoReal(f, salarioMinimoFederal);
+                  const beneficios = c.beneficios;
                   return (
                     <tr key={f.id} className="border-b last:border-0">
                       <td className="px-4 py-3 font-medium">
@@ -314,8 +364,18 @@ function FuncPage() {
                       <td className="px-4 py-3 text-right">{fmtBRL(c.sf)}</td>
                       <td className="px-4 py-3 text-right">
                         {fmtBRL(c.adicionais)}
-                        {c.pctAdic > 0 && (
-                          <span className="ml-1 text-xs text-muted-foreground">({c.pctAdic}%)</span>
+                        {c.adicionais > 0 && (
+                          <span className="ml-1 block text-[10px] text-muted-foreground">
+                            {[
+                              c.detalheAdicionais.periculosidade > 0 &&
+                                `peric. ${c.detalheAdicionais.pericPct}%`,
+                              c.detalheAdicionais.insalubridade > 0 &&
+                                `insal. ${c.detalheAdicionais.grauInsalubridade}%`,
+                              c.detalheAdicionais.quebraCaixa > 0 && `q. caixa ${QUEBRA_CAIXA_PCT}%`,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">{fmtBRL(beneficios)}</td>
@@ -390,19 +450,25 @@ function FuncForm({
   const [po, setPo] = useState<number>(Number(initial?.plano_odontologico ?? 0));
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
-  const [insalManual, setInsal] = useState<number>(Number(initial?.insalubridade_pct ?? 0));
-  const [pericManual, setPeric] = useState<number>(Number(initial?.periculosidade_pct ?? 0));
-  const [qcManual, setQc] = useState<number>(Number(initial?.quebra_caixa_pct ?? 0));
   const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
 
   // Cargo selecionado define automaticamente os adicionais legais.
-  const { salarioMinimo } = useSalarioMinimo();
+  const { salarioMinimoFederal } = useReferenciasSalariais();
   const cargo = cargos.find((c) => c.id === cargoId) ?? null;
-  const auto = cargo ? adicionaisPct(cargo, salario, salarioMinimo) : null;
 
-  const insal = auto ? auto.insalubridade_pct : insalManual;
-  const peric = auto ? auto.periculosidade_pct : pericManual;
-  const qc = auto ? auto.quebra_caixa_pct : qcManual;
+  const adicCfg = {
+    tem_periculosidade: cargo
+      ? Boolean(cargo.tem_periculosidade)
+      : Boolean(initial?.tem_periculosidade),
+    periculosidade_pct: cargo
+      ? Number(cargo.periculosidade_pct ?? PERICULOSIDADE_PCT_PADRAO)
+      : Number(initial?.periculosidade_pct ?? PERICULOSIDADE_PCT_PADRAO),
+    tem_quebra_caixa: cargo ? Boolean(cargo.tem_quebra_caixa) : Boolean(initial?.tem_quebra_caixa),
+    motivo_insalubridade: (cargo?.motivo_insalubridade ??
+      initial?.motivo_insalubridade ??
+      "nenhum") as MotivoInsalubridade,
+  };
+  const adic = adicionaisDoCargo(adicCfg, salario, salarioMinimoFederal);
 
   function selecionarCargo(id: string) {
     setCargoId(id);
@@ -410,19 +476,20 @@ function FuncForm({
     if (c && Number(c.salario_base) > 0) setSalario(Number(c.salario_base));
   }
 
-  const preview = custoReal({
-    salario_base: salario,
-    vale_transporte: vt,
-    vale_alimentacao: va,
-    plano_saude: ps,
-    plano_odontologico: po,
-    salario_familia: sf,
-    valor_extra_salarial: ve,
-    insalubridade_pct: insal,
-    periculosidade_pct: peric,
-    quebra_caixa_pct: qc,
-    regime_tributario: regime,
-  });
+  const preview = custoReal(
+    {
+      salario_base: salario,
+      vale_transporte: vt,
+      vale_alimentacao: va,
+      plano_saude: ps,
+      plano_odontologico: po,
+      salario_familia: sf,
+      valor_extra_salarial: ve,
+      regime_tributario: regime,
+      ...adicCfg,
+    },
+    salarioMinimoFederal,
+  );
 
 
 
@@ -460,14 +527,14 @@ function FuncForm({
             dependentes: Number(fd.get("dependentes") || 0),
             salario_familia: Number(fd.get("sf") || 0),
             valor_extra_salarial: _ve,
-            insalubridade_pct: insal,
-            periculosidade_pct: peric,
-            quebra_caixa_pct: qc,
+            motivo_insalubridade: adicCfg.motivo_insalubridade,
+            tem_periculosidade: adicCfg.tem_periculosidade,
+            periculosidade_pct: adicCfg.tem_periculosidade ? adicCfg.periculosidade_pct : 0,
+            tem_quebra_caixa: adicCfg.tem_quebra_caixa,
             desconto_vt: descontoVt,
             situacao: String(fd.get("situacao") || "").trim() || null,
             observacoes: String(fd.get("observacoes") || "").trim() || null,
             regime_tributario: regime,
-            encargos: Math.round(preview.encargos * 100) / 100,
             beneficios: _vt + _va + _ps + _po + _ve,
             ativo: true,
 
@@ -670,61 +737,54 @@ function FuncForm({
           </div>
 
           <div className="col-span-2 mt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Adicionais (% sobre o salário)
-            {cargo && (
-              <span className="ml-2 normal-case font-normal">
-                — preenchidos automaticamente pelo cargo <strong>{cargo.nome}</strong>
-              </span>
-            )}
+            Adicionais legais
+            <span className="ml-2 normal-case font-normal">
+              {cargo ? (
+                <>
+                  — definidos pelo cargo <strong>{cargo.nome}</strong> e recalculados sobre o salário
+                  mínimo federal vigente
+                </>
+              ) : (
+                "— selecione um cargo para aplicar os adicionais automaticamente"
+              )}
+            </span>
           </div>
-          <div>
-            <Label htmlFor="insal">Insalubridade (%)</Label>
-            <Input
-              id="insal"
-              name="insal"
-              type="number"
-              min="0"
-              step="0.01"
-              value={insal}
-              readOnly={!!cargo}
-              onChange={(e) => setInsal(Number(e.target.value))}
-            />
-            {cargo && auto && (
-              <p className="mt-1 text-xs text-muted-foreground">{fmtBRL(auto.valores.insalubridade)}</p>
-            )}
+          <div className="col-span-2 rounded-md border p-3 text-sm">
+            <div className="grid gap-1">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Periculosidade{" "}
+                  {adicCfg.tem_periculosidade
+                    ? `(${adicCfg.periculosidade_pct}% do salário base — CLT Art. 193)`
+                    : "— não aplicável"}
+                </span>
+                <span className="font-medium">{fmtBRL(adic.periculosidade)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Insalubridade{" "}
+                  {adic.grauInsalubridade > 0
+                    ? `(${adic.grauInsalubridade}% do SM federal — ${MOTIVOS_INSALUBRIDADE[adicCfg.motivo_insalubridade].fundamento})`
+                    : "— não aplicável"}
+                </span>
+                <span className="font-medium">{fmtBRL(adic.insalubridade)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Quebra de caixa{" "}
+                  {adicCfg.tem_quebra_caixa
+                    ? `(${QUEBRA_CAIXA_PCT}% do SM federal — CCT Cláusula 4ª)`
+                    : "— não aplicável"}
+                </span>
+                <span className="font-medium">{fmtBRL(adic.quebraCaixa)}</span>
+              </div>
+              <div className="mt-1 flex justify-between border-t pt-1 font-semibold">
+                <span>Total de adicionais</span>
+                <span>{fmtBRL(adic.total)}</span>
+              </div>
+            </div>
           </div>
-          <div>
-            <Label htmlFor="peric">Periculosidade (%)</Label>
-            <Input
-              id="peric"
-              name="peric"
-              type="number"
-              min="0"
-              step="0.01"
-              value={peric}
-              readOnly={!!cargo}
-              onChange={(e) => setPeric(Number(e.target.value))}
-            />
-            {cargo && auto && (
-              <p className="mt-1 text-xs text-muted-foreground">{fmtBRL(auto.valores.periculosidade)}</p>
-            )}
-          </div>
-          <div>
-            <Label htmlFor="qc">Quebra de caixa (%)</Label>
-            <Input
-              id="qc"
-              name="qc"
-              type="number"
-              min="0"
-              step="0.01"
-              value={qc}
-              readOnly={!!cargo}
-              onChange={(e) => setQc(Number(e.target.value))}
-            />
-            {cargo && auto && (
-              <p className="mt-1 text-xs text-muted-foreground">{fmtBRL(auto.valores.quebraCaixa)}</p>
-            )}
-          </div>
+
 
           <div className="flex items-end gap-2 pb-2">
             <input
@@ -767,7 +827,7 @@ function FuncForm({
           <div className="grid grid-cols-2 gap-y-1 sm:grid-cols-4">
             <div className="text-muted-foreground">Salário</div>
             <div className="text-right font-medium">{fmtBRL(preview.salario)}</div>
-            <div className="text-muted-foreground">Adicionais ({preview.pctAdic}%)</div>
+            <div className="text-muted-foreground">Adicionais legais</div>
             <div className="text-right font-medium">{fmtBRL(preview.adicionais)}</div>
             <div className="text-muted-foreground">
               Encargos ({Math.round(preview.rate * 100)}%)

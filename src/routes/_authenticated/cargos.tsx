@@ -17,8 +17,20 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { adicionaisDoCargo, type Cargo } from "@/lib/cargos";
-import { useSalarioMinimo, useSalvarSalarioMinimo } from "@/hooks/use-salario-minimo";
+import {
+  adicionaisDoCargo,
+  MOTIVOS_INSALUBRIDADE,
+  PERICULOSIDADE_PCT_PADRAO,
+  QUEBRA_CAIXA_PCT,
+  type Cargo,
+  type MotivoInsalubridade,
+} from "@/lib/cargos";
+import {
+  CHAVE_PISO_ES,
+  CHAVE_SM_FEDERAL,
+  useReferenciasSalariais,
+  useSalvarReferenciaSalarial,
+} from "@/hooks/use-referencias-salariais";
 import { calcInss, calcIrrf } from "@/lib/contracheque";
 
 const FGTS_PCT = 0.08;
@@ -31,8 +43,6 @@ function resumoCargo(bruto: number) {
   const irrf = calcIrrf(bruto, inss, 0);
   return { fgts, inss, irrf, liquido: r2(bruto - inss - irrf) };
 }
-
-
 
 export const Route = createFileRoute("/_authenticated/cargos")({
   head: () => ({
@@ -50,13 +60,12 @@ function CargosPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Cargo | null>(null);
-  const { salarioMinimo } = useSalarioMinimo();
-  const salvarSm = useSalvarSalarioMinimo();
+  const { salarioMinimoFederal, pisoComerciarioEs } = useReferenciasSalariais();
+  const salvarRef = useSalvarReferenciaSalarial();
   const [smEdit, setSmEdit] = useState<string | null>(null);
-  const smInput = smEdit ?? String(salarioMinimo);
-  const setSmInput = (v: string) => setSmEdit(v);
-
-
+  const [pisoEdit, setPisoEdit] = useState<string | null>(null);
+  const smInput = smEdit ?? String(salarioMinimoFederal);
+  const pisoInput = pisoEdit ?? String(pisoComerciarioEs);
 
   const { data: cargos = [], isLoading } = useQuery({
     queryKey: ["cargos"],
@@ -98,6 +107,16 @@ function CargosPage() {
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
+  function salvar(chave: string, valor: number, label: string) {
+    salvarRef.mutate(
+      { chave, valor },
+      {
+        onSuccess: () => toast.success(`${label} atualizado`),
+        onError: (e: any) => toast.error(e.message ?? "Erro"),
+      },
+    );
+  }
+
   return (
     <AppShell
       title="Cargos"
@@ -122,46 +141,65 @@ function CargosPage() {
         <CargoForm
           key={editing?.id ?? "new"}
           initial={editing}
-          salarioMinimo={salarioMinimo}
+          salarioMinimoFederal={salarioMinimoFederal}
           saving={upsert.isPending}
           onSubmit={(v) => upsert.mutate(v)}
         />
-
       </Dialog>
 
       <Card className="mb-4">
-        <CardContent className="flex flex-wrap items-end gap-3 p-4">
-          <div className="min-w-[200px]">
-            <Label htmlFor="sm">Salário mínimo de referência (R$)</Label>
-            <Input
-              id="sm"
-              type="number"
-              min="0"
-              step="0.01"
-              value={smInput}
-              onChange={(e) => setSmInput(e.target.value)}
-            />
+        <CardContent className="grid gap-4 p-4 md:grid-cols-2">
+          <div>
+            <Label htmlFor="sm">Salário mínimo federal (R$)</Label>
+            <div className="flex gap-2">
+              <Input
+                id="sm"
+                type="number"
+                min="0"
+                step="0.01"
+                value={smInput}
+                onChange={(e) => setSmEdit(e.target.value)}
+              />
+              <Button
+                variant="secondary"
+                disabled={salvarRef.isPending || Number(smInput) <= 0}
+                onClick={() => salvar(CHAVE_SM_FEDERAL, Number(smInput), "Salário mínimo federal")}
+              >
+                Salvar
+              </Button>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Base de cálculo da <strong>quebra de caixa (22%)</strong> e da{" "}
+              <strong>insalubridade (10% ou 20%)</strong> em todos os cargos e funcionários. Valor
+              legal de 2026: R$ 1.621,00 (Decreto 12.797/2025).
+            </p>
           </div>
-          <Button
-            variant="secondary"
-            disabled={salvarSm.isPending || Number(smInput) <= 0}
-            onClick={() =>
-              salvarSm.mutate(Number(smInput), {
-                onSuccess: () => toast.success("Salário mínimo atualizado"),
-                onError: (e: any) => toast.error(e.message ?? "Erro"),
-              })
-            }
-          >
-            {salvarSm.isPending ? "Salvando…" : "Salvar"}
-          </Button>
-          <p className="flex-1 text-sm text-muted-foreground">
-            Base de cálculo da insalubridade e da quebra de caixa em todos os cargos — inclusive os
-            já cadastrados. A periculosidade incide sobre o salário base do cargo. Valor atual:{" "}
-            <strong>{fmtBRL(salarioMinimo)}</strong>.
-          </p>
+          <div>
+            <Label htmlFor="piso">Piso salarial do comerciário-ES (R$)</Label>
+            <div className="flex gap-2">
+              <Input
+                id="piso"
+                type="number"
+                min="0"
+                step="0.01"
+                value={pisoInput}
+                onChange={(e) => setPisoEdit(e.target.value)}
+              />
+              <Button
+                variant="secondary"
+                disabled={salvarRef.isPending || Number(pisoInput) <= 0}
+                onClick={() => salvar(CHAVE_PISO_ES, Number(pisoInput), "Piso do comerciário-ES")}
+              >
+                Salvar
+              </Button>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Referência informativa (CCT Cláusula 1ª §2º): piso mínimo de contratação por função.{" "}
+              <strong>Não entra</strong> no cálculo de nenhum adicional.
+            </p>
+          </div>
         </CardContent>
       </Card>
-
 
       <Card>
         <CardContent className="overflow-x-auto p-0">
@@ -169,7 +207,6 @@ function CargosPage() {
             <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Cargo</th>
-                
                 <th className="px-4 py-3 text-right">Salário base</th>
                 <th className="px-4 py-3 text-right">Periculosidade</th>
                 <th className="px-4 py-3 text-right">Insalubridade</th>
@@ -197,7 +234,7 @@ function CargosPage() {
                 </tr>
               )}
               {cargos.map((c) => {
-                const a = adicionaisDoCargo(c, Number(c.salario_base) || 0, salarioMinimo);
+                const a = adicionaisDoCargo(c, Number(c.salario_base) || 0, salarioMinimoFederal);
                 const bruto = (Number(c.salario_base) || 0) + a.total;
                 const res = resumoCargo(bruto);
                 return (
@@ -205,15 +242,15 @@ function CargosPage() {
                     <td className="px-4 py-3 font-medium">{c.nome}</td>
                     <td className="px-4 py-3 text-right">{fmtBRL(Number(c.salario_base) || 0)}</td>
                     <td className="px-4 py-3 text-right">
-                      {c.tem_periculosidade ? fmtBRL(a.periculosidade) : "—"}
+                      {c.tem_periculosidade ? `${fmtBRL(a.periculosidade)} (${a.pericPct}%)` : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {Number(c.insalubridade_grau) > 0
-                        ? `${fmtBRL(a.insalubridade)} (${Number(c.insalubridade_grau)}%)`
+                      {a.grauInsalubridade > 0
+                        ? `${fmtBRL(a.insalubridade)} (${a.grauInsalubridade}%)`
                         : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {c.tem_quebra_caixa ? fmtBRL(a.quebraCaixa) : "—"}
+                      {c.tem_quebra_caixa ? `${fmtBRL(a.quebraCaixa)} (${QUEBRA_CAIXA_PCT}%)` : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">{fmtBRL(res.fgts)}</td>
                     <td className="px-4 py-3 text-right text-destructive">- {fmtBRL(res.inss)}</td>
@@ -221,7 +258,6 @@ function CargosPage() {
                       {res.irrf > 0 ? `- ${fmtBRL(res.irrf)}` : "—"}
                     </td>
                     <td className="px-4 py-3 text-right font-semibold">{fmtBRL(res.liquido)}</td>
-
                     <td className="px-4 py-3 text-right">
                       <Button
                         size="icon"
@@ -258,26 +294,32 @@ function CargoForm({
   initial,
   onSubmit,
   saving,
-  salarioMinimo,
+  salarioMinimoFederal,
 }: {
   initial: Cargo | null;
   onSubmit: (v: any) => void;
   saving: boolean;
-  salarioMinimo: number;
+  salarioMinimoFederal: number;
 }) {
   const [salario, setSalario] = useState<number>(Number(initial?.salario_base ?? 0));
   const [peric, setPeric] = useState<boolean>(Boolean(initial?.tem_periculosidade));
+  const [pericPct, setPericPct] = useState<number>(
+    Number(initial?.periculosidade_pct ?? PERICULOSIDADE_PCT_PADRAO) || PERICULOSIDADE_PCT_PADRAO,
+  );
   const [quebra, setQuebra] = useState<boolean>(Boolean(initial?.tem_quebra_caixa));
-  const [insalGrau, setInsalGrau] = useState<string>(String(Number(initial?.insalubridade_grau ?? 0)));
+  const [motivo, setMotivo] = useState<MotivoInsalubridade>(
+    (initial?.motivo_insalubridade as MotivoInsalubridade) ?? "nenhum",
+  );
 
   const a = adicionaisDoCargo(
     {
       tem_periculosidade: peric,
+      periculosidade_pct: pericPct,
       tem_quebra_caixa: quebra,
-      insalubridade_grau: Number(insalGrau),
+      motivo_insalubridade: motivo,
     },
     salario,
-    salarioMinimo,
+    salarioMinimoFederal,
   );
 
   const bruto = salario + a.total;
@@ -296,11 +338,11 @@ function CargoForm({
           onSubmit({
             id: initial?.id,
             nome: String(fd.get("nome") || "").trim(),
-            
             salario_base: salario,
             tem_periculosidade: peric,
+            periculosidade_pct: peric ? pericPct : 0,
             tem_quebra_caixa: quebra,
-            insalubridade_grau: Number(insalGrau) || 0,
+            motivo_insalubridade: motivo,
             ativo: true,
           });
         }}
@@ -326,6 +368,7 @@ function CargoForm({
           <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Adicionais do cargo
           </div>
+
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -333,8 +376,25 @@ function CargoForm({
               checked={peric}
               onChange={(e) => setPeric(e.target.checked)}
             />
-            Periculosidade — 12% sobre o salário base ({fmtBRL(a.periculosidade)})
+            Periculosidade — % sobre o salário base ({fmtBRL(a.periculosidade)})
           </label>
+          {peric && (
+            <div className="pl-6">
+              <Label htmlFor="pericPct">Percentual de periculosidade (%)</Label>
+              <Input
+                id="pericPct"
+                type="number"
+                min="0"
+                step="0.01"
+                value={pericPct}
+                onChange={(e) => setPericPct(Number(e.target.value))}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Padrão 30% (motoboy) — CLT Art. 193 §4º, Lei 12.997/2014. Editável por cargo.
+              </p>
+            </div>
+          )}
+
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -342,25 +402,31 @@ function CargoForm({
               checked={quebra}
               onChange={(e) => setQuebra(e.target.checked)}
             />
-            Quebra de caixa — 22% do salário mínimo ({fmtBRL(a.quebraCaixa)})
+            Quebra de caixa — {QUEBRA_CAIXA_PCT}% do salário mínimo federal ({fmtBRL(a.quebraCaixa)})
           </label>
+          <p className="pl-6 text-xs text-muted-foreground">
+            Percentual fixado pela CCT Fecomércio-ES, Cláusula 4ª — não editável.
+          </p>
+
           <div>
-            <Label>Insalubridade (sobre o salário mínimo)</Label>
-            <Select value={insalGrau} onValueChange={setInsalGrau}>
+            <Label>Insalubridade — motivo</Label>
+            <Select value={motivo} onValueChange={(v) => setMotivo(v as MotivoInsalubridade)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">Sem insalubridade</SelectItem>
-                <SelectItem value="10">Grau médio — 10%</SelectItem>
-                <SelectItem value="20">Grau máximo — 20%</SelectItem>
+                {(Object.keys(MOTIVOS_INSALUBRIDADE) as MotivoInsalubridade[]).map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {MOTIVOS_INSALUBRIDADE[k].label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            {Number(insalGrau) > 0 && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Valor mensal: {fmtBRL(a.insalubridade)}
-              </p>
-            )}
+            <p className="mt-1 text-xs text-muted-foreground">
+              {motivo === "nenhum"
+                ? "O grau (10% ou 20% do salário mínimo federal) é definido automaticamente pelo motivo."
+                : `${MOTIVOS_INSALUBRIDADE[motivo].fundamento} — ${fmtBRL(a.insalubridade)} por mês.`}
+            </p>
           </div>
         </div>
 
@@ -382,7 +448,6 @@ function CargoForm({
             <div className="text-right font-bold text-primary">{fmtBRL(res.liquido)}</div>
           </div>
         </div>
-
 
         <DialogFooter>
           <Button type="submit" disabled={saving}>

@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { CUSTO_SELECT, custoReal } from "@/lib/custo-funcionario";
+import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { AppShell, fmtBRL } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PeriodFilter, usePeriodo } from "@/components/period-filter";
@@ -28,13 +30,14 @@ const monthLabel = (key: string) => {
 function Dashboard() {
   const periodoState = usePeriodo("1m");
 
+  const { salarioMinimoFederal } = useReferenciasSalariais();
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
     queryFn: async () => {
       const [lojas, despesas, funcionarios, impostos, folha, mov, compras] = await Promise.all([
         supabase.from("lojas").select("id, nome, codigo, ativo"),
         supabase.from("despesas").select("id, loja_id, valor, data_competencia"),
-        supabase.from("funcionarios").select("id, loja_id, salario_base, encargos, beneficios, ativo"),
+        supabase.from("funcionarios").select(CUSTO_SELECT),
         supabase.from("impostos").select("id, loja_id, valor, competencia"),
         supabase.from("folha_pagamento").select("id, funcionario_id, custo_total, competencia"),
         supabase.from("movimentacoes_financeiras").select("loja_id, tipo, valor, data_movimentacao"),
@@ -74,7 +77,7 @@ function Dashboard() {
   const folhaPeriodo = folhaLancada.filter((f) => inWindow(f.competencia)).reduce((s, f) => s + Number(f.custo_total ?? 0), 0);
   const custoMensalFuncs = funcionarios
     .filter((f) => f.ativo)
-    .reduce((s, f) => s + Number(f.salario_base ?? 0) + Number(f.encargos ?? 0) + Number(f.beneficios ?? 0), 0);
+    .reduce((s, f) => s + custoReal(f, salarioMinimoFederal).total, 0);
   
   const totalFolha = folhaPeriodo > 0 ? folhaPeriodo : custoMensalFuncs * mesesJanela;
 
@@ -92,7 +95,7 @@ function Dashboard() {
       const cmv = compras.filter((c) => c.loja_id === l.id && inWindow(c.data_compra)).reduce((s, c) => s + Number(c.valor_total), 0);
       const imp = impostos.filter((i) => i.loja_id === l.id && inWindow(i.competencia)).reduce((s, i) => s + Number(i.valor), 0);
       const funcsLoja = funcionarios.filter((f) => f.loja_id === l.id && f.ativo);
-      const folhaLoja = funcsLoja.reduce((s, f) => s + Number(f.salario_base ?? 0) + Number(f.encargos ?? 0) + Number(f.beneficios ?? 0), 0) * mesesJanela;
+      const folhaLoja = funcsLoja.reduce((s, f) => s + custoReal(f, salarioMinimoFederal).total, 0) * mesesJanela;
       const rec = mov.filter((m) => m.loja_id === l.id && m.tipo === "entrada" && inWindow(m.data_movimentacao)).reduce((s, m) => s + Number(m.valor), 0);
       const custo = desp + cmv + imp + folhaLoja;
       return {
