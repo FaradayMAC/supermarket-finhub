@@ -806,6 +806,7 @@ export type Database = {
         Row: {
           ativo: boolean
           beneficios: number
+          calcula_encargos: boolean
           cargo: string | null
           cargo_id: string | null
           cpf: string | null
@@ -838,6 +839,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           beneficios?: number
+          calcula_encargos?: boolean
           cargo?: string | null
           cargo_id?: string | null
           cpf?: string | null
@@ -870,6 +872,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           beneficios?: number
+          calcula_encargos?: boolean
           cargo?: string | null
           cargo_id?: string | null
           cpf?: string | null
