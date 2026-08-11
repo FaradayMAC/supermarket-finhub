@@ -567,6 +567,8 @@ function FuncForm({
             tem_quebra_caixa: cargo ? false : adicCfg.tem_quebra_caixa,
             desconto_vt: descontoVt,
             calcula_encargos: calculaEncargos,
+            prestador_id: calculaEncargos ? null : prestadorId,
+
             situacao: String(fd.get("situacao") || "").trim() || null,
             observacoes: String(fd.get("observacoes") || "").trim() || null,
             beneficios: _vt + _va + _ps + _po + _ve,
