@@ -27,6 +27,7 @@ import { Route as AuthenticatedIndicadoresRouteImport } from './routes/_authenti
 import { Route as AuthenticatedLojasRouteImport } from './routes/_authenticated/lojas'
 import { Route as AuthenticatedMetasRouteImport } from './routes/_authenticated/metas'
 import { Route as AuthenticatedPrestadoresRouteImport } from './routes/_authenticated/prestadores'
+import { Route as AuthenticatedRescisaoRouteImport } from './routes/_authenticated/rescisao'
 import { Route as AuthenticatedTitulosRouteImport } from './routes/_authenticated/titulos'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedVendasRouteImport } from './routes/_authenticated/vendas'
@@ -127,6 +128,11 @@ const AuthenticatedPrestadoresRoute =
     path: '/prestadores',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRescisaoRoute = AuthenticatedRescisaoRouteImport.update({
+  id: '/rescisao',
+  path: '/rescisao',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTitulosRoute = AuthenticatedTitulosRouteImport.update({
   id: '/titulos',
   path: '/titulos',
@@ -166,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/lojas': typeof AuthenticatedLojasRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/prestadores': typeof AuthenticatedPrestadoresRoute
+  '/rescisao': typeof AuthenticatedRescisaoRoute
   '/titulos': typeof AuthenticatedTitulosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/vendas': typeof AuthenticatedVendasRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/lojas': typeof AuthenticatedLojasRoute
   '/metas': typeof AuthenticatedMetasRoute
   '/prestadores': typeof AuthenticatedPrestadoresRoute
+  '/rescisao': typeof AuthenticatedRescisaoRoute
   '/titulos': typeof AuthenticatedTitulosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/vendas': typeof AuthenticatedVendasRoute
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/_authenticated/lojas': typeof AuthenticatedLojasRoute
   '/_authenticated/metas': typeof AuthenticatedMetasRoute
   '/_authenticated/prestadores': typeof AuthenticatedPrestadoresRoute
+  '/_authenticated/rescisao': typeof AuthenticatedRescisaoRoute
   '/_authenticated/titulos': typeof AuthenticatedTitulosRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/vendas': typeof AuthenticatedVendasRoute
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/lojas'
     | '/metas'
     | '/prestadores'
+    | '/rescisao'
     | '/titulos'
     | '/usuarios'
     | '/vendas'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/lojas'
     | '/metas'
     | '/prestadores'
+    | '/rescisao'
     | '/titulos'
     | '/usuarios'
     | '/vendas'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/_authenticated/lojas'
     | '/_authenticated/metas'
     | '/_authenticated/prestadores'
+    | '/_authenticated/rescisao'
     | '/_authenticated/titulos'
     | '/_authenticated/usuarios'
     | '/_authenticated/vendas'
@@ -426,6 +438,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPrestadoresRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rescisao': {
+      id: '/_authenticated/rescisao'
+      path: '/rescisao'
+      fullPath: '/rescisao'
+      preLoaderRoute: typeof AuthenticatedRescisaoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/titulos': {
       id: '/_authenticated/titulos'
       path: '/titulos'
@@ -473,6 +492,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLojasRoute: typeof AuthenticatedLojasRoute
   AuthenticatedMetasRoute: typeof AuthenticatedMetasRoute
   AuthenticatedPrestadoresRoute: typeof AuthenticatedPrestadoresRoute
+  AuthenticatedRescisaoRoute: typeof AuthenticatedRescisaoRoute
   AuthenticatedTitulosRoute: typeof AuthenticatedTitulosRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedVendasRoute: typeof AuthenticatedVendasRoute
@@ -495,6 +515,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLojasRoute: AuthenticatedLojasRoute,
   AuthenticatedMetasRoute: AuthenticatedMetasRoute,
   AuthenticatedPrestadoresRoute: AuthenticatedPrestadoresRoute,
+  AuthenticatedRescisaoRoute: AuthenticatedRescisaoRoute,
   AuthenticatedTitulosRoute: AuthenticatedTitulosRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedVendasRoute: AuthenticatedVendasRoute,
