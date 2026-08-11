@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/comparativo")({
 function Comparativo() {
   const periodoState = usePeriodo("1m");
 
-  const { salarioMinimoFederal } = useReferenciasSalariais();
+  const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
   const { data, isLoading } = useQuery({
     queryKey: ["comparativo"],
     queryFn: async () => {
@@ -53,7 +53,7 @@ function Comparativo() {
     const cmv = (data?.compras ?? []).filter((c) => c.loja_id === l.id && inWindow(c.data_compra)).reduce((s, c) => s + Number(c.valor_total), 0);
     const imp = (data?.impostos ?? []).filter((i) => i.loja_id === l.id && inWindow(i.competencia)).reduce((s, i) => s + Number(i.valor), 0);
     const funcsLoja = (data?.funcionarios ?? []).filter((f) => f.loja_id === l.id && f.ativo);
-    const custoMensalFuncs = funcsLoja.reduce((s, f) => s + custoReal(f, salarioMinimoFederal).total, 0);
+    const custoMensalFuncs = funcsLoja.reduce((s, f) => s + custoReal(f, salarioMinimoFederal, planosCfg).total, 0);
     const folhaLanc = (data?.folha ?? []).filter((f) => {
       const fn = (data?.funcionarios ?? []).find((x) => x.loja_id === l.id);
       return fn && inWindow(f.competencia);

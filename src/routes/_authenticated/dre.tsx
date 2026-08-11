@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/dre")({
 function DREPage() {
   const periodoState = usePeriodo("1m");
 
-  const { salarioMinimoFederal } = useReferenciasSalariais();
+  const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
   const { data, isLoading } = useQuery({
     queryKey: ["dre"],
     queryFn: async () => {
@@ -54,7 +54,7 @@ function DREPage() {
     const imp = (data?.impostos ?? []).filter((i) => i.loja_id === l.id && inWindow(i.competencia)).reduce((s, i) => s + Number(i.valor), 0);
     const funcsLoja = (data?.funcionarios ?? []).filter((f) => f.loja_id === l.id && f.ativo);
     const funcIds = new Set(funcsLoja.map((f: any) => f.id));
-    const custoMensalFuncs = funcsLoja.reduce((s, f) => s + custoReal(f, salarioMinimoFederal).total, 0);
+    const custoMensalFuncs = funcsLoja.reduce((s, f) => s + custoReal(f, salarioMinimoFederal, planosCfg).total, 0);
     const folhaLanc = (data?.folha ?? []).filter((f) => funcIds.has(f.funcionario_id) && inWindow(f.competencia));
     const folhaTotal = folhaLanc.length > 0
       ? folhaLanc.reduce((s, f) => s + Number(f.custo_total ?? 0), 0)

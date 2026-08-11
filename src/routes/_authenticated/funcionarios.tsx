@@ -88,7 +88,7 @@ function FuncPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Func | null>(null);
   const [filtro, setFiltro] = useState("todas");
-  const { salarioMinimoFederal } = useReferenciasSalariais();
+  const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
 
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas-min"],
@@ -135,7 +135,7 @@ function FuncPage() {
     () => (filtro === "todas" ? funcs : funcs.filter((f) => f.loja_id === filtro)),
     [funcs, filtro],
   );
-  const totalFolha = filtrados.reduce((s, f) => s + custoReal(f, salarioMinimoFederal).total, 0);
+  const totalFolha = filtrados.reduce((s, f) => s + custoReal(f, salarioMinimoFederal, planosCfg).total, 0);
   // Casos herdados: recebem VT mas não têm o desconto de 6% ativo — revisão manual.
   const revisaoVt = useMemo(
     () => filtrados.filter((f) => Number(f.vale_transporte) > 0 && !f.desconto_vt),
@@ -304,7 +304,7 @@ function FuncPage() {
                   </tr>
                 )}
                 {filtrados.map((f) => {
-                  const c = custoReal(f, salarioMinimoFederal);
+                  const c = custoReal(f, salarioMinimoFederal, planosCfg);
                   const beneficios = c.beneficios;
                   return (
                     <tr key={f.id} className="border-b last:border-0">
