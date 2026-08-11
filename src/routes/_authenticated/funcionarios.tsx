@@ -29,6 +29,7 @@ import {
 } from "@/lib/cargos";
 import { custoReal, regimeDoFuncionario, type RegimeTributario } from "@/lib/custo-funcionario";
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
+import { VALE_ALIMENTACAO_PADRAO_ES, VALE_TRANSPORTE_DESCONTO_PCT } from "@/lib/beneficios";
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
   head: () => ({ meta: [{ title: "Funcionários · MercadoGest" }] }),
@@ -132,6 +133,11 @@ function FuncPage() {
     [funcs, filtro],
   );
   const totalFolha = filtrados.reduce((s, f) => s + custoReal(f, salarioMinimoFederal).total, 0);
+  // Casos herdados: recebem VT mas não têm o desconto de 6% ativo — revisão manual.
+  const revisaoVt = useMemo(
+    () => filtrados.filter((f) => Number(f.vale_transporte) > 0 && !f.desconto_vt),
+    [filtrados],
+  );
 
   const upsert = useMutation({
     mutationFn: async ({ id, ...p }: any) => {
@@ -314,6 +320,24 @@ function FuncPage() {
         </div>
       </div>
 
+      {revisaoVt.length > 0 && (
+        <Card className="border-amber-500/50 bg-amber-500/5">
+          <CardContent className="py-4 text-sm">
+            <p className="font-semibold">
+              Revisão de vale-transporte ({revisaoVt.length})
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              Estes funcionários recebem vale-transporte sem o desconto de 6% aplicado. Edite cada
+              cadastro para confirmar a exceção ou ativar o desconto.
+            </p>
+            <p className="mt-2 text-muted-foreground">
+              {revisaoVt.map((f) => f.nome).join(" · ")}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+
       {lojas.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
@@ -472,12 +496,18 @@ function FuncForm({
 
   const [salario, setSalario] = useState<number>(Number(initial?.salario_base ?? 0));
   const [vt, setVt] = useState<number>(Number(initial?.vale_transporte ?? 0));
-  const [va, setVa] = useState<number>(Number(initial?.vale_alimentacao ?? 0));
+  // Vale-alimentação é fixo por convenção coletiva — não editável no cadastro.
+  const va = VALE_ALIMENTACAO_PADRAO_ES;
   const [ps, setPs] = useState<number>(Number(initial?.plano_saude ?? 0));
   const [po, setPo] = useState<number>(Number(initial?.plano_odontologico ?? 0));
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
-  const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
+  // Um único controle: possuir VT já implica o desconto de até 6%.
+  const [temVt, setTemVt] = useState<boolean>(
+    initial ? Number(initial.vale_transporte ?? 0) > 0 : false,
+  );
+  const [descontoVt, setDescontoVt] = useState<boolean>(initial ? Boolean(initial.desconto_vt) : true);
+
   const [calculaEncargos, setCalculaEncargos] = useState<boolean>(initial?.calcula_encargos !== false);
   const [prestadorId, setPrestadorId] = useState<string>((initial as any)?.prestador_id ?? "");
 
@@ -542,8 +572,9 @@ function FuncForm({
 
           const fd = new FormData(e.currentTarget);
           const sal = Number(fd.get("salario") || 0);
-          const _vt = Number(fd.get("vt") || 0);
-          const _va = Number(fd.get("va") || 0);
+          const _vt = temVt ? Number(fd.get("vt") || 0) : 0;
+          if (temVt && _vt <= 0) return toast.error("Informe o valor do vale-transporte");
+          const _va = VALE_ALIMENTACAO_PADRAO_ES;
           const _ps = Number(fd.get("ps") || 0);
           const _po = Number(fd.get("po") || 0);
           const _ve = Number(fd.get("ve") || 0);
@@ -568,7 +599,7 @@ function FuncForm({
             tem_periculosidade: cargo ? false : adicCfg.tem_periculosidade,
             periculosidade_pct: !cargo && adicCfg.tem_periculosidade ? adicCfg.periculosidade_pct : 0,
             tem_quebra_caixa: cargo ? false : adicCfg.tem_quebra_caixa,
-            desconto_vt: descontoVt,
+            desconto_vt: temVt && descontoVt,
             calcula_encargos: calculaEncargos,
             prestador_id: calculaEncargos ? null : prestadorId,
 
@@ -735,30 +766,63 @@ function FuncForm({
               onChange={(e) => setSalario(Number(e.target.value))}
             />
           </div>
-          <div>
-            <Label htmlFor="vt">Vale transporte (R$)</Label>
-            <Input
-              id="vt"
-              name="vt"
-              type="number"
-              min="0"
-              step="0.01"
-              value={vt}
-              onChange={(e) => setVt(Number(e.target.value))}
-            />
+          <div className="col-span-2 rounded-md border p-3">
+            <div className="flex items-center gap-2">
+              <input
+                id="tem_vt"
+                type="checkbox"
+                className="h-4 w-4 accent-primary"
+                checked={temVt}
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  setTemVt(on);
+                  if (!on) setVt(0);
+                  else setDescontoVt(true);
+                }}
+              />
+              <Label htmlFor="tem_vt" className="cursor-pointer">
+                Possui vale-transporte
+              </Label>
+            </div>
+            {temVt && (
+              <div className="mt-3 space-y-2">
+                <div>
+                  <Label htmlFor="vt">Valor mensal do vale-transporte (R$) *</Label>
+                  <Input
+                    id="vt"
+                    name="vt"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    required
+                    value={vt || ""}
+                    onChange={(e) => setVt(Number(e.target.value))}
+                  />
+                </div>
+                <div className="flex items-start gap-2">
+                  <input
+                    id="desconto_vt"
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 accent-primary"
+                    checked={descontoVt}
+                    onChange={(e) => setDescontoVt(e.target.checked)}
+                  />
+                  <Label htmlFor="desconto_vt" className="cursor-pointer text-xs font-normal text-muted-foreground">
+                    Aplicar o desconto legal de {VALE_TRANSPORTE_DESCONTO_PCT}% do salário (Lei 7.418/85).
+                    Desmarque apenas na exceção em que a empresa custeia integralmente o benefício.
+                  </Label>
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <Label htmlFor="va">Vale alimentação (R$)</Label>
-            <Input
-              id="va"
-              name="va"
-              type="number"
-              min="0"
-              step="0.01"
-              value={va}
-              onChange={(e) => setVa(Number(e.target.value))}
-            />
+            <Input id="va" name="va" type="number" value={va} readOnly disabled />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Valor fixo pela CCT Fecomércio-ES 2025-2027 (gêneros alimentícios).
+            </p>
           </div>
+
           <div>
             <Label htmlFor="ps">Plano de saúde (R$)</Label>
             <Input
@@ -866,18 +930,6 @@ function FuncForm({
           </div>
 
 
-          <div className="flex items-end gap-2 pb-2">
-            <input
-              id="desconto_vt"
-              type="checkbox"
-              className="h-4 w-4 accent-primary"
-              checked={descontoVt}
-              onChange={(e) => setDescontoVt(e.target.checked)}
-            />
-            <Label htmlFor="desconto_vt" className="cursor-pointer">
-              Desconta vale transporte
-            </Label>
-          </div>
           <div>
             <Label htmlFor="situacao">Situação</Label>
             <Input
