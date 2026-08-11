@@ -302,7 +302,7 @@ function ContrachequePage() {
               {!isLoading && lista.length === 0 && (
                 <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">Nenhum funcionário ativo para este filtro.</td></tr>
               )}
-              {lista.map(({ f, cc }) => (
+              {lista.map(({ f, cc, hist }) => (
                 <tr key={f.id} className="border-b last:border-0">
                   <td className="px-4 py-3">
                     <div className="font-medium">{f.nome}</div>
@@ -310,26 +310,43 @@ function ContrachequePage() {
                   </td>
                   <td className="px-4 py-3">{lojaMap.get(f.loja_id)?.nome ?? "—"}</td>
                   <td className="px-4 py-3 text-center">
-                    {cc.faltas > 0 ? <Badge variant="destructive">{cc.faltas}</Badge> : <span className="text-muted-foreground">0</span>}
+                    {hist ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : cc!.faltas > 0 ? (
+                      <Badge variant="destructive">{cc!.faltas}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">0</span>
+                    )}
                   </td>
-                  <td className="px-4 py-3 text-right">{fmtBRL(cc.proventos)}</td>
-                  <td className="px-4 py-3 text-right text-destructive">{cc.descFaltas + cc.descDsr > 0 ? `- ${fmtBRL(cc.descFaltas + cc.descDsr)}` : "—"}</td>
-                  <td className="px-4 py-3 text-right text-destructive">{cc.convenio > 0 ? `- ${fmtBRL(cc.convenio)}` : "—"}</td>
-                  <td className="px-4 py-3 text-right">{fmtBRL(cc.totalDescontos)}</td>
-                  <td className="px-4 py-3 text-right font-semibold">{fmtBRL(cc.liquido)}</td>
+                  <td className="px-4 py-3 text-right">{fmtBRL(hist ? Number(hist.total_proventos) : cc!.proventos)}</td>
+                  <td className="px-4 py-3 text-right text-destructive">
+                    {hist ? "—" : cc!.descFaltas + cc!.descDsr > 0 ? `- ${fmtBRL(cc!.descFaltas + cc!.descDsr)}` : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right text-destructive">
+                    {hist ? "—" : cc!.convenio > 0 ? `- ${fmtBRL(cc!.convenio)}` : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right">{fmtBRL(hist ? Number(hist.total_descontos) : cc!.totalDescontos)}</td>
+                  <td className="px-4 py-3 text-right font-semibold">{fmtBRL(hist ? Number(hist.liquido) : cc!.liquido)}</td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
-                    <Button size="icon" variant="ghost" title="Lançar convênio" onClick={() => setConvOpen(f)}>
-                      <ShoppingBasket className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" title="Ver contracheque" onClick={() => setDetalhe(f)}>
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" title="Baixar contracheque em PDF" onClick={() => baixarPdf(f)}>
-                      <Download className="h-4 w-4" />
-                    </Button>
+                    {hist ? (
+                      <span className="text-xs text-muted-foreground">Somente leitura</span>
+                    ) : (
+                      <>
+                        <Button size="icon" variant="ghost" title="Lançar convênio" onClick={() => setConvOpen(f)}>
+                          <ShoppingBasket className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" title="Ver contracheque" onClick={() => setDetalhe(f)}>
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" title="Baixar contracheque em PDF" onClick={() => baixarPdf(f)}>
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}
+
             </tbody>
           </table>
         </CardContent>
