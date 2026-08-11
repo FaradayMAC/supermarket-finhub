@@ -2,6 +2,12 @@ import { adicionaisDoCargo, SALARIO_MINIMO_FEDERAL } from "@/lib/cargos";
 import { adicionaisFonte, type FonteAdicionais } from "@/lib/custo-funcionario";
 import { FGTS_PCT } from "@/lib/encargos";
 import { calcSalarioFamilia } from "@/lib/salario-familia";
+import {
+  planosDoFuncionario,
+  PLANOS_CONFIG_ZERO,
+  referenciaCompetencia,
+  type PlanosConfig,
+} from "@/lib/planos";
 
 
 // ============================================================================
@@ -260,8 +266,13 @@ export function calcContracheque(
   const fgts = r2(baseFgts * FGTS_PCT);
   const irrf = calcIrrf(baseInss, inss, Number(f.dependentes) || 0);
   const descontoVt = f.desconto_vt ? r2(Math.min(salario * 0.06, vtLiquido)) : 0;
-  const planoSaude = Number(f.plano_saude) || 0;
-  const planoOdonto = Number(f.plano_odontologico) || 0;
+  const planosCalc = planosDoFuncionario(
+    f,
+    opts.planos ?? PLANOS_CONFIG_ZERO,
+    referenciaCompetencia(opts.mes),
+  );
+  const planoSaude = planosCalc.planoSaude;
+  const planoOdonto = planosCalc.planoOdonto;
   const convenio = Math.max(0, Number(opts.convenio) || 0);
 
   const totalDescontos = r2(
@@ -299,6 +310,7 @@ export function calcContracheque(
     descontoVt,
     planoSaude,
     planoOdonto,
+    planosCalc,
     convenio,
     totalDescontos,
     liquido,
