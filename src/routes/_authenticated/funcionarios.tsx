@@ -101,6 +101,16 @@ function FuncPage() {
       (await supabase.from("cargos").select("*").eq("ativo", true).order("nome")).data ?? [],
   });
 
+  const { data: prestadores = [] } = useQuery({
+    queryKey: ["prestadores-min"],
+    queryFn: async () =>
+      (await supabase
+        .from("prestadores_servico")
+        .select("id, razao_social, nome_fantasia, cnpj")
+        .order("razao_social")).data ?? [],
+  });
+
+
 
   const { data: funcs = [], isLoading } = useQuery({
     queryKey: ["funcionarios"],
