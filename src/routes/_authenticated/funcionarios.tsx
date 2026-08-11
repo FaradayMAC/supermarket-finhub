@@ -131,6 +131,42 @@ function FuncPage() {
     },
   });
 
+  // Situação derivada do Contracheque da competência aberta (mês corrente).
+  const mesAberto = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  })();
+
+  const { data: feriasMes = [] } = useQuery({
+    queryKey: ["ferias-competencia", mesAberto],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ferias_gozadas")
+        .select("funcionario_id")
+        .eq("competencia", `${mesAberto}-01`);
+      if (error) throw error;
+      return (data ?? []) as { funcionario_id: string }[];
+    },
+  });
+
+  const { data: afastMes = [] } = useQuery({
+    queryKey: ["afastamentos-competencia", mesAberto],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("afastamentos_inss")
+        .select("funcionario_id")
+        .eq("competencia", `${mesAberto}-01`);
+      if (error) throw error;
+      return (data ?? []) as { funcionario_id: string }[];
+    },
+  });
+
+  const situacaoDe = (id: string) =>
+    afastMes.some((a) => a.funcionario_id === id)
+      ? "Afastado (INSS)"
+      : feriasMes.some((a) => a.funcionario_id === id)
+        ? "Férias"
+        : "Ativo";
 
 
   const filtrados = useMemo(
