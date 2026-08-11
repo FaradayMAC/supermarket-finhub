@@ -29,6 +29,7 @@ import {
 } from "@/lib/cargos";
 import { custoReal, regimeDoFuncionario, type RegimeTributario } from "@/lib/custo-funcionario";
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
+import { dataFimCarencia } from "@/lib/planos";
 import { VALE_ALIMENTACAO_PADRAO_ES, VALE_TRANSPORTE_DESCONTO_PCT } from "@/lib/beneficios";
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
@@ -417,8 +418,8 @@ function FuncForm({
   const [vt, setVt] = useState<number>(Number(initial?.vale_transporte ?? 0));
   // Vale-alimentação é fixo por convenção coletiva — não editável no cadastro.
   const va = VALE_ALIMENTACAO_PADRAO_ES;
-  const [ps, setPs] = useState<number>(Number(initial?.plano_saude ?? 0));
-  const [po, setPo] = useState<number>(Number(initial?.plano_odontologico ?? 0));
+  const [nascimento, setNascimento] = useState<string>((initial as any)?.data_nascimento ?? "");
+  const [admissao, setAdmissao] = useState<string>(initial?.data_admissao ?? "");
   const [dependentes, setDependentes] = useState<number>(Number(initial?.dependentes ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
   // Um único controle: possuir VT já implica o desconto de até 6%.
@@ -432,7 +433,7 @@ function FuncForm({
 
 
   // Cargo selecionado define automaticamente os adicionais legais.
-  const { salarioMinimoFederal } = useReferenciasSalariais();
+  const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
   const cargo = cargos.find((c) => c.id === cargoId) ?? null;
 
   // Com cargo selecionado, os adicionais pertencem ao cargo — o funcionário
@@ -463,8 +464,8 @@ function FuncForm({
       salario_base: salario,
       vale_transporte: vt,
       vale_alimentacao: va,
-      plano_saude: ps,
-      plano_odontologico: po,
+      data_admissao: admissao || null,
+      data_nascimento: nascimento || null,
       dependentes,
       valor_extra_salarial: ve,
       lojas: { empresas: { regime_tributario: regime } },
@@ -472,6 +473,7 @@ function FuncForm({
       ...adicCfg,
     },
     salarioMinimoFederal,
+    planosCfg,
   );
 
 
@@ -494,8 +496,9 @@ function FuncForm({
           const _vt = temVt ? Number(fd.get("vt") || 0) : 0;
           if (temVt && _vt <= 0) return toast.error("Informe o valor do vale-transporte");
           const _va = VALE_ALIMENTACAO_PADRAO_ES;
-          const _ps = Number(fd.get("ps") || 0);
-          const _po = Number(fd.get("po") || 0);
+          if (!nascimento) return toast.error("Informe a data de nascimento");
+          const _ps = preview.ps;
+          const _po = preview.po;
           const _ve = Number(fd.get("ve") || 0);
           onSubmit({
             id: initial?.id,
@@ -505,7 +508,8 @@ function FuncForm({
             cpf: String(fd.get("cpf") || "").trim() || null,
             cargo: cargo ? cargo.nome : String(fd.get("cargo") || "").trim() || null,
             salario_base: sal,
-            data_admissao: String(fd.get("admissao") || "") || null,
+            data_admissao: admissao || null,
+            data_nascimento: nascimento || null,
             data_desligamento: String(fd.get("desligamento") || "") || null,
 
             vale_transporte: _vt,
@@ -660,8 +664,28 @@ function FuncForm({
           </div>
 
           <div>
+            <Label htmlFor="nascimento">Data de nascimento *</Label>
+            <Input
+              id="nascimento"
+              name="nascimento"
+              type="date"
+              required
+              value={nascimento}
+              onChange={(e) => setNascimento(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Define a faixa etária do plano de saúde (18–43 ou 44+).
+            </p>
+          </div>
+          <div>
             <Label htmlFor="admissao">Data de admissão</Label>
-            <Input id="admissao" name="admissao" type="date" defaultValue={initial?.data_admissao ?? ""} />
+            <Input
+              id="admissao"
+              name="admissao"
+              type="date"
+              value={admissao}
+              onChange={(e) => setAdmissao(e.target.value)}
+            />
           </div>
           <div>
             <Label htmlFor="desligamento">Data de desligamento</Label>
@@ -761,29 +785,28 @@ function FuncForm({
             </p>
           </div>
 
-          <div>
-            <Label htmlFor="ps">Plano de saúde (R$)</Label>
-            <Input
-              id="ps"
-              name="ps"
-              type="number"
-              min="0"
-              step="0.01"
-              value={ps}
-              onChange={(e) => setPs(Number(e.target.value))}
-            />
-          </div>
-          <div>
-            <Label htmlFor="po">Plano odontológico (R$)</Label>
-            <Input
-              id="po"
-              name="po"
-              type="number"
-              min="0"
-              step="0.01"
-              value={po}
-              onChange={(e) => setPo(Number(e.target.value))}
-            />
+          <div className="col-span-2 rounded-md border bg-muted/40 p-3 text-sm">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Planos (valores globais — módulo Cargos)
+            </div>
+            {preview.planos.elegivel ? (
+              <div className="grid grid-cols-2 gap-y-1">
+                <div className="text-muted-foreground">
+                  Plano de saúde{preview.planos.idade !== null ? ` — ${preview.planos.idade} anos` : ""}
+                </div>
+                <div className="text-right font-medium">{fmtBRL(preview.ps)}</div>
+                <div className="text-muted-foreground">Plano odontológico</div>
+                <div className="text-right font-medium">{fmtBRL(preview.po)}</div>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {admissao
+                  ? `Ainda em carência — faltam ${preview.planos.diasParaCarencia} dia(s) (direito a partir de ${
+                      dataFimCarencia(admissao)?.toISOString().slice(0, 10).split("-").reverse().join("/") ?? "—"
+                    }).`
+                  : "Informe a data de admissão para calcular a carência de 3 meses."}
+              </p>
+            )}
           </div>
           <div>
             <Label htmlFor="ve">Valor extra salarial (R$)</Label>
