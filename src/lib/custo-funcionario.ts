@@ -94,4 +94,4 @@ export function custoReal(
 
 /** Campos mínimos que toda tela precisa selecionar para calcular o custo ao vivo. */
 export const CUSTO_SELECT =
-  "id, loja_id, ativo, salario_base, vale_transporte, vale_alimentacao, plano_saude, plano_odontologico, salario_familia, valor_extra_salarial, cargo_id, motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa, cargos(motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa), lojas(empresa_id, empresas(regime_tributario))";
+  "id, loja_id, ativo, salario_base, vale_transporte, vale_alimentacao, plano_saude, plano_odontologico, salario_familia, valor_extra_salarial, calcula_encargos, cargo_id, motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa, cargos(motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa), lojas(empresa_id, empresas(regime_tributario))";
