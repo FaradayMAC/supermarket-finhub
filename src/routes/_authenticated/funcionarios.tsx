@@ -639,7 +639,29 @@ function FuncForm({
                 </>
               )}
             </p>
+            {!calculaEncargos && (
+              <div className="mt-3">
+                <Label>Empresa prestadora de serviços *</Label>
+                <Select value={prestadorId} onValueChange={setPrestadorId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a prestadora" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {prestadores.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.nome_fantasia || p.razao_social}
+                        {p.cnpj ? ` — ${p.cnpj}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Necessário para o rateio do DAS mensal por unidade no módulo Prestadores.
+                </p>
+              </div>
+            )}
           </div>
+
 
 
           <div className="col-span-2">
