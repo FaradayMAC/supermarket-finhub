@@ -201,6 +201,49 @@ function CargosPage() {
         </CardContent>
       </Card>
 
+      <Card className="mb-4">
+        <CardContent className="p-4">
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Planos de saúde e odontológico — valores da empresa
+          </div>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Valores únicos para toda a rede, aplicados automaticamente a cada funcionário após{" "}
+            <strong>3 meses de admissão (carência)</strong>. O plano de saúde varia pela{" "}
+            <strong>faixa etária</strong> na competência calculada.
+          </p>
+          <div className="grid gap-4 md:grid-cols-3">
+            <CampoConfig
+              id="odonto"
+              label="Plano odontológico (R$)"
+              valor={planoOdonto}
+              onChange={setPlanoOdonto}
+              onSave={(v) => salvar(CHAVE_PLANO_ODONTO, v, "Plano odontológico")}
+              saving={salvarRef.isPending}
+              hint="Sem faixa etária — sujeito apenas à carência de 3 meses."
+            />
+            <CampoConfig
+              id="saude1"
+              label="Plano de saúde — 18 a 43 anos (R$)"
+              valor={planoF1}
+              onChange={setPlanoF1}
+              onSave={(v) => salvar(CHAVE_PLANO_SAUDE_F1, v, "Plano de saúde (18–43)")}
+              saving={salvarRef.isPending}
+              hint="Faixa 1 — aplicada a quem tem menos de 44 anos na competência."
+            />
+            <CampoConfig
+              id="saude2"
+              label="Plano de saúde — 44 anos ou mais (R$)"
+              valor={planoF2}
+              onChange={setPlanoF2}
+              onSave={(v) => salvar(CHAVE_PLANO_SAUDE_F2, v, "Plano de saúde (44+)")}
+              saving={salvarRef.isPending}
+              hint="Faixa 2 — passa a valer automaticamente no mês em que o funcionário completa 44 anos."
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+
       <Card>
         <CardContent className="overflow-x-auto p-0">
           <table className="w-full text-sm">
