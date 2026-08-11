@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_authenticated/funcionarios")({
   component: FuncPage,
 });
 
-export { encargosRate };
+export { encargosRate, custoReal };
 
 
 type Func = {
@@ -54,9 +54,10 @@ type Func = {
   dependentes: number;
   salario_familia: number;
   valor_extra_salarial: number;
-  insalubridade_pct: number;
+  motivo_insalubridade: MotivoInsalubridade;
+  tem_periculosidade: boolean;
   periculosidade_pct: number;
-  quebra_caixa_pct: number;
+  tem_quebra_caixa: boolean;
   desconto_vt: boolean;
   situacao: string | null;
   observacoes: string | null;
@@ -66,49 +67,6 @@ type Func = {
   prestadores_servico?: { nome_fantasia: string | null; razao_social: string } | null;
 };
 
-
-export function custoReal(f: {
-  salario_base: number | string;
-  vale_transporte: number | string;
-  vale_alimentacao: number | string;
-  plano_saude: number | string;
-  plano_odontologico?: number | string;
-  salario_familia?: number | string;
-  valor_extra_salarial?: number | string;
-  insalubridade_pct?: number | string;
-  periculosidade_pct?: number | string;
-  quebra_caixa_pct?: number | string;
-  regime_tributario?: string | null;
-}) {
-  const salario = Number(f.salario_base) || 0;
-  const vt = Number(f.vale_transporte) || 0;
-  const va = Number(f.vale_alimentacao) || 0;
-  const ps = Number(f.plano_saude) || 0;
-  const po = Number(f.plano_odontologico) || 0;
-  const sf = Number(f.salario_familia) || 0;
-  const ve = Number(f.valor_extra_salarial) || 0;
-  const pctAdic =
-    (Number(f.insalubridade_pct) || 0) +
-    (Number(f.periculosidade_pct) || 0) +
-    (Number(f.quebra_caixa_pct) || 0);
-  const adicionais = (salario * pctAdic) / 100;
-  const rate = encargosRate(f.regime_tributario);
-  const encargos = (salario + adicionais) * rate;
-  return {
-    salario,
-    vt,
-    va,
-    ps,
-    po,
-    sf,
-    ve,
-    adicionais,
-    pctAdic,
-    encargos,
-    rate,
-    total: salario + adicionais + encargos + vt + va + ps + po + sf + ve,
-  };
-}
 
 
 function FuncPage() {
