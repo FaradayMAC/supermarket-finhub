@@ -579,15 +579,51 @@ function FuncForm({
               Loja onde o funcionário efetivamente trabalha.
             </p>
           </div>
-          <div className="col-span-2 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-            Regime tributário:{" "}
-            <span className="font-semibold text-foreground">
-              {regime === "lucro_real" ? "Lucro Real / Presumido" : "Simples Nacional"}
-            </span>{" "}
-            — definido pela empresa{empresa ? ` ${empresa.razao_social}` : ""} da unidade
-            selecionada (configurado em Lojas). Encargos patronais aplicados:{" "}
-            {Math.round(encargosRate(regime) * 100)}%.
+          <div className="col-span-2 rounded-md border p-3">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Vínculo empregatício
+            </div>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="vinculo"
+                  className="h-4 w-4 accent-primary"
+                  checked={calculaEncargos}
+                  onChange={() => setCalculaEncargos(true)}
+                />
+                Vínculo direto (CLT)
+              </label>
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="vinculo"
+                  className="h-4 w-4 accent-primary"
+                  checked={!calculaEncargos}
+                  onChange={() => setCalculaEncargos(false)}
+                />
+                Terceirizado via prestadora
+              </label>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {calculaEncargos ? (
+                <>
+                  Encargos patronais aplicados: <strong>{Math.round(encargosRate(regime) * 100)}%</strong>{" "}
+                  — regime{" "}
+                  <strong>{regime === "lucro_real" ? "Lucro Real / Presumido" : "Simples Nacional"}</strong>{" "}
+                  da empresa{empresa ? ` ${empresa.razao_social}` : ""} da unidade selecionada
+                  (configurado em Lojas).
+                </>
+              ) : (
+                <>
+                  INSS patronal e FGTS são obrigação da prestadora — não entram no custo deste
+                  funcionário. O repasse (DAS rateado + retenção de INSS sobre a nota) continua
+                  lançado como despesa, no módulo Prestadores.
+                </>
+              )}
+            </p>
           </div>
+
 
           <div className="col-span-2">
             <Label htmlFor="nome">Nome *</Label>
