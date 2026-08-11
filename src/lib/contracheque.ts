@@ -146,12 +146,41 @@ export type FuncionarioCC = CargoAdicionais & {
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
+export type FaltaDia = { data: string; tipo: string };
+
+/** Chave da semana (segunda a domingo) a que a data pertence. */
+function semanaKey(iso: string) {
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  const dow = (date.getUTCDay() + 6) % 7; // 0 = segunda
+  const segunda = new Date(date.getTime() - dow * 86400000);
+  return segunda.toISOString().slice(0, 10);
+}
+
+/**
+ * Lei 605/49, Art. 6º: a falta injustificada faz perder o repouso semanal
+ * remunerado da semana correspondente (segunda a domingo). Cada semana com
+ * ao menos uma falta injustificada = 1 dia de DSR perdido.
+ */
+export function semanasComFaltaInjustificada(faltas: FaltaDia[], mes: string): number {
+  const semanas = new Set<string>();
+  for (const f of faltas) {
+    if (f.tipo !== "injustificada") continue;
+    if (!f.data?.startsWith(mes)) continue;
+    semanas.add(semanaKey(f.data));
+  }
+  return semanas.size;
+}
+
 export function calcContracheque(
   f: FuncionarioCC,
-  opts: { mes: string; faltas: number; convenio: number; salarioMinimoFederal?: number },
+  opts: { mes: string; faltas: FaltaDia[]; convenio: number; salarioMinimoFederal?: number },
 ) {
   const cal = calendarioMes(opts.mes);
-  const faltas = Math.max(0, Math.min(opts.faltas || 0, cal.diasUteis));
+  const listaFaltas = (opts.faltas ?? []).filter((x) => x.data?.startsWith(opts.mes));
+  const injustificadas = listaFaltas.filter((x) => x.tipo === "injustificada");
+  const faltas = Math.min(injustificadas.length, cal.diasUteis);
+  const faltasJustificadas = listaFaltas.length - injustificadas.length;
 
   const salario = Number(f.salario_base) || 0;
   const adic = adicionaisDoCargo(
@@ -169,10 +198,10 @@ export function calcContracheque(
   const va = Number(f.vale_alimentacao) || 0;
   const vt = Number(f.vale_transporte) || 0;
 
-  // --- Faltas: dia + DSR ---
+  // --- Faltas: dia + DSR (semana cheia perdida, Lei 605/49 Art. 6º) ---
   const baseDia = (salario + adicionais) / 30;
   const descFaltas = r2(baseDia * faltas);
-  const dsrDias = cal.diasUteis > 0 ? (faltas / cal.diasUteis) * cal.diasRepouso : 0;
+  const dsrDias = semanasComFaltaInjustificada(injustificadas, opts.mes);
   const descDsr = r2(baseDia * dsrDias);
 
   // --- Redução proporcional em verbas extras e benefícios ---
@@ -180,6 +209,7 @@ export function calcContracheque(
   const descExtra = r2(extra * fatorProporcional);
   const descVa = r2(va * fatorProporcional);
   const descVtBeneficio = r2(vt * fatorProporcional);
+
 
   const proventos = r2(salario + adicionais + extra + salFamilia);
   const vaLiquido = r2(va - descVa);
