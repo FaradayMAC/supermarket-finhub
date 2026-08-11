@@ -133,6 +133,11 @@ function FuncPage() {
     [funcs, filtro],
   );
   const totalFolha = filtrados.reduce((s, f) => s + custoReal(f, salarioMinimoFederal).total, 0);
+  // Casos herdados: recebem VT mas não têm o desconto de 6% ativo — revisão manual.
+  const revisaoVt = useMemo(
+    () => filtrados.filter((f) => Number(f.vale_transporte) > 0 && !f.desconto_vt),
+    [filtrados],
+  );
 
   const upsert = useMutation({
     mutationFn: async ({ id, ...p }: any) => {
