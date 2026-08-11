@@ -39,6 +39,7 @@ type Func = FuncionarioCC & {
   loja_id: string;
   ativo?: boolean;
   data_admissao?: string | null;
+  data_nascimento?: string | null;
   data_desligamento?: string | null;
 };
 
@@ -177,7 +178,7 @@ function ContrachequePage() {
           salarioMinimoFederal,
         }),
       }));
-  }, [fechada, folha, funcMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal]);
+  }, [fechada, folha, funcMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg]);
 
   const totalLiquido = lista.reduce((s, i) => s + (i.hist ? Number(i.hist.liquido) : i.cc!.liquido), 0);
   const totalDescontos = lista.reduce(
