@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -189,8 +189,8 @@ function FaltasPage() {
                 <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">Nenhuma falta lançada ainda. Clique em "Lançar falta".</td></tr>
               )}
               {grupos.map(([mes, itens]) => (
-                <>
-                  <tr key={mes} className="border-b bg-muted/20">
+                <Fragment key={mes}>
+                  <tr className="border-b bg-muted/20">
                     <td colSpan={7} className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {fmtMes(`${mes}-01`)} · {itens.length} falta(s)
                     </td>
@@ -219,7 +219,7 @@ function FaltasPage() {
                       </tr>
                     );
                   })}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>
