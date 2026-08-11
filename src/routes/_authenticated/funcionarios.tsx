@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Pencil, Trash2, Lock } from "lucide-react";
 import { calcContracheque } from "@/lib/contracheque";
 import { toast } from "sonner";
-import { encargosRate, regimeFromPrestador } from "@/lib/encargos";
+import { encargosRate } from "@/lib/encargos";
 import {
   adicionaisDoCargo,
   MOTIVOS_INSALUBRIDADE,
@@ -27,7 +27,7 @@ import {
   type Cargo,
   type MotivoInsalubridade,
 } from "@/lib/cargos";
-import { custoReal } from "@/lib/custo-funcionario";
+import { custoReal, regimeDoFuncionario, type RegimeTributario } from "@/lib/custo-funcionario";
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
@@ -41,7 +41,6 @@ export { encargosRate, custoReal };
 type Func = {
   id: string;
   loja_id: string;
-  prestador_id: string | null;
   nome: string;
   cpf: string | null;
   cargo: string | null;
@@ -62,10 +61,19 @@ type Func = {
   desconto_vt: boolean;
   situacao: string | null;
   observacoes: string | null;
-  regime_tributario: "simples" | "lucro_real";
   ativo: boolean;
-  lojas?: { nome: string; codigo: string };
-  prestadores_servico?: { nome_fantasia: string | null; razao_social: string } | null;
+  lojas?: {
+    nome: string;
+    codigo: string;
+    empresa_id?: string | null;
+    empresas?: { regime_tributario?: string | null } | null;
+  };
+  cargos?: {
+    motivo_insalubridade: MotivoInsalubridade;
+    tem_periculosidade: boolean;
+    periculosidade_pct: number;
+    tem_quebra_caixa: boolean;
+  } | null;
 };
 
 
@@ -80,16 +88,10 @@ function FuncPage() {
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas-min"],
     queryFn: async () =>
-      (await supabase.from("lojas").select("id, nome, codigo").order("nome")).data ?? [],
-  });
-
-  const { data: prestadores = [] } = useQuery({
-    queryKey: ["prestadores-min"],
-    queryFn: async () =>
       (await supabase
-        .from("prestadores_servico")
-        .select("id, razao_social, nome_fantasia, status, regime_tributario")
-        .order("razao_social")).data ?? [],
+        .from("lojas")
+        .select("id, nome, codigo, empresa_id, empresas(id, razao_social, regime_tributario)")
+        .order("nome")).data ?? [],
   });
 
   const { data: cargos = [] } = useQuery({
@@ -104,7 +106,9 @@ function FuncPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("funcionarios")
-        .select("*, lojas(nome, codigo), prestadores_servico(nome_fantasia, razao_social)")
+        .select(
+          "*, lojas(nome, codigo, empresa_id, empresas(regime_tributario)), cargos(motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa)",
+        )
         .order("nome");
       if (error) throw error;
       return data as any as Func[];
@@ -265,7 +269,6 @@ function FuncPage() {
         <FuncForm
           key={editing?.id ?? "new"}
           lojas={lojas as any}
-          prestadores={prestadores as any}
           cargos={cargos as any}
           initial={editing}
           onSubmit={(v) => upsert.mutate(v)}
@@ -360,7 +363,7 @@ function FuncPage() {
                       <td className="px-4 py-3 text-muted-foreground">{f.cargo ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.lojas?.nome ?? "—"}</td>
                       <td className="px-4 py-3 text-xs">
-                        {f.regime_tributario === "lucro_real" ? "Lucro Real" : "Simples"}
+                        {regimeDoFuncionario(f) === "lucro_real" ? "Lucro Real" : "Simples"}
                       </td>
                       <td className="px-4 py-3 text-center">{f.dependentes ?? 0}</td>
                       <td className="px-4 py-3 text-right">{fmtBRL(c.salario)}</td>
@@ -418,19 +421,17 @@ function FuncPage() {
 
 function FuncForm({
   lojas,
-  prestadores,
   cargos,
   initial,
   onSubmit,
   saving,
 }: {
-  lojas: { id: string; nome: string; codigo: string }[];
-  prestadores: {
+  lojas: {
     id: string;
-    razao_social: string;
-    nome_fantasia: string | null;
-    status?: string;
-    regime_tributario?: string | null;
+    nome: string;
+    codigo: string;
+    empresa_id?: string | null;
+    empresas?: { id: string; razao_social: string; regime_tributario?: string | null } | null;
   }[];
   cargos: Cargo[];
   initial: Func | null;
@@ -438,13 +439,12 @@ function FuncForm({
   saving: boolean;
 }) {
   const [lojaId, setLojaId] = useState(initial?.loja_id ?? "");
-  const [prestadorId, setPrestadorId] = useState<string>(initial?.prestador_id ?? "none");
   const [cargoId, setCargoId] = useState<string>(initial?.cargo_id ?? "none");
 
-  const prestador = prestadores.find((p) => p.id === prestadorId) ?? null;
-  const regime: "simples" | "lucro_real" = prestador
-    ? regimeFromPrestador(prestador.regime_tributario)
-    : ((initial?.regime_tributario as any) ?? "simples");
+  const loja = lojas.find((l) => l.id === lojaId) ?? null;
+  const empresa = loja?.empresas ?? null;
+  const regime: RegimeTributario =
+    empresa?.regime_tributario === "lucro_real" ? "lucro_real" : "simples";
 
   const [salario, setSalario] = useState<number>(Number(initial?.salario_base ?? 0));
   const [vt, setVt] = useState<number>(Number(initial?.vale_transporte ?? 0));
@@ -459,18 +459,21 @@ function FuncForm({
   const { salarioMinimoFederal } = useReferenciasSalariais();
   const cargo = cargos.find((c) => c.id === cargoId) ?? null;
 
-  const adicCfg = {
-    tem_periculosidade: cargo
-      ? Boolean(cargo.tem_periculosidade)
-      : Boolean(initial?.tem_periculosidade),
-    periculosidade_pct: cargo
-      ? Number(cargo.periculosidade_pct ?? PERICULOSIDADE_PCT_PADRAO)
-      : Number(initial?.periculosidade_pct ?? PERICULOSIDADE_PCT_PADRAO),
-    tem_quebra_caixa: cargo ? Boolean(cargo.tem_quebra_caixa) : Boolean(initial?.tem_quebra_caixa),
-    motivo_insalubridade: (cargo?.motivo_insalubridade ??
-      initial?.motivo_insalubridade ??
-      "nenhum") as MotivoInsalubridade,
-  };
+  // Com cargo selecionado, os adicionais pertencem ao cargo — o funcionário
+  // não guarda cópia. Sem cargo (avulso), valem os campos do próprio cadastro.
+  const adicCfg = cargo
+    ? {
+        tem_periculosidade: Boolean(cargo.tem_periculosidade),
+        periculosidade_pct: Number(cargo.periculosidade_pct ?? PERICULOSIDADE_PCT_PADRAO),
+        tem_quebra_caixa: Boolean(cargo.tem_quebra_caixa),
+        motivo_insalubridade: (cargo.motivo_insalubridade ?? "nenhum") as MotivoInsalubridade,
+      }
+    : {
+        tem_periculosidade: Boolean(initial?.tem_periculosidade),
+        periculosidade_pct: Number(initial?.periculosidade_pct ?? PERICULOSIDADE_PCT_PADRAO),
+        tem_quebra_caixa: Boolean(initial?.tem_quebra_caixa),
+        motivo_insalubridade: (initial?.motivo_insalubridade ?? "nenhum") as MotivoInsalubridade,
+      };
   const adic = adicionaisDoCargo(adicCfg, salario, salarioMinimoFederal);
 
   function selecionarCargo(id: string) {
@@ -488,7 +491,7 @@ function FuncForm({
       plano_odontologico: po,
       salario_familia: sf,
       valor_extra_salarial: ve,
-      regime_tributario: regime,
+      lojas: { empresas: { regime_tributario: regime } },
       ...adicCfg,
     },
     salarioMinimoFederal,
@@ -516,7 +519,6 @@ function FuncForm({
           onSubmit({
             id: initial?.id,
             loja_id: lojaId,
-            prestador_id: prestadorId === "none" ? null : prestadorId,
             cargo_id: cargoId === "none" ? null : cargoId,
             nome: String(fd.get("nome") || "").trim(),
             cpf: String(fd.get("cpf") || "").trim() || null,
@@ -530,14 +532,14 @@ function FuncForm({
             dependentes: Number(fd.get("dependentes") || 0),
             salario_familia: Number(fd.get("sf") || 0),
             valor_extra_salarial: _ve,
-            motivo_insalubridade: adicCfg.motivo_insalubridade,
-            tem_periculosidade: adicCfg.tem_periculosidade,
-            periculosidade_pct: adicCfg.tem_periculosidade ? adicCfg.periculosidade_pct : 0,
-            tem_quebra_caixa: adicCfg.tem_quebra_caixa,
+            // Com cargo, os adicionais vivem no cargo — nada é copiado aqui.
+            motivo_insalubridade: cargo ? "nenhum" : adicCfg.motivo_insalubridade,
+            tem_periculosidade: cargo ? false : adicCfg.tem_periculosidade,
+            periculosidade_pct: !cargo && adicCfg.tem_periculosidade ? adicCfg.periculosidade_pct : 0,
+            tem_quebra_caixa: cargo ? false : adicCfg.tem_quebra_caixa,
             desconto_vt: descontoVt,
             situacao: String(fd.get("situacao") || "").trim() || null,
             observacoes: String(fd.get("observacoes") || "").trim() || null,
-            regime_tributario: regime,
             beneficios: _vt + _va + _ps + _po + _ve,
             ativo: true,
 
@@ -565,33 +567,14 @@ function FuncForm({
               Loja onde o funcionário efetivamente trabalha.
             </p>
           </div>
-          <div className="col-span-2">
-            <Label>Empresa Prestadora de Serviços</Label>
-            <Select value={prestadorId} onValueChange={setPrestadorId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a empresa contratante" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">— Sem empresa prestadora —</SelectItem>
-                {prestadores.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.nome_fantasia || p.razao_social}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Empresa responsável pela contratação do funcionário (cadastrada em Prestadores).
-            </p>
-          </div>
-
           <div className="col-span-2 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
             Regime tributário:{" "}
             <span className="font-semibold text-foreground">
               {regime === "lucro_real" ? "Lucro Real / Presumido" : "Simples Nacional"}
             </span>{" "}
-            — definido automaticamente pela empresa prestadora selecionada. Encargos patronais
-            aplicados: {Math.round(encargosRate(regime) * 100)}%.
+            — definido pela empresa{empresa ? ` ${empresa.razao_social}` : ""} da unidade
+            selecionada (configurado em Lojas). Encargos patronais aplicados:{" "}
+            {Math.round(encargosRate(regime) * 100)}%.
           </div>
 
           <div className="col-span-2">
@@ -744,8 +727,10 @@ function FuncForm({
             <span className="ml-2 normal-case font-normal">
               {cargo ? (
                 <>
-                  — definidos pelo cargo <strong>{cargo.nome}</strong> e recalculados sobre o salário
-                  mínimo federal vigente
+                  — pertencem ao cargo <strong>{cargo.nome}</strong>; para alterar, edite em{" "}
+                  <Link to="/cargos" className="underline">
+                    Cargos
+                  </Link>
                 </>
               ) : (
                 "— selecione um cargo para aplicar os adicionais automaticamente"

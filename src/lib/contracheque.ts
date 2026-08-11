@@ -1,8 +1,5 @@
-import {
-  adicionaisDoCargo,
-  SALARIO_MINIMO_FEDERAL,
-  type CargoAdicionais,
-} from "@/lib/cargos";
+import { adicionaisDoCargo, SALARIO_MINIMO_FEDERAL } from "@/lib/cargos";
+import { adicionaisFonte, type FonteAdicionais } from "@/lib/custo-funcionario";
 
 // ============================================================================
 // Cálculo do contracheque — legislação trabalhista aplicada ao Espírito Santo
@@ -132,7 +129,7 @@ export function calcIrrf(baseBruta: number, inss: number, dependentes: number) {
   return Math.round(Math.max(0, base * faixa.aliq - faixa.ded) * 100) / 100;
 }
 
-export type FuncionarioCC = CargoAdicionais & {
+export type FuncionarioCC = FonteAdicionais & {
   salario_base: number | string;
   vale_transporte: number | string;
   vale_alimentacao: number | string;
@@ -184,7 +181,7 @@ export function calcContracheque(
 
   const salario = Number(f.salario_base) || 0;
   const adic = adicionaisDoCargo(
-    f,
+    adicionaisFonte(f),
     salario,
     opts.salarioMinimoFederal ?? SALARIO_MINIMO_FEDERAL,
   );

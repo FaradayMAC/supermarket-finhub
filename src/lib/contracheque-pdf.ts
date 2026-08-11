@@ -7,7 +7,6 @@ export type PdfFunc = FuncionarioCC & {
   id: string;
   nome: string;
   cargo: string | null;
-  regime_tributario?: string;
 };
 
 export async function gerarContrachequePdf(params: {
@@ -43,7 +42,7 @@ export async function gerarContrachequePdf(params: {
   doc.setFont("helvetica", "bold").setFontSize(11).text(func.nome, L, y);
   doc.setFont("helvetica", "normal").setFontSize(9);
   y += 13;
-  doc.text(`${func.cargo ?? "—"} · Regime: ${String(func.regime_tributario ?? "—")}`, L, y);
+  doc.text(`${func.cargo ?? "—"}`, L, y);
   y += 12;
   doc.text(
     `Dias úteis: ${cc.calendario.diasUteis} · Dias de repouso (DSR): ${cc.calendario.diasRepouso} · Faltas injustificadas: ${cc.faltas} · Justificadas: ${cc.faltasJustificadas}`,

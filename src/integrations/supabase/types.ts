@@ -446,6 +446,7 @@ export type Database = {
           inscricao_estadual: string | null
           nome_fantasia: string | null
           razao_social: string
+          regime_tributario: string
           telefone: string | null
           updated_at: string
         }
@@ -459,6 +460,7 @@ export type Database = {
           inscricao_estadual?: string | null
           nome_fantasia?: string | null
           razao_social: string
+          regime_tributario?: string
           telefone?: string | null
           updated_at?: string
         }
@@ -472,6 +474,7 @@ export type Database = {
           inscricao_estadual?: string | null
           nome_fantasia?: string | null
           razao_social?: string
+          regime_tributario?: string
           telefone?: string | null
           updated_at?: string
         }
@@ -821,7 +824,6 @@ export type Database = {
           plano_odontologico: number
           plano_saude: number
           prestador_id: string | null
-          regime_tributario: string
           salario_base: number
           salario_familia: number
           situacao: string | null
@@ -854,7 +856,6 @@ export type Database = {
           plano_odontologico?: number
           plano_saude?: number
           prestador_id?: string | null
-          regime_tributario?: string
           salario_base?: number
           salario_familia?: number
           situacao?: string | null
@@ -887,7 +888,6 @@ export type Database = {
           plano_odontologico?: number
           plano_saude?: number
           prestador_id?: string | null
-          regime_tributario?: string
           salario_base?: number
           salario_familia?: number
           situacao?: string | null

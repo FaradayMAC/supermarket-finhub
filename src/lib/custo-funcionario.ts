@@ -1,7 +1,43 @@
 import { adicionaisDoCargo, SALARIO_MINIMO_FEDERAL, type CargoAdicionais } from "@/lib/cargos";
 import { encargosRate } from "@/lib/encargos";
 
-export type FuncionarioCusto = CargoAdicionais & {
+export type RegimeTributario = "simples" | "lucro_real";
+
+/** Vínculos que definem a fonte real dos adicionais e do regime tributário. */
+export type FonteAdicionais = CargoAdicionais & {
+  cargo_id?: string | null;
+  /** Join com `cargos` — fonte única dos adicionais quando há cargo_id. */
+  cargos?: CargoAdicionais | null;
+  /** Join com `lojas → empresas` — fonte única do regime tributário. */
+  lojas?: {
+    empresa_id?: string | null;
+    empresas?: { regime_tributario?: string | null } | null;
+  } | null;
+};
+
+/**
+ * Adicionais legais do funcionário: vêm SEMPRE do cargo quando há cargo_id.
+ * Os campos do próprio funcionário só valem no caso avulso (sem cargo).
+ */
+export function adicionaisFonte(f: FonteAdicionais): CargoAdicionais {
+  if (f.cargo_id && f.cargos) return f.cargos;
+  if (f.cargo_id) {
+    return {
+      tem_periculosidade: false,
+      periculosidade_pct: 0,
+      tem_quebra_caixa: false,
+      motivo_insalubridade: "nenhum",
+    };
+  }
+  return f;
+}
+
+/** Regime tributário do funcionário = regime da empresa dona da loja. */
+export function regimeDoFuncionario(f: FonteAdicionais): RegimeTributario {
+  return f.lojas?.empresas?.regime_tributario === "lucro_real" ? "lucro_real" : "simples";
+}
+
+export type FuncionarioCusto = FonteAdicionais & {
   salario_base: number | string;
   vale_transporte?: number | string;
   vale_alimentacao?: number | string;
@@ -9,7 +45,6 @@ export type FuncionarioCusto = CargoAdicionais & {
   plano_odontologico?: number | string;
   salario_familia?: number | string;
   valor_extra_salarial?: number | string;
-  regime_tributario?: string | null;
 };
 
 /**
@@ -28,8 +63,8 @@ export function custoReal(
   const sf = Number(f.salario_familia) || 0;
   const ve = Number(f.valor_extra_salarial) || 0;
 
-  const a = adicionaisDoCargo(f, salario, salarioMinimoFederal);
-  const rate = encargosRate(f.regime_tributario);
+  const a = adicionaisDoCargo(adicionaisFonte(f), salario, salarioMinimoFederal);
+  const rate = encargosRate(regimeDoFuncionario(f));
   const encargos = (salario + a.total) * rate;
 
   return {
@@ -51,4 +86,4 @@ export function custoReal(
 
 /** Campos mínimos que toda tela precisa selecionar para calcular o custo ao vivo. */
 export const CUSTO_SELECT =
-  "id, loja_id, ativo, salario_base, vale_transporte, vale_alimentacao, plano_saude, plano_odontologico, salario_familia, valor_extra_salarial, regime_tributario, motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa";
+  "id, loja_id, ativo, salario_base, vale_transporte, vale_alimentacao, plano_saude, plano_odontologico, salario_familia, valor_extra_salarial, cargo_id, motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa, cargos(motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa), lojas(empresa_id, empresas(regime_tributario))";
