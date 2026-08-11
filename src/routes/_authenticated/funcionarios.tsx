@@ -907,18 +907,6 @@ function FuncForm({
           </div>
 
 
-          <div className="flex items-end gap-2 pb-2">
-            <input
-              id="desconto_vt"
-              type="checkbox"
-              className="h-4 w-4 accent-primary"
-              checked={descontoVt}
-              onChange={(e) => setDescontoVt(e.target.checked)}
-            />
-            <Label htmlFor="desconto_vt" className="cursor-pointer">
-              Desconta vale transporte
-            </Label>
-          </div>
           <div>
             <Label htmlFor="situacao">Situação</Label>
             <Input
