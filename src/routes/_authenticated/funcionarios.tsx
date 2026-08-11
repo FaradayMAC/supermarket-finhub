@@ -59,6 +59,7 @@ type Func = {
   periculosidade_pct: number;
   tem_quebra_caixa: boolean;
   desconto_vt: boolean;
+  calcula_encargos: boolean;
   situacao: string | null;
   observacoes: string | null;
   ativo: boolean;
