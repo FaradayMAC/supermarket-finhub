@@ -103,11 +103,15 @@ export async function gerarContrachequePdf(params: {
     linha("Redução por faltas (VT)", cc.descVtBeneficio, true);
   }
 
+  section("Encargos da empresa (não descontados do funcionário)");
+  linha("FGTS do mês (8%)", cc.fgts);
+
   y += 26;
   doc.setFillColor(235, 241, 250).rect(L, y - 13, R - L, 26, "F");
   doc.setFont("helvetica", "bold").setFontSize(11);
   doc.text("Líquido a receber", L + 6, y + 4);
   doc.text(brl(cc.liquido), R - 6, y + 4, { align: "right" });
+
 
   y += 48;
   doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(110);
