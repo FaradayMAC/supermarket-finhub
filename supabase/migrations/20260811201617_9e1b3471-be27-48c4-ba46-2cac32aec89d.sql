@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.block_folha_fechada() FROM PUBLIC, anon, authenticated;
