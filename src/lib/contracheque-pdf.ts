@@ -90,17 +90,16 @@ export async function gerarContrachequePdf(params: {
   linha("INSS", cc.inss, true);
   linha("IRRF", cc.irrf, true);
   linha("Vale-transporte (6%)", cc.descontoVt, true);
-  linha("Plano de saúde", cc.planoSaude, true);
-  linha("Plano odontológico", cc.planoOdonto, true);
   linha("Convênio (compras na loja)", cc.convenio, true);
   total("Total de descontos", cc.totalDescontos, true);
 
-  if (cc.va > 0 || cc.vt > 0) {
-    section("Benefícios (proporcionais às faltas)");
-    linha("Vale-alimentação", cc.vaLiquido);
+  if (cc.va > 0 || cc.vt > 0 || cc.planoSaude > 0 || cc.planoOdonto > 0) {
+    section("Benefícios");
+    linha("Vale-alimentação (proporcional às faltas)", cc.vaLiquido);
     linha("Redução por faltas (VA)", cc.descVa, true);
     linha("Vale-transporte", cc.vtLiquido);
-    linha("Redução por faltas (VT)", cc.descVtBeneficio, true);
+    linha("Plano de saúde", cc.planoSaude);
+    linha("Plano odontológico", cc.planoOdonto);
   }
 
   section("Encargos da empresa (não descontados do funcionário)");
