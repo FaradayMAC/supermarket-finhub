@@ -258,8 +258,8 @@ function FuncPage() {
                   </tr>
                 )}
                 {filtrados.map((f) => {
-                  const c = custoReal(f);
-                  const beneficios = c.vt + c.va + c.ps + c.po;
+                  const c = custoReal(f, salarioMinimoFederal);
+                  const beneficios = c.beneficios;
                   return (
                     <tr key={f.id} className="border-b last:border-0">
                       <td className="px-4 py-3 font-medium">
