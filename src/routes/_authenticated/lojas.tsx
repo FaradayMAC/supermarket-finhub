@@ -172,3 +172,70 @@ function LojaForm({ initial, onSubmit, saving }: { initial: Loja | null; onSubmi
     </DialogContent>
   );
 }
+
+type Empresa = { id: string; razao_social: string; regime_tributario: string | null };
+
+/**
+ * Regime tributário é um dado da empresa (vale para todas as lojas dela) e
+ * define o percentual de encargos patronais de todos os seus funcionários.
+ */
+function EmpresasRegime() {
+  const qc = useQueryClient();
+  const { data: empresas = [] } = useQuery({
+    queryKey: ["empresas-regime"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("empresas")
+        .select("id, razao_social, regime_tributario")
+        .order("razao_social");
+      if (error) throw error;
+      return data as any as Empresa[];
+    },
+  });
+
+  const salvar = useMutation({
+    mutationFn: async ({ id, regime }: { id: string; regime: string }) => {
+      const { error } = await supabase
+        .from("empresas")
+        .update({ regime_tributario: regime } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Regime tributário atualizado");
+      qc.invalidateQueries();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
+  });
+
+  if (empresas.length === 0) return null;
+
+  return (
+    <Card className="mb-4">
+      <CardContent className="p-4">
+        <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Regime tributário por empresa
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {empresas.map((e) => (
+            <div key={e.id} className="flex items-center justify-between gap-3 rounded-md border p-3">
+              <span className="text-sm font-medium">{e.razao_social}</span>
+              <select
+                className="h-9 rounded-md border bg-background px-2 text-sm"
+                value={e.regime_tributario === "lucro_real" ? "lucro_real" : "simples"}
+                disabled={salvar.isPending}
+                onChange={(ev) => salvar.mutate({ id: e.id, regime: ev.target.value })}
+              >
+                <option value="simples">Simples Nacional (28% de encargos)</option>
+                <option value="lucro_real">Lucro Real / Presumido (68% de encargos)</option>
+              </select>
+            </div>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Vale para todas as lojas e funcionários da empresa — não é mais definido por funcionário.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
