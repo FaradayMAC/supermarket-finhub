@@ -200,8 +200,15 @@ export function semanasComFaltaInjustificada(faltas: FaltaDia[], mes: string): n
 
 export function calcContracheque(
   f: FuncionarioCC,
-  opts: { mes: string; faltas: FaltaDia[]; convenio: number; salarioMinimoFederal?: number },
+  opts: {
+    mes: string;
+    faltas: FaltaDia[];
+    convenio: number;
+    salarioMinimoFederal?: number;
+    planos?: PlanosConfig;
+  },
 ) {
+
   const cal = calendarioMes(opts.mes);
   const listaFaltas = (opts.faltas ?? []).filter((x) => x.data?.startsWith(opts.mes));
   const injustificadas = listaFaltas.filter((x) => x.tipo === "injustificada");
