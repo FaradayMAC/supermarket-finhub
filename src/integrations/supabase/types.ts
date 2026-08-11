@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      afastamentos_inss: {
+        Row: {
+          competencia: string
+          created_at: string
+          data_fim: string | null
+          data_inicio: string
+          funcionario_id: string
+          id: string
+          observacoes: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          competencia: string
+          created_at?: string
+          data_fim?: string | null
+          data_inicio: string
+          funcionario_id: string
+          id?: string
+          observacoes?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          competencia?: string
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          funcionario_id?: string
+          id?: string
+          observacoes?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "afastamentos_inss_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cargos: {
         Row: {
           ativo: boolean
@@ -651,9 +695,11 @@ export type Database = {
       }
       ferias_gozadas: {
         Row: {
+          competencia: string | null
           created_at: string
           data_inicio_gozo: string
           dias_gozados: number
+          dias_vendidos: number
           funcionario_id: string
           id: string
           observacoes: string | null
@@ -662,9 +708,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          competencia?: string | null
           created_at?: string
           data_inicio_gozo: string
           dias_gozados?: number
+          dias_vendidos?: number
           funcionario_id: string
           id?: string
           observacoes?: string | null
@@ -673,9 +721,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          competencia?: string | null
           created_at?: string
           data_inicio_gozo?: string
           dias_gozados?: number
+          dias_vendidos?: number
           funcionario_id?: string
           id?: string
           observacoes?: string | null
