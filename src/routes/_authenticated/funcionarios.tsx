@@ -15,7 +15,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Lock } from "lucide-react";
+import { calcContracheque } from "@/lib/contracheque";
 import { toast } from "sonner";
 import { encargosRate, regimeFromPrestador } from "@/lib/encargos";
 import {
