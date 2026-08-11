@@ -115,7 +115,7 @@ function FuncPage() {
     () => (filtro === "todas" ? funcs : funcs.filter((f) => f.loja_id === filtro)),
     [funcs, filtro],
   );
-  const totalFolha = filtrados.reduce((s, f) => s + custoReal(f).total, 0);
+  const totalFolha = filtrados.reduce((s, f) => s + custoReal(f, salarioMinimoFederal).total, 0);
 
   const upsert = useMutation({
     mutationFn: async ({ id, ...p }: any) => {
