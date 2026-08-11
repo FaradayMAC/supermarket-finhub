@@ -271,10 +271,12 @@ function FuncPage() {
           key={editing?.id ?? "new"}
           lojas={lojas as any}
           cargos={cargos as any}
+          prestadores={prestadores as any}
           initial={editing}
           onSubmit={(v) => upsert.mutate(v)}
           saving={upsert.isPending}
         />
+
 
 
       </Dialog>
