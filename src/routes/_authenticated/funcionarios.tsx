@@ -15,8 +15,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Lock } from "lucide-react";
-import { calcContracheque } from "@/lib/contracheque";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+
 import { toast } from "sonner";
 import { encargosRate } from "@/lib/encargos";
 import {
@@ -48,6 +48,8 @@ type Func = {
   cargo_id: string | null;
   salario_base: number;
   data_admissao: string | null;
+  data_desligamento: string | null;
+
   vale_transporte: number;
   vale_alimentacao: number;
   plano_saude: number;
