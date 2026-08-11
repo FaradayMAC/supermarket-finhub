@@ -199,7 +199,6 @@ export async function runDriveSync(): Promise<SyncResult> {
           desconto_vt: !!(cVT >= 0 && String(row[cVT] ?? "").trim()),
           situacao: (cSituacao >= 0 ? row[cSituacao] : "") || null,
           observacoes: (cObs >= 0 ? row[cObs] : "") || null,
-          regime_tributario: "simples",
           ativo: true,
         };
 

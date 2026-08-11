@@ -35,7 +35,6 @@ type Func = FuncionarioCC & {
   nome: string;
   cargo: string | null;
   loja_id: string;
-  regime_tributario: string;
 };
 
 const mesAtual = () => {
@@ -66,7 +65,7 @@ function ContrachequePage() {
       const { data, error } = await supabase
         .from("funcionarios")
         .select(
-          "id,nome,cargo,loja_id,salario_base,vale_transporte,vale_alimentacao,plano_saude,plano_odontologico,salario_familia,valor_extra_salarial,motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa,dependentes,desconto_vt,regime_tributario",
+          "id,nome,cargo,loja_id,salario_base,vale_transporte,vale_alimentacao,plano_saude,plano_odontologico,salario_familia,valor_extra_salarial,cargo_id,motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa,dependentes,desconto_vt,cargos(motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa),lojas(empresa_id,empresas(regime_tributario))",
         )
         .eq("ativo", true)
         .order("nome");
