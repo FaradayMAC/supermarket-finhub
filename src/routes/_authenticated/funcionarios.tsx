@@ -479,6 +479,8 @@ function FuncForm({
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
   const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
   const [calculaEncargos, setCalculaEncargos] = useState<boolean>(initial?.calcula_encargos !== false);
+  const [prestadorId, setPrestadorId] = useState<string>((initial as any)?.prestador_id ?? "");
+
 
   // Cargo selecionado define automaticamente os adicionais legais.
   const { salarioMinimoFederal } = useReferenciasSalariais();
