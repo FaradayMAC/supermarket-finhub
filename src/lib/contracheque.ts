@@ -90,12 +90,13 @@ export function calendarioMes(mes: string): CalendarioMes {
   return { diasNoMes, diasUteis, diasRepouso, feriados };
 }
 
-// --- Tabelas oficiais (INSS / IRRF) ---------------------------------------
+// --- Tabelas oficiais (INSS / IRRF) — vigentes desde jan/2026 -------------
+// INSS: Portaria Interministerial MPS/MF nº 13/2026 (salário mínimo R$ 1.621,00)
 const INSS_FAIXAS = [
-  { ate: 1518.0, aliq: 0.075 },
-  { ate: 2793.88, aliq: 0.09 },
-  { ate: 4190.83, aliq: 0.12 },
-  { ate: 8157.41, aliq: 0.14 },
+  { ate: 1621.0, aliq: 0.075 },
+  { ate: 2902.84, aliq: 0.09 },
+  { ate: 4354.27, aliq: 0.12 },
+  { ate: 8475.55, aliq: 0.14 },
 ];
 
 export function calcInss(base: number) {
@@ -115,19 +116,41 @@ export function calcInss(base: number) {
 }
 
 const DEDUCAO_DEPENDENTE = 189.59;
+// IRRF: tabela progressiva vigente desde jan/2026 (Lei nº 15.191/2025)
 const IRRF_FAIXAS = [
-  { ate: 2259.2, aliq: 0, ded: 0 },
-  { ate: 2826.65, aliq: 0.075, ded: 169.44 },
-  { ate: 3751.05, aliq: 0.15, ded: 381.44 },
-  { ate: 4664.68, aliq: 0.225, ded: 662.77 },
-  { ate: Infinity, aliq: 0.275, ded: 896.0 },
+  { ate: 2428.8, aliq: 0, ded: 0 },
+  { ate: 2826.65, aliq: 0.075, ded: 182.16 },
+  { ate: 3751.05, aliq: 0.15, ded: 394.16 },
+  { ate: 4664.68, aliq: 0.225, ded: 675.49 },
+  { ate: Infinity, aliq: 0.275, ded: 908.73 },
 ];
 
-export function calcIrrf(baseBruta: number, inss: number, dependentes: number) {
+/**
+ * Redutor mensal do IRRF — Lei 15.270/2025 (Tabela de Redução Mensal RFB,
+ * vigente desde jan/2026). Isenção efetiva até R$ 5.000,00 e redução
+ * decrescente entre R$ 5.000,01 e R$ 7.350,00.
+ */
+export function redutorIrrf2026(rendimentoTributavel: number): number {
+  if (rendimentoTributavel <= 5000) return 312.89;
+  if (rendimentoTributavel <= 7350) {
+    return Math.max(0, 978.62 - 0.133145 * rendimentoTributavel);
+  }
+  return 0;
+}
+
+export function calcIrrf(
+  baseBruta: number,
+  inss: number,
+  dependentes: number,
+  rendimentoTributavel: number = baseBruta,
+) {
   const base = Math.max(0, baseBruta - inss - dependentes * DEDUCAO_DEPENDENTE);
   const faixa = IRRF_FAIXAS.find((f) => base <= f.ate)!;
-  return Math.round(Math.max(0, base * faixa.aliq - faixa.ded) * 100) / 100;
+  const irrfTabela = Math.max(0, base * faixa.aliq - faixa.ded);
+  const redutor = redutorIrrf2026(rendimentoTributavel);
+  return Math.round(Math.max(0, irrfTabela - redutor) * 100) / 100;
 }
+
 
 export type FuncionarioCC = FonteAdicionais & {
   salario_base: number | string;
