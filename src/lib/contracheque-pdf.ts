@@ -18,7 +18,7 @@ export async function gerarContrachequePdf(params: {
   convenio: number;
 }) {
   const { func, loja, mes, faltas, convenio } = params;
-  const cc = calcContracheque(func, { mes, faltas, convenio });
+  const cc = calcContracheque(func, { mes, faltas, convenio, salarioMinimoFederal });
   const [ano, m] = mes.split("-");
 
   const { jsPDF } = await import("jspdf");

@@ -49,6 +49,7 @@ function ContrachequePage() {
   const [lojaFiltro, setLojaFiltro] = useState<string>("todas");
   const [detalhe, setDetalhe] = useState<Func | null>(null);
   const [convOpen, setConvOpen] = useState<Func | null>(null);
+  const { salarioMinimoFederal } = useReferenciasSalariais();
 
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas"],
@@ -137,6 +138,7 @@ function ContrachequePage() {
         mes,
         faltas: faltasMap.get(f.id) ?? 0,
         convenio: Number(convMap.get(f.id)?.valor ?? 0),
+        salarioMinimoFederal,
       });
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao gerar PDF");
