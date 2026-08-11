@@ -249,7 +249,8 @@ export function calcContracheque(
   const fatorProporcional = cal.diasUteis > 0 ? faltas / cal.diasUteis : 0;
   const descExtra = r2(extra * fatorProporcional);
   const descVa = r2(va * fatorProporcional);
-  const descVtBeneficio = r2(vt * fatorProporcional);
+  // Vale-transporte é fornecido em valor fixo (passagens do mês), sem redução por faltas.
+  const descVtBeneficio = 0;
 
 
   const proventos = r2(salario + adicionais + extra + salFamilia);
