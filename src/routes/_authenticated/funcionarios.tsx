@@ -367,19 +367,25 @@ function FuncForm({
   const [po, setPo] = useState<number>(Number(initial?.plano_odontologico ?? 0));
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
-  const [insalManual, setInsal] = useState<number>(Number(initial?.insalubridade_pct ?? 0));
-  const [pericManual, setPeric] = useState<number>(Number(initial?.periculosidade_pct ?? 0));
-  const [qcManual, setQc] = useState<number>(Number(initial?.quebra_caixa_pct ?? 0));
   const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
 
   // Cargo selecionado define automaticamente os adicionais legais.
-  const { salarioMinimo } = useSalarioMinimo();
+  const { salarioMinimoFederal } = useReferenciasSalariais();
   const cargo = cargos.find((c) => c.id === cargoId) ?? null;
-  const auto = cargo ? adicionaisPct(cargo, salario, salarioMinimo) : null;
 
-  const insal = auto ? auto.insalubridade_pct : insalManual;
-  const peric = auto ? auto.periculosidade_pct : pericManual;
-  const qc = auto ? auto.quebra_caixa_pct : qcManual;
+  const adicCfg = {
+    tem_periculosidade: cargo
+      ? Boolean(cargo.tem_periculosidade)
+      : Boolean(initial?.tem_periculosidade),
+    periculosidade_pct: cargo
+      ? Number(cargo.periculosidade_pct ?? PERICULOSIDADE_PCT_PADRAO)
+      : Number(initial?.periculosidade_pct ?? PERICULOSIDADE_PCT_PADRAO),
+    tem_quebra_caixa: cargo ? Boolean(cargo.tem_quebra_caixa) : Boolean(initial?.tem_quebra_caixa),
+    motivo_insalubridade: (cargo?.motivo_insalubridade ??
+      initial?.motivo_insalubridade ??
+      "nenhum") as MotivoInsalubridade,
+  };
+  const adic = adicionaisDoCargo(adicCfg, salario, salarioMinimoFederal);
 
   function selecionarCargo(id: string) {
     setCargoId(id);
@@ -387,19 +393,20 @@ function FuncForm({
     if (c && Number(c.salario_base) > 0) setSalario(Number(c.salario_base));
   }
 
-  const preview = custoReal({
-    salario_base: salario,
-    vale_transporte: vt,
-    vale_alimentacao: va,
-    plano_saude: ps,
-    plano_odontologico: po,
-    salario_familia: sf,
-    valor_extra_salarial: ve,
-    insalubridade_pct: insal,
-    periculosidade_pct: peric,
-    quebra_caixa_pct: qc,
-    regime_tributario: regime,
-  });
+  const preview = custoReal(
+    {
+      salario_base: salario,
+      vale_transporte: vt,
+      vale_alimentacao: va,
+      plano_saude: ps,
+      plano_odontologico: po,
+      salario_familia: sf,
+      valor_extra_salarial: ve,
+      regime_tributario: regime,
+      ...adicCfg,
+    },
+    salarioMinimoFederal,
+  );
 
 
 
