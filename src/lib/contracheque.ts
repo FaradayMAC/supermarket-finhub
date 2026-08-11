@@ -1,5 +1,6 @@
 import { adicionaisDoCargo, SALARIO_MINIMO_FEDERAL } from "@/lib/cargos";
 import { adicionaisFonte, type FonteAdicionais } from "@/lib/custo-funcionario";
+import { FGTS_PCT } from "@/lib/encargos";
 
 // ============================================================================
 // Cálculo do contracheque — legislação trabalhista aplicada ao Espírito Santo
@@ -166,8 +167,7 @@ export type FuncionarioCC = FonteAdicionais & {
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
-/** FGTS: 8% sobre a remuneração do mês (Lei 8.036/90, Art. 15). */
-export const FGTS_PCT = 0.08;
+export { FGTS_PCT };
 
 export type FaltaDia = { data: string; tipo: string };
 
