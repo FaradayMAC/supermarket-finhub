@@ -649,6 +649,88 @@ export type Database = {
           },
         ]
       }
+      ferias_gozadas: {
+        Row: {
+          created_at: string
+          data_inicio_gozo: string
+          dias_gozados: number
+          funcionario_id: string
+          id: string
+          observacoes: string | null
+          periodo_aquisitivo_fim: string
+          periodo_aquisitivo_inicio: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_inicio_gozo: string
+          dias_gozados?: number
+          funcionario_id: string
+          id?: string
+          observacoes?: string | null
+          periodo_aquisitivo_fim: string
+          periodo_aquisitivo_inicio: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_inicio_gozo?: string
+          dias_gozados?: number
+          funcionario_id?: string
+          id?: string
+          observacoes?: string | null
+          periodo_aquisitivo_fim?: string
+          periodo_aquisitivo_inicio?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ferias_gozadas_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fgts_saques: {
+        Row: {
+          created_at: string
+          data: string
+          funcionario_id: string
+          id: string
+          motivo: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          funcionario_id: string
+          id?: string
+          motivo?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          funcionario_id?: string
+          id?: string
+          motivo?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fgts_saques_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       folha_pagamento: {
         Row: {
           beneficios: number
@@ -824,6 +906,8 @@ export type Database = {
           desconto_vt: boolean
           email: string | null
           empresa_id: string | null
+          fgts_saldo_inicial: number
+          fgts_saldo_inicial_data: string | null
           id: string
           loja_id: string
           motivo_insalubridade: Database["public"]["Enums"]["motivo_insalubridade"]
@@ -859,6 +943,8 @@ export type Database = {
           desconto_vt?: boolean
           email?: string | null
           empresa_id?: string | null
+          fgts_saldo_inicial?: number
+          fgts_saldo_inicial_data?: string | null
           id?: string
           loja_id: string
           motivo_insalubridade?: Database["public"]["Enums"]["motivo_insalubridade"]
@@ -894,6 +980,8 @@ export type Database = {
           desconto_vt?: boolean
           email?: string | null
           empresa_id?: string | null
+          fgts_saldo_inicial?: number
+          fgts_saldo_inicial_data?: string | null
           id?: string
           loja_id?: string
           motivo_insalubridade?: Database["public"]["Enums"]["motivo_insalubridade"]

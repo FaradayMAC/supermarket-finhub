@@ -31,6 +31,12 @@ import { custoReal, regimeDoFuncionario, type RegimeTributario } from "@/lib/cus
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { dataFimCarencia } from "@/lib/planos";
 import { VALE_ALIMENTACAO_PADRAO_ES, VALE_TRANSPORTE_DESCONTO_PCT } from "@/lib/beneficios";
+import {
+  hojeUTCDate,
+  provisaoDecimoTerceiro,
+  provisaoFerias,
+  type FeriasGozadas,
+} from "@/lib/rescisao";
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
   head: () => ({ meta: [{ title: "Funcionários · MercadoGest" }] }),
@@ -130,6 +136,27 @@ function FuncPage() {
     },
   });
 
+
+  const { data: feriasGozadas = [] } = useQuery({
+    queryKey: ["ferias-gozadas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("ferias_gozadas").select("*");
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const feriasPorFunc = useMemo(() => {
+    const m = new Map<string, FeriasGozadas[]>();
+    for (const g of feriasGozadas) {
+      const arr = m.get(g.funcionario_id) ?? [];
+      arr.push(g as FeriasGozadas);
+      m.set(g.funcionario_id, arr);
+    }
+    return m;
+  }, [feriasGozadas]);
+
+  const hojeRef = hojeUTCDate();
 
   const filtrados = useMemo(
     () => (filtro === "todas" ? funcs : funcs.filter((f) => f.loja_id === filtro)),
@@ -280,6 +307,8 @@ function FuncPage() {
                   <th className="px-4 py-3 text-center">Dep.</th>
                   <th className="px-4 py-3 text-right">Salário</th>
                   <th className="px-4 py-3 text-right">Sal. família</th>
+                  <th className="px-4 py-3 text-right">Prov. férias</th>
+                  <th className="px-4 py-3 text-right">Prov. 13º</th>
                   <th className="px-4 py-3 text-right">Adicionais</th>
                   <th className="px-4 py-3 text-right">Benefícios</th>
 
@@ -291,14 +320,14 @@ function FuncPage() {
               <tbody>
                 {isLoading && (
                   <tr>
-                    <td colSpan={13} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={15} className="px-4 py-8 text-center text-muted-foreground">
                       Carregando…
                     </td>
                   </tr>
                 )}
                 {!isLoading && filtrados.length === 0 && (
                   <tr>
-                    <td colSpan={13} className="px-4 py-12 text-center text-muted-foreground">
+                    <td colSpan={15} className="px-4 py-12 text-center text-muted-foreground">
                       Sem funcionários neste filtro.
                     </td>
                   </tr>
@@ -306,6 +335,9 @@ function FuncPage() {
                 {filtrados.map((f) => {
                   const c = custoReal(f, salarioMinimoFederal, planosCfg);
                   const beneficios = c.beneficios;
+                  const gozadas = feriasPorFunc.get(f.id) ?? [];
+                  const provFerias = provisaoFerias(f as any, gozadas, hojeRef, salarioMinimoFederal);
+                  const prov13 = provisaoDecimoTerceiro(f as any, hojeRef, salarioMinimoFederal);
                   return (
                     <tr key={f.id} className="border-b last:border-0">
                       <td className="px-4 py-3 font-medium">
@@ -325,6 +357,18 @@ function FuncPage() {
                       <td className="px-4 py-3 text-center">{f.dependentes ?? 0}</td>
                       <td className="px-4 py-3 text-right">{fmtBRL(c.salario)}</td>
                       <td className="px-4 py-3 text-right">{fmtBRL(c.sf)}</td>
+                      <td className="px-4 py-3 text-right">
+                        {fmtBRL(provFerias.total)}
+                        <span className="block text-[10px] text-muted-foreground">
+                          {provFerias.meses}/12 avos
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {fmtBRL(prov13.total)}
+                        <span className="block text-[10px] text-muted-foreground">
+                          {prov13.meses}/12 avos
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-right">
                         {fmtBRL(c.adicionais)}
                         {c.adicionais > 0 && (
