@@ -335,9 +335,6 @@ function FuncPage() {
                 {filtrados.map((f) => {
                   const c = custoReal(f, salarioMinimoFederal, planosCfg);
                   const beneficios = c.beneficios;
-                  const gozadas = feriasPorFunc.get(f.id) ?? [];
-                  const provFerias = provisaoFerias(f as any, gozadas, hojeRef, salarioMinimoFederal);
-                  const prov13 = provisaoDecimoTerceiro(f as any, hojeRef, salarioMinimoFederal);
                   return (
                     <tr key={f.id} className="border-b last:border-0">
                       <td className="px-4 py-3 font-medium">
@@ -358,17 +355,18 @@ function FuncPage() {
                       <td className="px-4 py-3 text-right">{fmtBRL(c.salario)}</td>
                       <td className="px-4 py-3 text-right">{fmtBRL(c.sf)}</td>
                       <td className="px-4 py-3 text-right">
-                        {fmtBRL(provFerias.total)}
+                        {fmtBRL(c.provFeriasMes)}
                         <span className="block text-[10px] text-muted-foreground">
-                          {provFerias.meses}/12 avos
+                          1/12 + 1/3 no mês
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {fmtBRL(prov13.total)}
+                        {fmtBRL(c.prov13Mes)}
                         <span className="block text-[10px] text-muted-foreground">
-                          {prov13.meses}/12 avos
+                          1/12 no mês
                         </span>
                       </td>
+
                       <td className="px-4 py-3 text-right">
                         {fmtBRL(c.adicionais)}
                         {c.adicionais > 0 && (
