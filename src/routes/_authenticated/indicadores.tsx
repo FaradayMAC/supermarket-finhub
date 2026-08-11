@@ -50,6 +50,7 @@ function IndicadoresPage() {
   const periodoState = usePeriodo("1m");
   const { inWindow, meses } = periodoState;
 
+  const { salarioMinimoFederal } = useReferenciasSalariais();
   const { data, isLoading } = useQuery({
     queryKey: ["indicadores"],
     queryFn: async () => {

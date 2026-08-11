@@ -30,6 +30,7 @@ const monthLabel = (key: string) => {
 function Dashboard() {
   const periodoState = usePeriodo("1m");
 
+  const { salarioMinimoFederal } = useReferenciasSalariais();
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
     queryFn: async () => {

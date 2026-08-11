@@ -20,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/comparativo")({
 function Comparativo() {
   const periodoState = usePeriodo("1m");
 
+  const { salarioMinimoFederal } = useReferenciasSalariais();
   const { data, isLoading } = useQuery({
     queryKey: ["comparativo"],
     queryFn: async () => {

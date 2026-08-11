@@ -17,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/dre")({
 function DREPage() {
   const periodoState = usePeriodo("1m");
 
+  const { salarioMinimoFederal } = useReferenciasSalariais();
   const { data, isLoading } = useQuery({
     queryKey: ["dre"],
     queryFn: async () => {
