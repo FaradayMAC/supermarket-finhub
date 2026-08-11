@@ -238,6 +238,11 @@ export function calcContracheque(
   // --- Descontos legais ---
   const baseInss = Math.max(0, r2(salario + adicionais + extra - descFaltas - descDsr - descExtra));
   const inss = calcInss(baseInss);
+
+  // --- FGTS do mês (Lei 8.036/90, Art. 15): 8% sobre a remuneração paga no mês.
+  // Custo da empresa — não entra em totalDescontos nem no líquido.
+  const baseFgts = Math.max(0, r2(salario + adicionais + extra - descFaltas - descDsr));
+  const fgts = r2(baseFgts * FGTS_PCT);
   const irrf = calcIrrf(baseInss, inss, Number(f.dependentes) || 0);
   const descontoVt = f.desconto_vt ? r2(Math.min(salario * 0.06, vtLiquido)) : 0;
   const planoSaude = Number(f.plano_saude) || 0;
