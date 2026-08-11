@@ -463,6 +463,7 @@ function FuncForm({
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
   const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
+  const [calculaEncargos, setCalculaEncargos] = useState<boolean>(initial?.calcula_encargos !== false);
 
   // Cargo selecionado define automaticamente os adicionais legais.
   const { salarioMinimoFederal } = useReferenciasSalariais();
