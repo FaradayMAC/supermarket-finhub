@@ -654,61 +654,54 @@ function FuncForm({
           </div>
 
           <div className="col-span-2 mt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Adicionais (% sobre o salário)
-            {cargo && (
-              <span className="ml-2 normal-case font-normal">
-                — preenchidos automaticamente pelo cargo <strong>{cargo.nome}</strong>
-              </span>
-            )}
+            Adicionais legais
+            <span className="ml-2 normal-case font-normal">
+              {cargo ? (
+                <>
+                  — definidos pelo cargo <strong>{cargo.nome}</strong> e recalculados sobre o salário
+                  mínimo federal vigente
+                </>
+              ) : (
+                "— selecione um cargo para aplicar os adicionais automaticamente"
+              )}
+            </span>
           </div>
-          <div>
-            <Label htmlFor="insal">Insalubridade (%)</Label>
-            <Input
-              id="insal"
-              name="insal"
-              type="number"
-              min="0"
-              step="0.01"
-              value={insal}
-              readOnly={!!cargo}
-              onChange={(e) => setInsal(Number(e.target.value))}
-            />
-            {cargo && auto && (
-              <p className="mt-1 text-xs text-muted-foreground">{fmtBRL(auto.valores.insalubridade)}</p>
-            )}
+          <div className="col-span-2 rounded-md border p-3 text-sm">
+            <div className="grid gap-1">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Periculosidade{" "}
+                  {adicCfg.tem_periculosidade
+                    ? `(${adicCfg.periculosidade_pct}% do salário base — CLT Art. 193)`
+                    : "— não aplicável"}
+                </span>
+                <span className="font-medium">{fmtBRL(adic.periculosidade)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Insalubridade{" "}
+                  {adic.grauInsalubridade > 0
+                    ? `(${adic.grauInsalubridade}% do SM federal — ${MOTIVOS_INSALUBRIDADE[adicCfg.motivo_insalubridade].fundamento})`
+                    : "— não aplicável"}
+                </span>
+                <span className="font-medium">{fmtBRL(adic.insalubridade)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Quebra de caixa{" "}
+                  {adicCfg.tem_quebra_caixa
+                    ? `(${QUEBRA_CAIXA_PCT}% do SM federal — CCT Cláusula 4ª)`
+                    : "— não aplicável"}
+                </span>
+                <span className="font-medium">{fmtBRL(adic.quebraCaixa)}</span>
+              </div>
+              <div className="mt-1 flex justify-between border-t pt-1 font-semibold">
+                <span>Total de adicionais</span>
+                <span>{fmtBRL(adic.total)}</span>
+              </div>
+            </div>
           </div>
-          <div>
-            <Label htmlFor="peric">Periculosidade (%)</Label>
-            <Input
-              id="peric"
-              name="peric"
-              type="number"
-              min="0"
-              step="0.01"
-              value={peric}
-              readOnly={!!cargo}
-              onChange={(e) => setPeric(Number(e.target.value))}
-            />
-            {cargo && auto && (
-              <p className="mt-1 text-xs text-muted-foreground">{fmtBRL(auto.valores.periculosidade)}</p>
-            )}
-          </div>
-          <div>
-            <Label htmlFor="qc">Quebra de caixa (%)</Label>
-            <Input
-              id="qc"
-              name="qc"
-              type="number"
-              min="0"
-              step="0.01"
-              value={qc}
-              readOnly={!!cargo}
-              onChange={(e) => setQc(Number(e.target.value))}
-            />
-            {cargo && auto && (
-              <p className="mt-1 text-xs text-muted-foreground">{fmtBRL(auto.valores.quebraCaixa)}</p>
-            )}
-          </div>
+
 
           <div className="flex items-end gap-2 pb-2">
             <input
