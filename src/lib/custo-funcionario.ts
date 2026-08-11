@@ -70,7 +70,8 @@ export function custoReal(
   const ve = Number(f.valor_extra_salarial) || 0;
 
   const a = adicionaisDoCargo(adicionaisFonte(f), salario, salarioMinimoFederal);
-  const rate = encargosRate(regimeDoFuncionario(f));
+  const comEncargos = f.calcula_encargos !== false;
+  const rate = comEncargos ? encargosRate(regimeDoFuncionario(f)) : 0;
   const encargos = (salario + a.total) * rate;
 
   return {
@@ -83,6 +84,7 @@ export function custoReal(
     ve,
     detalheAdicionais: a,
     adicionais: a.total,
+    comEncargos,
     encargos,
     rate,
     beneficios: vt + va + ps + po,
