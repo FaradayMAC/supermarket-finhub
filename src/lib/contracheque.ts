@@ -1,6 +1,8 @@
 import { adicionaisDoCargo, SALARIO_MINIMO_FEDERAL } from "@/lib/cargos";
 import { adicionaisFonte, type FonteAdicionais } from "@/lib/custo-funcionario";
 import { FGTS_PCT } from "@/lib/encargos";
+import { calcSalarioFamilia } from "@/lib/salario-familia";
+
 
 // ============================================================================
 // Cálculo do contracheque — legislação trabalhista aplicada ao Espírito Santo
@@ -217,7 +219,9 @@ export function calcContracheque(
   const adicionais = adic.total;
 
   const extra = Number(f.valor_extra_salarial) || 0;
-  const salFamilia = Number(f.salario_familia) || 0;
+  // Salário-família: cota legal por dependente elegível, não varia com faltas.
+  const salFamilia = calcSalarioFamilia(salario, Number(f.dependentes) || 0);
+
   const va = Number(f.vale_alimentacao) || 0;
   const vt = Number(f.vale_transporte) || 0;
 

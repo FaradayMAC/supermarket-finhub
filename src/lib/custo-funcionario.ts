@@ -1,5 +1,7 @@
 import { adicionaisDoCargo, SALARIO_MINIMO_FEDERAL, type CargoAdicionais } from "@/lib/cargos";
 import { encargosRate, FGTS_PCT } from "@/lib/encargos";
+import { calcSalarioFamilia } from "@/lib/salario-familia";
+
 
 export type RegimeTributario = "simples" | "lucro_real";
 
@@ -43,8 +45,11 @@ export type FuncionarioCusto = FonteAdicionais & {
   vale_alimentacao?: number | string;
   plano_saude?: number | string;
   plano_odontologico?: number | string;
+  /** Somente leitura: o salário-família é sempre recalculado. */
   salario_familia?: number | string;
+  dependentes?: number | string;
   valor_extra_salarial?: number | string;
+
   /**
    * false = vínculo registrado por prestadora (terceirizado): INSS patronal e
    * FGTS são obrigação da prestadora, então não entram no custo da empresa.
@@ -66,7 +71,7 @@ export function custoReal(
   const va = Number(f.vale_alimentacao) || 0;
   const ps = Number(f.plano_saude) || 0;
   const po = Number(f.plano_odontologico) || 0;
-  const sf = Number(f.salario_familia) || 0;
+  const sf = calcSalarioFamilia(salario, Number(f.dependentes) || 0);
   const ve = Number(f.valor_extra_salarial) || 0;
 
   const a = adicionaisDoCargo(adicionaisFonte(f), salario, salarioMinimoFederal);
@@ -104,4 +109,4 @@ export function custoReal(
 
 /** Campos mínimos que toda tela precisa selecionar para calcular o custo ao vivo. */
 export const CUSTO_SELECT =
-  "id, loja_id, ativo, salario_base, vale_transporte, vale_alimentacao, plano_saude, plano_odontologico, salario_familia, valor_extra_salarial, calcula_encargos, cargo_id, motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa, cargos(motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa), lojas(empresa_id, empresas(regime_tributario))";
+  "id, loja_id, ativo, salario_base, vale_transporte, vale_alimentacao, plano_saude, plano_odontologico, salario_familia, dependentes, valor_extra_salarial, calcula_encargos, cargo_id, motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa, cargos(motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa), lojas(empresa_id, empresas(regime_tributario))";
