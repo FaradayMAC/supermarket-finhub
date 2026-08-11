@@ -31,12 +31,7 @@ import { custoReal, regimeDoFuncionario, type RegimeTributario } from "@/lib/cus
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { dataFimCarencia } from "@/lib/planos";
 import { VALE_ALIMENTACAO_PADRAO_ES, VALE_TRANSPORTE_DESCONTO_PCT } from "@/lib/beneficios";
-import {
-  hojeUTCDate,
-  provisaoDecimoTerceiro,
-  provisaoFerias,
-  type FeriasGozadas,
-} from "@/lib/rescisao";
+
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
   head: () => ({ meta: [{ title: "Funcionários · MercadoGest" }] }),
@@ -137,26 +132,6 @@ function FuncPage() {
   });
 
 
-  const { data: feriasGozadas = [] } = useQuery({
-    queryKey: ["ferias-gozadas"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("ferias_gozadas").select("*");
-      if (error) throw error;
-      return (data ?? []) as any[];
-    },
-  });
-
-  const feriasPorFunc = useMemo(() => {
-    const m = new Map<string, FeriasGozadas[]>();
-    for (const g of feriasGozadas) {
-      const arr = m.get(g.funcionario_id) ?? [];
-      arr.push(g as FeriasGozadas);
-      m.set(g.funcionario_id, arr);
-    }
-    return m;
-  }, [feriasGozadas]);
-
-  const hojeRef = hojeUTCDate();
 
   const filtrados = useMemo(
     () => (filtro === "todas" ? funcs : funcs.filter((f) => f.loja_id === filtro)),
