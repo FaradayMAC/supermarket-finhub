@@ -10,9 +10,17 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, Lock, ShoppingBasket } from "lucide-react";
+import { CalendarDays, Download, FileText, Lock, ShoppingBasket } from "lucide-react";
 import { toast } from "sonner";
-import { calcContracheque, calendarioMes, type FaltaDia, type FuncionarioCC } from "@/lib/contracheque";
+import {
+  calcContracheque,
+  calendarioMes,
+  MAX_DIAS_VENDIDOS,
+  type AfastamentoMes,
+  type FaltaDia,
+  type FeriasMes,
+  type FuncionarioCC,
+} from "@/lib/contracheque";
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { gerarContrachequePdf } from "@/lib/contracheque-pdf";
 import { competenciaDate, entraNaCompetencia, fmtDataHora, podeFechar } from "@/lib/folha-competencia";
@@ -67,6 +75,7 @@ function ContrachequePage() {
   const [lojaFiltro, setLojaFiltro] = useState<string>("todas");
   const [detalhe, setDetalhe] = useState<Func | null>(null);
   const [convOpen, setConvOpen] = useState<Func | null>(null);
+  const [eventoOpen, setEventoOpen] = useState<Func | null>(null);
   const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
 
   const { data: lojas = [] } = useQuery({
@@ -133,6 +142,39 @@ function ContrachequePage() {
     },
   });
 
+  const { data: feriasRows = [] } = useQuery({
+    queryKey: ["ferias-competencia", mes],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ferias_gozadas")
+        .select("id,funcionario_id,dias_gozados,dias_vendidos,data_inicio_gozo,periodo_aquisitivo_inicio,periodo_aquisitivo_fim")
+        .eq("competencia", `${mes}-01`);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data: afastRows = [] } = useQuery({
+    queryKey: ["afastamentos-competencia", mes],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("afastamentos_inss")
+        .select("id,funcionario_id,data_inicio,data_fim,tipo")
+        .eq("competencia", `${mes}-01`);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const feriasMap = useMemo(
+    () => new Map<string, any>(feriasRows.map((r) => [r.funcionario_id, r])),
+    [feriasRows],
+  );
+  const afastMap = useMemo(
+    () => new Map<string, any>(afastRows.map((r) => [r.funcionario_id, r])),
+    [afastRows],
+  );
+
   const faltasMap = useMemo(() => {
     const m = new Map<string, FaltaDia[]>();
     faltas.forEach((f) => {
@@ -176,9 +218,11 @@ function ContrachequePage() {
           faltas: faltasMap.get(f.id) ?? [],
           convenio: Number(convMap.get(f.id)?.valor ?? 0),
           salarioMinimoFederal,
+          ferias: (feriasMap.get(f.id) as FeriasMes | undefined) ?? null,
+          afastamento: (afastMap.get(f.id) as AfastamentoMes | undefined) ?? null,
         }),
       }));
-  }, [fechada, folha, funcMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg]);
+  }, [fechada, folha, funcMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg, feriasMap, afastMap]);
 
   const totalLiquido = lista.reduce((s, i) => s + (i.hist ? Number(i.hist.liquido) : i.cc!.liquido), 0);
   const totalDescontos = lista.reduce(
@@ -200,6 +244,8 @@ function ContrachequePage() {
           faltas: faltasMap.get(f.id) ?? [],
           convenio: Number(convMap.get(f.id)?.valor ?? 0),
           salarioMinimoFederal,
+          ferias: (feriasMap.get(f.id) as FeriasMes | undefined) ?? null,
+          afastamento: (afastMap.get(f.id) as AfastamentoMes | undefined) ?? null,
         });
         return {
           funcionario_id: f.id,
