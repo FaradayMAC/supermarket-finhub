@@ -974,7 +974,13 @@ function FuncForm({
                 <span className="text-xs text-muted-foreground">por conta da prestadora</span>
               )}
             </div>
-
+            <div className="text-muted-foreground">FGTS (estimado, 8%)</div>
+            <div className="text-right font-medium">
+              {fmtBRL(preview.fgtsEstimado)}
+              {calculaEncargos && (
+                <span className="ml-1 text-[11px] text-muted-foreground">(já incluso nos encargos)</span>
+              )}
+            </div>
 
             <div className="text-muted-foreground">VT + VA + Saúde + Odonto</div>
             <div className="text-right font-medium">
