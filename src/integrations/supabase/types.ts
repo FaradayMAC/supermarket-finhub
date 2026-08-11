@@ -658,6 +658,8 @@ export type Database = {
           custo_total: number
           data_pagamento: string | null
           empresa_id: string | null
+          fechada_em: string | null
+          fechada_por: string | null
           fgts: number
           funcionario_id: string
           horas_extras: number
@@ -682,6 +684,8 @@ export type Database = {
           custo_total?: number
           data_pagamento?: string | null
           empresa_id?: string | null
+          fechada_em?: string | null
+          fechada_por?: string | null
           fgts?: number
           funcionario_id: string
           horas_extras?: number
@@ -706,6 +710,8 @@ export type Database = {
           custo_total?: number
           data_pagamento?: string | null
           empresa_id?: string | null
+          fechada_em?: string | null
+          fechada_por?: string | null
           fgts?: number
           funcionario_id?: string
           horas_extras?: number
@@ -812,6 +818,7 @@ export type Database = {
           cpf: string | null
           created_at: string
           data_admissao: string | null
+          data_desligamento: string | null
           dependentes: number
           desconto_vt: boolean
           email: string | null
@@ -845,6 +852,7 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           data_admissao?: string | null
+          data_desligamento?: string | null
           dependentes?: number
           desconto_vt?: boolean
           email?: string | null
@@ -878,6 +886,7 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           data_admissao?: string | null
+          data_desligamento?: string | null
           dependentes?: number
           desconto_vt?: boolean
           email?: string | null
