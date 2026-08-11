@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Download, FileText, ShoppingBasket } from "lucide-react";
 import { toast } from "sonner";
 import { calcContracheque, calendarioMes, type FuncionarioCC } from "@/lib/contracheque";
+import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { gerarContrachequePdf } from "@/lib/contracheque-pdf";
 
 export const Route = createFileRoute("/_authenticated/contracheque")({
@@ -64,7 +65,7 @@ function ContrachequePage() {
       const { data, error } = await supabase
         .from("funcionarios")
         .select(
-          "id,nome,cargo,loja_id,salario_base,vale_transporte,vale_alimentacao,plano_saude,plano_odontologico,salario_familia,valor_extra_salarial,insalubridade_pct,periculosidade_pct,quebra_caixa_pct,dependentes,desconto_vt,regime_tributario",
+          "id,nome,cargo,loja_id,salario_base,vale_transporte,vale_alimentacao,plano_saude,plano_odontologico,salario_familia,valor_extra_salarial,motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa,dependentes,desconto_vt,regime_tributario",
         )
         .eq("ativo", true)
         .order("nome");
@@ -118,9 +119,10 @@ function ContrachequePage() {
           mes,
           faltas: faltasMap.get(f.id) ?? 0,
           convenio: Number(convMap.get(f.id)?.valor ?? 0),
+          salarioMinimoFederal,
         }),
       }));
-  }, [funcionarios, lojaFiltro, mes, faltasMap, convMap]);
+  }, [funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal]);
 
   const totalLiquido = lista.reduce((s, i) => s + i.cc.liquido, 0);
   const totalDescontos = lista.reduce((s, i) => s + i.cc.totalDescontos, 0);
@@ -313,7 +315,8 @@ function Linha({ label, valor, negativo, muted }: { label: string; valor: number
 function DetalheContracheque({
   func, loja, mes, faltas, convenio,
 }: { func: Func; loja: string; mes: string; faltas: number; convenio: number }) {
-  const cc = calcContracheque(func, { mes, faltas, convenio });
+  const { salarioMinimoFederal } = useReferenciasSalariais();
+  const cc = calcContracheque(func, { mes, faltas, convenio, salarioMinimoFederal });
   const [y, m] = mes.split("-");
   return (
     <>
