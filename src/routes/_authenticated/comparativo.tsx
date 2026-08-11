@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { CUSTO_SELECT, custoReal } from "@/lib/custo-funcionario";
+import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { AppShell, fmtBRL } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PeriodFilter, usePeriodo } from "@/components/period-filter";
@@ -24,7 +26,7 @@ function Comparativo() {
       const [lojas, despesas, funcionarios, impostos, folha, mov, compras] = await Promise.all([
         supabase.from("lojas").select("id, nome, codigo, ativo"),
         supabase.from("despesas").select("loja_id, valor, data_competencia"),
-        supabase.from("funcionarios").select("loja_id, salario_base, encargos, beneficios, ativo"),
+        supabase.from("funcionarios").select(CUSTO_SELECT),
         supabase.from("impostos").select("loja_id, valor, competencia"),
         supabase.from("folha_pagamento").select("funcionario_id, custo_total, competencia"),
         supabase.from("movimentacoes_financeiras").select("loja_id, tipo, valor, data_movimentacao"),
@@ -50,7 +52,7 @@ function Comparativo() {
     const cmv = (data?.compras ?? []).filter((c) => c.loja_id === l.id && inWindow(c.data_compra)).reduce((s, c) => s + Number(c.valor_total), 0);
     const imp = (data?.impostos ?? []).filter((i) => i.loja_id === l.id && inWindow(i.competencia)).reduce((s, i) => s + Number(i.valor), 0);
     const funcsLoja = (data?.funcionarios ?? []).filter((f) => f.loja_id === l.id && f.ativo);
-    const custoMensalFuncs = funcsLoja.reduce((s, f) => s + Number(f.salario_base ?? 0) + Number(f.encargos ?? 0) + Number(f.beneficios ?? 0), 0);
+    const custoMensalFuncs = funcsLoja.reduce((s, f) => s + custoReal(f, salarioMinimoFederal).total, 0);
     const folhaLanc = (data?.folha ?? []).filter((f) => {
       const fn = (data?.funcionarios ?? []).find((x) => x.loja_id === l.id);
       return fn && inWindow(f.competencia);
