@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { calcContracheque, calendarioMes, type FaltaDia, type FuncionarioCC } from "@/lib/contracheque";
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { gerarContrachequePdf } from "@/lib/contracheque-pdf";
+import { competenciaDate, entraNaCompetencia, fmtDataHora, podeFechar } from "@/lib/folha-competencia";
+
 
 export const Route = createFileRoute("/_authenticated/contracheque")({
   head: () => ({
@@ -35,7 +37,23 @@ type Func = FuncionarioCC & {
   nome: string;
   cargo: string | null;
   loja_id: string;
+  ativo?: boolean;
+  data_admissao?: string | null;
+  data_desligamento?: string | null;
 };
+
+type FolhaRow = {
+  funcionario_id: string;
+  loja_id: string | null;
+  salario_base: number;
+  total_proventos: number;
+  total_descontos: number;
+  liquido: number;
+  fgts: number;
+  status: string;
+  fechada_em: string | null;
+};
+
 
 const mesAtual = () => {
   const d = new Date();
