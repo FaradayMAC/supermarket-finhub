@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, ShoppingBasket } from "lucide-react";
+import { Download, FileText, Lock, ShoppingBasket } from "lucide-react";
 import { toast } from "sonner";
 import { calcContracheque, calendarioMes, type FaltaDia, type FuncionarioCC } from "@/lib/contracheque";
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
@@ -281,9 +281,36 @@ function ContrachequePage() {
               ))}
             </SelectContent>
           </Select>
+          {fechada ? (
+            <Badge variant="secondary">Fechada em {fmtDataHora(fechadaEm)}</Badge>
+          ) : (
+            <>
+              <Badge variant="outline">Competência aberta</Badge>
+              {podeFechar(mes) && (
+                <Button
+                  variant="secondary"
+                  disabled={fecharFolha.isPending}
+                  onClick={() => {
+                    if (confirm(`Fechar a folha de ${mes}? Depois disso o mês vira histórico e não recalcula mais.`))
+                      fecharFolha.mutate();
+                  }}
+                >
+                  <Lock className="mr-2 h-4 w-4" />
+                  {fecharFolha.isPending ? "Fechando…" : "Fechar folha do mês"}
+                </Button>
+              )}
+            </>
+          )}
         </div>
       }
     >
+      {fechada && (
+        <p className="mb-4 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+          Competência fechada — valores gravados no histórico. Alterações no cadastro de funcionários ou em faltas
+          não afetam mais este mês.
+        </p>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Líquido a pagar</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{fmtBRL(totalLiquido)}</CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Total de descontos</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{fmtBRL(totalDescontos)}</CardContent></Card>
