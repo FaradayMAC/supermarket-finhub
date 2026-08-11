@@ -126,7 +126,7 @@ export function calcIrrf(baseBruta: number, inss: number, dependentes: number) {
   return Math.round(Math.max(0, base * faixa.aliq - faixa.ded) * 100) / 100;
 }
 
-export type FuncionarioCC = {
+export type FuncionarioCC = CargoAdicionais & {
   salario_base: number | string;
   vale_transporte: number | string;
   vale_alimentacao: number | string;
@@ -134,27 +134,29 @@ export type FuncionarioCC = {
   plano_odontologico?: number | string;
   salario_familia?: number | string;
   valor_extra_salarial?: number | string;
-  insalubridade_pct?: number | string;
-  periculosidade_pct?: number | string;
-  quebra_caixa_pct?: number | string;
   dependentes?: number | string;
   desconto_vt?: boolean;
 };
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
-export function calcContracheque(f: FuncionarioCC, opts: { mes: string; faltas: number; convenio: number }) {
+export function calcContracheque(
+  f: FuncionarioCC,
+  opts: { mes: string; faltas: number; convenio: number; salarioMinimoFederal?: number },
+) {
   const cal = calendarioMes(opts.mes);
   const faltas = Math.max(0, Math.min(opts.faltas || 0, cal.diasUteis));
 
   const salario = Number(f.salario_base) || 0;
-  const insalPct = Number(f.insalubridade_pct) || 0;
-  const pericPct = Number(f.periculosidade_pct) || 0;
-  const qcPct = Number(f.quebra_caixa_pct) || 0;
-  const insalubridade = r2((salario * insalPct) / 100);
-  const periculosidade = r2((salario * pericPct) / 100);
-  const quebraCaixa = r2((salario * qcPct) / 100);
-  const adicionais = insalubridade + periculosidade + quebraCaixa;
+  const adic = adicionaisDoCargo(
+    f,
+    salario,
+    opts.salarioMinimoFederal ?? SALARIO_MINIMO_FEDERAL,
+  );
+  const insalubridade = adic.insalubridade;
+  const periculosidade = adic.periculosidade;
+  const quebraCaixa = adic.quebraCaixa;
+  const adicionais = adic.total;
 
   const extra = Number(f.valor_extra_salarial) || 0;
   const salFamilia = Number(f.salario_familia) || 0;
