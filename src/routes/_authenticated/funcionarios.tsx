@@ -443,6 +443,7 @@ function FuncPage() {
 function FuncForm({
   lojas,
   cargos,
+  prestadores,
   initial,
   onSubmit,
   saving,
@@ -455,10 +456,12 @@ function FuncForm({
     empresas?: { id: string; razao_social: string; regime_tributario?: string | null } | null;
   }[];
   cargos: Cargo[];
+  prestadores: { id: string; razao_social: string; nome_fantasia: string | null; cnpj: string | null }[];
   initial: Func | null;
   onSubmit: (v: any) => void;
   saving: boolean;
 }) {
+
   const [lojaId, setLojaId] = useState(initial?.loja_id ?? "");
   const [cargoId, setCargoId] = useState<string>(initial?.cargo_id ?? "none");
 
