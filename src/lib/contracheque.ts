@@ -232,7 +232,8 @@ export function calcContracheque(
   return {
     calendario: cal,
     faltas,
-    dsrDias: Math.round(dsrDias * 100) / 100,
+    faltasJustificadas,
+    dsrDias,
     salario,
     insalubridade,
     periculosidade,

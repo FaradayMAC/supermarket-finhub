@@ -171,12 +171,15 @@ function FuncPage() {
 
       const { data: faltas } = await supabase
         .from("faltas_rh")
-        .select("funcionario_id, quantidade")
-        .eq("mes_referencia", competencia);
-      const faltasMap = new Map<string, number>();
-      (faltas ?? []).forEach((f: any) =>
-        faltasMap.set(f.funcionario_id, (faltasMap.get(f.funcionario_id) ?? 0) + Number(f.quantidade || 0)),
-      );
+        .select("funcionario_id, data, tipo")
+        .gte("data", competencia)
+        .lte("data", `${mes}-31`);
+      const faltasMap = new Map<string, { data: string; tipo: string }[]>();
+      (faltas ?? []).forEach((f: any) => {
+        const arr = faltasMap.get(f.funcionario_id) ?? [];
+        arr.push({ data: f.data, tipo: f.tipo });
+        faltasMap.set(f.funcionario_id, arr);
+      });
       const { data: convenios } = await supabase
         .from("convenio_funcionario")
         .select("funcionario_id, valor")
@@ -188,7 +191,7 @@ function FuncPage() {
       const linhas = alvo.map((f) => {
         const cc = calcContracheque(f as any, {
           mes,
-          faltas: faltasMap.get(f.id) ?? 0,
+          faltas: faltasMap.get(f.id) ?? [],
           convenio: convMap.get(f.id) ?? 0,
           salarioMinimoFederal,
         });

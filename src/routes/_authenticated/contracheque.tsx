@@ -80,10 +80,11 @@ function ContrachequePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("faltas_rh")
-        .select("funcionario_id,quantidade")
-        .eq("mes_referencia", `${mes}-01`);
+        .select("funcionario_id,data,tipo")
+        .gte("data", `${mes}-01`)
+        .lte("data", `${mes}-31`);
       if (error) throw error;
-      return data as { funcionario_id: string; quantidade: number }[];
+      return data as { funcionario_id: string; data: string; tipo: string }[];
     },
   });
 
@@ -100,8 +101,12 @@ function ContrachequePage() {
   });
 
   const faltasMap = useMemo(() => {
-    const m = new Map<string, number>();
-    faltas.forEach((f) => m.set(f.funcionario_id, (m.get(f.funcionario_id) ?? 0) + Number(f.quantidade || 0)));
+    const m = new Map<string, FaltaDia[]>();
+    faltas.forEach((f) => {
+      const arr = m.get(f.funcionario_id) ?? [];
+      arr.push({ data: f.data, tipo: f.tipo });
+      m.set(f.funcionario_id, arr);
+    });
     return m;
   }, [faltas]);
 
@@ -118,7 +123,7 @@ function ContrachequePage() {
         f,
         cc: calcContracheque(f, {
           mes,
-          faltas: faltasMap.get(f.id) ?? 0,
+          faltas: faltasMap.get(f.id) ?? [],
           convenio: Number(convMap.get(f.id)?.valor ?? 0),
           salarioMinimoFederal,
         }),
@@ -136,7 +141,7 @@ function ContrachequePage() {
         func: f,
         loja: lojaMap.get(f.loja_id)?.nome ?? "—",
         mes,
-        faltas: faltasMap.get(f.id) ?? 0,
+        faltas: faltasMap.get(f.id) ?? [],
         convenio: Number(convMap.get(f.id)?.valor ?? 0),
         salarioMinimoFederal,
       });
@@ -261,7 +266,7 @@ function ContrachequePage() {
               func={detalhe}
               loja={lojaMap.get(detalhe.loja_id)?.nome ?? "—"}
               mes={mes}
-              faltas={faltasMap.get(detalhe.id) ?? 0}
+              faltas={faltasMap.get(detalhe.id) ?? []}
               convenio={Number(convMap.get(detalhe.id)?.valor ?? 0)}
             />
           )}
@@ -316,7 +321,7 @@ function Linha({ label, valor, negativo, muted }: { label: string; valor: number
 
 function DetalheContracheque({
   func, loja, mes, faltas, convenio,
-}: { func: Func; loja: string; mes: string; faltas: number; convenio: number }) {
+}: { func: Func; loja: string; mes: string; faltas: FaltaDia[]; convenio: number }) {
   const { salarioMinimoFederal } = useReferenciasSalariais();
   const cc = calcContracheque(func, { mes, faltas, convenio, salarioMinimoFederal });
   const [y, m] = mes.split("-");
@@ -344,8 +349,8 @@ function DetalheContracheque({
 
       <div className="rounded-md border p-3">
         <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Descontos</div>
-        <Linha label={`Faltas (${cc.faltas} dia(s))`} valor={cc.descFaltas} negativo />
-        <Linha label={`DSR sobre faltas (${cc.dsrDias} dia(s))`} valor={cc.descDsr} negativo />
+        <Linha label={`Faltas injustificadas (${cc.faltas} dia(s))`} valor={cc.descFaltas} negativo />
+        <Linha label={`DSR perdido (${cc.dsrDias} semana(s))`} valor={cc.descDsr} negativo />
         <Linha label="Redução proporcional do valor extra" valor={cc.descExtra} negativo />
         <Linha label="INSS" valor={cc.inss} negativo />
         <Linha label="IRRF" valor={cc.irrf} negativo />
