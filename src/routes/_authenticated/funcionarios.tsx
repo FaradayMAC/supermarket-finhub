@@ -315,6 +315,24 @@ function FuncPage() {
         </div>
       </div>
 
+      {revisaoVt.length > 0 && (
+        <Card className="border-amber-500/50 bg-amber-500/5">
+          <CardContent className="py-4 text-sm">
+            <p className="font-semibold">
+              Revisão de vale-transporte ({revisaoVt.length})
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              Estes funcionários recebem vale-transporte sem o desconto de 6% aplicado. Edite cada
+              cadastro para confirmar a exceção ou ativar o desconto.
+            </p>
+            <p className="mt-2 text-muted-foreground">
+              {revisaoVt.map((f) => f.nome).join(" · ")}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+
       {lojas.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
