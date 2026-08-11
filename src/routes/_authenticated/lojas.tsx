@@ -89,7 +89,9 @@ function LojasPage() {
         </Dialog>
       }
     >
+      <EmpresasRegime />
       <Card>
+
         <CardContent className="overflow-x-auto p-0">
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
