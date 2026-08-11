@@ -166,6 +166,9 @@ export type FuncionarioCC = FonteAdicionais & {
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
+/** FGTS: 8% sobre a remuneração do mês (Lei 8.036/90, Art. 15). */
+export const FGTS_PCT = 0.08;
+
 export type FaltaDia = { data: string; tipo: string };
 
 /** Chave da semana (segunda a domingo) a que a data pertence. */
@@ -278,6 +281,8 @@ export function calcContracheque(
     vtLiquido,
     baseInss,
     inss,
+    baseFgts,
+    fgts,
     irrf,
     descontoVt,
     planoSaude,
