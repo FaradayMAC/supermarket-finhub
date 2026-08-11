@@ -858,7 +858,10 @@ function FuncForm({
 
         <div className="rounded-md border bg-muted/40 p-3 text-sm">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Custo real do funcionário ({regime === "lucro_real" ? "Lucro Real" : "Simples Nacional"})
+            Custo real do funcionário{" "}
+            {calculaEncargos
+              ? `(${regime === "lucro_real" ? "Lucro Real" : "Simples Nacional"})`
+              : "(terceirizado — sem encargos patronais)"}
           </div>
           <div className="grid grid-cols-2 gap-y-1 sm:grid-cols-4">
             <div className="text-muted-foreground">Salário</div>
@@ -866,9 +869,16 @@ function FuncForm({
             <div className="text-muted-foreground">Adicionais legais</div>
             <div className="text-right font-medium">{fmtBRL(preview.adicionais)}</div>
             <div className="text-muted-foreground">
-              Encargos ({Math.round(preview.rate * 100)}%)
+              {calculaEncargos ? `Encargos (${Math.round(preview.rate * 100)}%)` : "Encargos patronais"}
             </div>
-            <div className="text-right font-medium">{fmtBRL(preview.encargos)}</div>
+            <div className="text-right font-medium">
+              {calculaEncargos ? (
+                fmtBRL(preview.encargos)
+              ) : (
+                <span className="text-xs text-muted-foreground">por conta da prestadora</span>
+              )}
+            </div>
+
 
             <div className="text-muted-foreground">VT + VA + Saúde + Odonto</div>
             <div className="text-right font-medium">
