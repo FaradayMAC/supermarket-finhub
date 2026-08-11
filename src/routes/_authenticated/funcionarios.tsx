@@ -549,8 +549,9 @@ function FuncForm({
 
           const fd = new FormData(e.currentTarget);
           const sal = Number(fd.get("salario") || 0);
-          const _vt = Number(fd.get("vt") || 0);
-          const _va = Number(fd.get("va") || 0);
+          const _vt = temVt ? Number(fd.get("vt") || 0) : 0;
+          if (temVt && _vt <= 0) return toast.error("Informe o valor do vale-transporte");
+          const _va = VALE_ALIMENTACAO_PADRAO_ES;
           const _ps = Number(fd.get("ps") || 0);
           const _po = Number(fd.get("po") || 0);
           const _ve = Number(fd.get("ve") || 0);
