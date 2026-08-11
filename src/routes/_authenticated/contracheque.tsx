@@ -10,11 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, ShoppingBasket } from "lucide-react";
+import { Download, FileText, Lock, ShoppingBasket } from "lucide-react";
 import { toast } from "sonner";
 import { calcContracheque, calendarioMes, type FaltaDia, type FuncionarioCC } from "@/lib/contracheque";
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { gerarContrachequePdf } from "@/lib/contracheque-pdf";
+import { competenciaDate, entraNaCompetencia, fmtDataHora, podeFechar } from "@/lib/folha-competencia";
+
 
 export const Route = createFileRoute("/_authenticated/contracheque")({
   head: () => ({
@@ -35,7 +37,23 @@ type Func = FuncionarioCC & {
   nome: string;
   cargo: string | null;
   loja_id: string;
+  ativo?: boolean;
+  data_admissao?: string | null;
+  data_desligamento?: string | null;
 };
+
+type FolhaRow = {
+  funcionario_id: string;
+  loja_id: string | null;
+  salario_base: number;
+  total_proventos: number;
+  total_descontos: number;
+  liquido: number;
+  fgts: number;
+  status: string;
+  fechada_em: string | null;
+};
+
 
 const mesAtual = () => {
   const d = new Date();
@@ -65,14 +83,29 @@ function ContrachequePage() {
       const { data, error } = await supabase
         .from("funcionarios")
         .select(
-          "id,nome,cargo,loja_id,salario_base,vale_transporte,vale_alimentacao,plano_saude,plano_odontologico,salario_familia,valor_extra_salarial,cargo_id,motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa,dependentes,desconto_vt,cargos(motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa),lojas(empresa_id,empresas(regime_tributario))",
+          "id,nome,cargo,loja_id,ativo,data_admissao,data_desligamento,salario_base,vale_transporte,vale_alimentacao,plano_saude,plano_odontologico,salario_familia,valor_extra_salarial,cargo_id,motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa,dependentes,desconto_vt,cargos(motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa),lojas(empresa_id,empresas(regime_tributario))",
         )
-        .eq("ativo", true)
         .order("nome");
       if (error) throw error;
       return data as unknown as Func[];
     },
   });
+
+  // Histórico oficial da competência (existe apenas quando a folha foi fechada)
+  const { data: folha = [] } = useQuery({
+    queryKey: ["folha-competencia", mes],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("folha_pagamento")
+        .select("funcionario_id,loja_id,salario_base,total_proventos,total_descontos,liquido,fgts,status,fechada_em")
+        .eq("competencia", competenciaDate(mes));
+      if (error) throw error;
+      return data as FolhaRow[];
+    },
+  });
+
+  const fechada = folha.length > 0;
+  const fechadaEm = folha[0]?.fechada_em ?? null;
 
   const { data: faltas = [] } = useQuery({
     queryKey: ["faltas-mes", mes],
@@ -114,12 +147,28 @@ function ContrachequePage() {
     [convenios],
   );
   const lojaMap = useMemo(() => new Map(lojas.map((l) => [l.id, l])), [lojas]);
+  const funcMap = useMemo(() => new Map(funcionarios.map((f) => [f.id, f])), [funcionarios]);
 
+  // Competência fechada = histórico imutável; aberta = recálculo ao vivo.
   const lista = useMemo(() => {
+    if (fechada) {
+      return folha
+        .map((r) => ({ f: funcMap.get(r.funcionario_id), r }))
+        .filter((x) => !!x.f)
+        .filter((x) => lojaFiltro === "todas" || x.f!.loja_id === lojaFiltro)
+        .sort((a, b) => (a.f!.nome > b.f!.nome ? 1 : -1))
+        .map(({ f, r }) => ({
+          f: f as Func,
+          cc: null,
+          hist: r,
+        }));
+    }
     return funcionarios
+      .filter((f) => entraNaCompetencia(f, mes))
       .filter((f) => lojaFiltro === "todas" || f.loja_id === lojaFiltro)
       .map((f) => ({
         f,
+        hist: null,
         cc: calcContracheque(f, {
           mes,
           faltas: faltasMap.get(f.id) ?? [],
@@ -127,12 +176,58 @@ function ContrachequePage() {
           salarioMinimoFederal,
         }),
       }));
-  }, [funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal]);
+  }, [fechada, folha, funcMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal]);
 
-  const totalLiquido = lista.reduce((s, i) => s + i.cc.liquido, 0);
-  const totalDescontos = lista.reduce((s, i) => s + i.cc.totalDescontos, 0);
-  const totalConvenio = lista.reduce((s, i) => s + i.cc.convenio, 0);
+  const totalLiquido = lista.reduce((s, i) => s + (i.hist ? Number(i.hist.liquido) : i.cc!.liquido), 0);
+  const totalDescontos = lista.reduce(
+    (s, i) => s + (i.hist ? Number(i.hist.total_descontos) : i.cc!.totalDescontos),
+    0,
+  );
+  const totalConvenio = lista.reduce((s, i) => s + (i.hist ? 0 : i.cc!.convenio), 0);
   const cal = calendarioMes(mes);
+
+  const fecharFolha = useMutation({
+    mutationFn: async () => {
+      const elegiveis = funcionarios.filter((f) => entraNaCompetencia(f, mes));
+      if (elegiveis.length === 0) throw new Error("Nenhum funcionário elegível nesta competência.");
+      const { data: userData } = await supabase.auth.getUser();
+      const linhas = elegiveis.map((f) => {
+        const cc = calcContracheque(f, {
+          mes,
+          faltas: faltasMap.get(f.id) ?? [],
+          convenio: Number(convMap.get(f.id)?.valor ?? 0),
+          salarioMinimoFederal,
+        });
+        return {
+          funcionario_id: f.id,
+          loja_id: f.loja_id,
+          competencia: competenciaDate(mes),
+          salario_base: cc.salario,
+          beneficios: cc.vaLiquido + cc.vtLiquido,
+          inss: cc.inss,
+          irrf: cc.irrf,
+          fgts: cc.fgts,
+          outros_descontos: Math.round((cc.totalDescontos - cc.inss - cc.irrf) * 100) / 100,
+          total_proventos: cc.proventos,
+          total_descontos: cc.totalDescontos,
+          liquido: cc.liquido,
+          custo_total: Math.round((cc.proventos + cc.fgts + cc.vaLiquido + cc.vtLiquido) * 100) / 100,
+          status: "fechada",
+          fechada_em: new Date().toISOString(),
+          fechada_por: userData.user?.id ?? null,
+        };
+      });
+      const { error } = await supabase.from("folha_pagamento").insert(linhas as any);
+      if (error) throw error;
+      return linhas.length;
+    },
+    onSuccess: (n) => {
+      toast.success(`Folha de ${mes} fechada para ${n} funcionário(s).`);
+      qc.invalidateQueries();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao fechar a folha"),
+  });
+
 
   const baixarPdf = async (f: Func) => {
     try {
@@ -186,9 +281,36 @@ function ContrachequePage() {
               ))}
             </SelectContent>
           </Select>
+          {fechada ? (
+            <Badge variant="secondary">Fechada em {fmtDataHora(fechadaEm)}</Badge>
+          ) : (
+            <>
+              <Badge variant="outline">Competência aberta</Badge>
+              {podeFechar(mes) && (
+                <Button
+                  variant="secondary"
+                  disabled={fecharFolha.isPending}
+                  onClick={() => {
+                    if (confirm(`Fechar a folha de ${mes}? Depois disso o mês vira histórico e não recalcula mais.`))
+                      fecharFolha.mutate();
+                  }}
+                >
+                  <Lock className="mr-2 h-4 w-4" />
+                  {fecharFolha.isPending ? "Fechando…" : "Fechar folha do mês"}
+                </Button>
+              )}
+            </>
+          )}
         </div>
       }
     >
+      {fechada && (
+        <p className="mb-4 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+          Competência fechada — valores gravados no histórico. Alterações no cadastro de funcionários ou em faltas
+          não afetam mais este mês.
+        </p>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Líquido a pagar</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{fmtBRL(totalLiquido)}</CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Total de descontos</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{fmtBRL(totalDescontos)}</CardContent></Card>
@@ -225,7 +347,7 @@ function ContrachequePage() {
               {!isLoading && lista.length === 0 && (
                 <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">Nenhum funcionário ativo para este filtro.</td></tr>
               )}
-              {lista.map(({ f, cc }) => (
+              {lista.map(({ f, cc, hist }) => (
                 <tr key={f.id} className="border-b last:border-0">
                   <td className="px-4 py-3">
                     <div className="font-medium">{f.nome}</div>
@@ -233,26 +355,43 @@ function ContrachequePage() {
                   </td>
                   <td className="px-4 py-3">{lojaMap.get(f.loja_id)?.nome ?? "—"}</td>
                   <td className="px-4 py-3 text-center">
-                    {cc.faltas > 0 ? <Badge variant="destructive">{cc.faltas}</Badge> : <span className="text-muted-foreground">0</span>}
+                    {hist ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : cc!.faltas > 0 ? (
+                      <Badge variant="destructive">{cc!.faltas}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">0</span>
+                    )}
                   </td>
-                  <td className="px-4 py-3 text-right">{fmtBRL(cc.proventos)}</td>
-                  <td className="px-4 py-3 text-right text-destructive">{cc.descFaltas + cc.descDsr > 0 ? `- ${fmtBRL(cc.descFaltas + cc.descDsr)}` : "—"}</td>
-                  <td className="px-4 py-3 text-right text-destructive">{cc.convenio > 0 ? `- ${fmtBRL(cc.convenio)}` : "—"}</td>
-                  <td className="px-4 py-3 text-right">{fmtBRL(cc.totalDescontos)}</td>
-                  <td className="px-4 py-3 text-right font-semibold">{fmtBRL(cc.liquido)}</td>
+                  <td className="px-4 py-3 text-right">{fmtBRL(hist ? Number(hist.total_proventos) : cc!.proventos)}</td>
+                  <td className="px-4 py-3 text-right text-destructive">
+                    {hist ? "—" : cc!.descFaltas + cc!.descDsr > 0 ? `- ${fmtBRL(cc!.descFaltas + cc!.descDsr)}` : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right text-destructive">
+                    {hist ? "—" : cc!.convenio > 0 ? `- ${fmtBRL(cc!.convenio)}` : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right">{fmtBRL(hist ? Number(hist.total_descontos) : cc!.totalDescontos)}</td>
+                  <td className="px-4 py-3 text-right font-semibold">{fmtBRL(hist ? Number(hist.liquido) : cc!.liquido)}</td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
-                    <Button size="icon" variant="ghost" title="Lançar convênio" onClick={() => setConvOpen(f)}>
-                      <ShoppingBasket className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" title="Ver contracheque" onClick={() => setDetalhe(f)}>
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" title="Baixar contracheque em PDF" onClick={() => baixarPdf(f)}>
-                      <Download className="h-4 w-4" />
-                    </Button>
+                    {hist ? (
+                      <span className="text-xs text-muted-foreground">Somente leitura</span>
+                    ) : (
+                      <>
+                        <Button size="icon" variant="ghost" title="Lançar convênio" onClick={() => setConvOpen(f)}>
+                          <ShoppingBasket className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" title="Ver contracheque" onClick={() => setDetalhe(f)}>
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" title="Baixar contracheque em PDF" onClick={() => baixarPdf(f)}>
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}
+
             </tbody>
           </table>
         </CardContent>
