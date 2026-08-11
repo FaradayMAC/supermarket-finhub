@@ -576,7 +576,7 @@ function FuncForm({
             tem_periculosidade: cargo ? false : adicCfg.tem_periculosidade,
             periculosidade_pct: !cargo && adicCfg.tem_periculosidade ? adicCfg.periculosidade_pct : 0,
             tem_quebra_caixa: cargo ? false : adicCfg.tem_quebra_caixa,
-            desconto_vt: descontoVt,
+            desconto_vt: temVt && descontoVt,
             calcula_encargos: calculaEncargos,
             prestador_id: calculaEncargos ? null : prestadorId,
 
