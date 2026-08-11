@@ -45,8 +45,11 @@ export type FuncionarioCusto = FonteAdicionais & {
   vale_alimentacao?: number | string;
   plano_saude?: number | string;
   plano_odontologico?: number | string;
+  /** Somente leitura: o salário-família é sempre recalculado. */
   salario_familia?: number | string;
+  dependentes?: number | string;
   valor_extra_salarial?: number | string;
+
   /**
    * false = vínculo registrado por prestadora (terceirizado): INSS patronal e
    * FGTS são obrigação da prestadora, então não entram no custo da empresa.
