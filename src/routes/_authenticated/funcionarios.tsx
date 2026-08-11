@@ -101,6 +101,16 @@ function FuncPage() {
       (await supabase.from("cargos").select("*").eq("ativo", true).order("nome")).data ?? [],
   });
 
+  const { data: prestadores = [] } = useQuery({
+    queryKey: ["prestadores-min"],
+    queryFn: async () =>
+      (await supabase
+        .from("prestadores_servico")
+        .select("id, razao_social, nome_fantasia, cnpj")
+        .order("razao_social")).data ?? [],
+  });
+
+
 
   const { data: funcs = [], isLoading } = useQuery({
     queryKey: ["funcionarios"],
@@ -271,10 +281,12 @@ function FuncPage() {
           key={editing?.id ?? "new"}
           lojas={lojas as any}
           cargos={cargos as any}
+          prestadores={prestadores as any}
           initial={editing}
           onSubmit={(v) => upsert.mutate(v)}
           saving={upsert.isPending}
         />
+
 
 
       </Dialog>
@@ -431,6 +443,7 @@ function FuncPage() {
 function FuncForm({
   lojas,
   cargos,
+  prestadores,
   initial,
   onSubmit,
   saving,
@@ -443,10 +456,12 @@ function FuncForm({
     empresas?: { id: string; razao_social: string; regime_tributario?: string | null } | null;
   }[];
   cargos: Cargo[];
+  prestadores: { id: string; razao_social: string; nome_fantasia: string | null; cnpj: string | null }[];
   initial: Func | null;
   onSubmit: (v: any) => void;
   saving: boolean;
 }) {
+
   const [lojaId, setLojaId] = useState(initial?.loja_id ?? "");
   const [cargoId, setCargoId] = useState<string>(initial?.cargo_id ?? "none");
 
@@ -464,6 +479,8 @@ function FuncForm({
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
   const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
   const [calculaEncargos, setCalculaEncargos] = useState<boolean>(initial?.calcula_encargos !== false);
+  const [prestadorId, setPrestadorId] = useState<string>((initial as any)?.prestador_id ?? "");
+
 
   // Cargo selecionado define automaticamente os adicionais legais.
   const { salarioMinimoFederal } = useReferenciasSalariais();
@@ -520,6 +537,9 @@ function FuncForm({
         onSubmit={(e) => {
           e.preventDefault();
           if (!lojaId) return toast.error("Selecione a unidade");
+          if (!calculaEncargos && !prestadorId)
+            return toast.error("Selecione a empresa prestadora de serviços");
+
           const fd = new FormData(e.currentTarget);
           const sal = Number(fd.get("salario") || 0);
           const _vt = Number(fd.get("vt") || 0);
@@ -550,6 +570,8 @@ function FuncForm({
             tem_quebra_caixa: cargo ? false : adicCfg.tem_quebra_caixa,
             desconto_vt: descontoVt,
             calcula_encargos: calculaEncargos,
+            prestador_id: calculaEncargos ? null : prestadorId,
+
             situacao: String(fd.get("situacao") || "").trim() || null,
             observacoes: String(fd.get("observacoes") || "").trim() || null,
             beneficios: _vt + _va + _ps + _po + _ve,
@@ -622,7 +644,29 @@ function FuncForm({
                 </>
               )}
             </p>
+            {!calculaEncargos && (
+              <div className="mt-3">
+                <Label>Empresa prestadora de serviços *</Label>
+                <Select value={prestadorId} onValueChange={setPrestadorId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a prestadora" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {prestadores.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.nome_fantasia || p.razao_social}
+                        {p.cnpj ? ` — ${p.cnpj}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Necessário para o rateio do DAS mensal por unidade no módulo Prestadores.
+                </p>
+              </div>
+            )}
           </div>
+
 
 
           <div className="col-span-2">
