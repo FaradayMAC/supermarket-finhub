@@ -550,6 +550,57 @@ export type Database = {
       faltas_rh: {
         Row: {
           created_at: string
+          data: string
+          funcionario_id: string
+          id: string
+          loja_id: string
+          motivo: string | null
+          observacoes: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          funcionario_id: string
+          id?: string
+          loja_id: string
+          motivo?: string | null
+          observacoes?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          funcionario_id?: string
+          id?: string
+          loja_id?: string
+          motivo?: string | null
+          observacoes?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faltas_rh_funcionario_id_fkey1"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faltas_rh_loja_id_fkey1"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faltas_rh_legado: {
+        Row: {
+          created_at: string
           funcionario_id: string
           id: string
           loja_id: string
