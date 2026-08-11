@@ -65,14 +65,29 @@ function ContrachequePage() {
       const { data, error } = await supabase
         .from("funcionarios")
         .select(
-          "id,nome,cargo,loja_id,salario_base,vale_transporte,vale_alimentacao,plano_saude,plano_odontologico,salario_familia,valor_extra_salarial,cargo_id,motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa,dependentes,desconto_vt,cargos(motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa),lojas(empresa_id,empresas(regime_tributario))",
+          "id,nome,cargo,loja_id,ativo,data_admissao,data_desligamento,salario_base,vale_transporte,vale_alimentacao,plano_saude,plano_odontologico,salario_familia,valor_extra_salarial,cargo_id,motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa,dependentes,desconto_vt,cargos(motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa),lojas(empresa_id,empresas(regime_tributario))",
         )
-        .eq("ativo", true)
         .order("nome");
       if (error) throw error;
       return data as unknown as Func[];
     },
   });
+
+  // Histórico oficial da competência (existe apenas quando a folha foi fechada)
+  const { data: folha = [] } = useQuery({
+    queryKey: ["folha-competencia", mes],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("folha_pagamento")
+        .select("funcionario_id,loja_id,salario_base,total_proventos,total_descontos,liquido,fgts,status,fechada_em")
+        .eq("competencia", competenciaDate(mes));
+      if (error) throw error;
+      return data as FolhaRow[];
+    },
+  });
+
+  const fechada = folha.length > 0;
+  const fechadaEm = folha[0]?.fechada_em ?? null;
 
   const { data: faltas = [] } = useQuery({
     queryKey: ["faltas-mes", mes],
@@ -114,12 +129,28 @@ function ContrachequePage() {
     [convenios],
   );
   const lojaMap = useMemo(() => new Map(lojas.map((l) => [l.id, l])), [lojas]);
+  const funcMap = useMemo(() => new Map(funcionarios.map((f) => [f.id, f])), [funcionarios]);
 
+  // Competência fechada = histórico imutável; aberta = recálculo ao vivo.
   const lista = useMemo(() => {
+    if (fechada) {
+      return folha
+        .map((r) => ({ f: funcMap.get(r.funcionario_id), r }))
+        .filter((x) => !!x.f)
+        .filter((x) => lojaFiltro === "todas" || x.f!.loja_id === lojaFiltro)
+        .sort((a, b) => (a.f!.nome > b.f!.nome ? 1 : -1))
+        .map(({ f, r }) => ({
+          f: f as Func,
+          cc: null,
+          hist: r,
+        }));
+    }
     return funcionarios
+      .filter((f) => entraNaCompetencia(f, mes))
       .filter((f) => lojaFiltro === "todas" || f.loja_id === lojaFiltro)
       .map((f) => ({
         f,
+        hist: null,
         cc: calcContracheque(f, {
           mes,
           faltas: faltasMap.get(f.id) ?? [],
@@ -127,12 +158,58 @@ function ContrachequePage() {
           salarioMinimoFederal,
         }),
       }));
-  }, [funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal]);
+  }, [fechada, folha, funcMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal]);
 
-  const totalLiquido = lista.reduce((s, i) => s + i.cc.liquido, 0);
-  const totalDescontos = lista.reduce((s, i) => s + i.cc.totalDescontos, 0);
-  const totalConvenio = lista.reduce((s, i) => s + i.cc.convenio, 0);
+  const totalLiquido = lista.reduce((s, i) => s + (i.hist ? Number(i.hist.liquido) : i.cc!.liquido), 0);
+  const totalDescontos = lista.reduce(
+    (s, i) => s + (i.hist ? Number(i.hist.total_descontos) : i.cc!.totalDescontos),
+    0,
+  );
+  const totalConvenio = lista.reduce((s, i) => s + (i.hist ? 0 : i.cc!.convenio), 0);
   const cal = calendarioMes(mes);
+
+  const fecharFolha = useMutation({
+    mutationFn: async () => {
+      const elegiveis = funcionarios.filter((f) => entraNaCompetencia(f, mes));
+      if (elegiveis.length === 0) throw new Error("Nenhum funcionário elegível nesta competência.");
+      const { data: userData } = await supabase.auth.getUser();
+      const linhas = elegiveis.map((f) => {
+        const cc = calcContracheque(f, {
+          mes,
+          faltas: faltasMap.get(f.id) ?? [],
+          convenio: Number(convMap.get(f.id)?.valor ?? 0),
+          salarioMinimoFederal,
+        });
+        return {
+          funcionario_id: f.id,
+          loja_id: f.loja_id,
+          competencia: competenciaDate(mes),
+          salario_base: cc.salario,
+          beneficios: cc.vaLiquido + cc.vtLiquido,
+          inss: cc.inss,
+          irrf: cc.irrf,
+          fgts: cc.fgts,
+          outros_descontos: Math.round((cc.totalDescontos - cc.inss - cc.irrf) * 100) / 100,
+          total_proventos: cc.proventos,
+          total_descontos: cc.totalDescontos,
+          liquido: cc.liquido,
+          custo_total: Math.round((cc.proventos + cc.fgts + cc.vaLiquido + cc.vtLiquido) * 100) / 100,
+          status: "fechada",
+          fechada_em: new Date().toISOString(),
+          fechada_por: userData.user?.id ?? null,
+        };
+      });
+      const { error } = await supabase.from("folha_pagamento").insert(linhas as any);
+      if (error) throw error;
+      return linhas.length;
+    },
+    onSuccess: (n) => {
+      toast.success(`Folha de ${mes} fechada para ${n} funcionário(s).`);
+      qc.invalidateQueries();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao fechar a folha"),
+  });
+
 
   const baixarPdf = async (f: Func) => {
     try {
