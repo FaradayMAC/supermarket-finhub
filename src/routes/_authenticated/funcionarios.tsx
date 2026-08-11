@@ -419,7 +419,7 @@ function FuncForm({
   const va = VALE_ALIMENTACAO_PADRAO_ES;
   const [ps, setPs] = useState<number>(Number(initial?.plano_saude ?? 0));
   const [po, setPo] = useState<number>(Number(initial?.plano_odontologico ?? 0));
-  const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
+  const [dependentes, setDependentes] = useState<number>(Number(initial?.dependentes ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
   // Um único controle: possuir VT já implica o desconto de até 6%.
   const [temVt, setTemVt] = useState<boolean>(
@@ -465,7 +465,7 @@ function FuncForm({
       vale_alimentacao: va,
       plano_saude: ps,
       plano_odontologico: po,
-      salario_familia: sf,
+      dependentes,
       valor_extra_salarial: ve,
       lojas: { empresas: { regime_tributario: regime } },
       calcula_encargos: calculaEncargos,
@@ -512,8 +512,8 @@ function FuncForm({
             vale_alimentacao: _va,
             plano_saude: _ps,
             plano_odontologico: _po,
-            dependentes: Number(fd.get("dependentes") || 0),
-            salario_familia: Number(fd.get("sf") || 0),
+            dependentes,
+            salario_familia: preview.sf,
             valor_extra_salarial: _ve,
             // Com cargo, os adicionais vivem no cargo — nada é copiado aqui.
             motivo_insalubridade: cargo ? "nenhum" : adicCfg.motivo_insalubridade,
@@ -684,8 +684,12 @@ function FuncForm({
               type="number"
               min="0"
               step="1"
-              defaultValue={initial?.dependentes ?? 0}
+              value={dependentes}
+              onChange={(e) => setDependentes(Number(e.target.value))}
             />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Base do salário-família e da dedução de IRRF.
+            </p>
           </div>
           <div className="col-span-2">
             <Label htmlFor="salario">Salário base (R$) *</Label>
@@ -780,21 +784,6 @@ function FuncForm({
               value={po}
               onChange={(e) => setPo(Number(e.target.value))}
             />
-          </div>
-          <div>
-            <Label htmlFor="sf">Salário-família (R$)</Label>
-            <Input
-              id="sf"
-              name="sf"
-              type="number"
-              min="0"
-              step="0.01"
-              value={sf}
-              onChange={(e) => setSf(Number(e.target.value))}
-            />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Valor pago ao funcionário por filho elegível (reembolsado pelo INSS).
-            </p>
           </div>
           <div>
             <Label htmlFor="ve">Valor extra salarial (R$)</Label>
@@ -920,7 +909,7 @@ function FuncForm({
             <div className="text-right font-medium">
               {fmtBRL(preview.vt + preview.va + preview.ps + preview.po)}
             </div>
-            <div className="text-muted-foreground">Salário-família</div>
+            <div className="text-muted-foreground">Salário-família (automático)</div>
             <div className="text-right font-medium">{fmtBRL(preview.sf)}</div>
             <div className="text-muted-foreground">Extra salarial</div>
             <div className="text-right font-medium">{fmtBRL(preview.ve)}</div>
