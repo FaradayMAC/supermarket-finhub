@@ -819,6 +819,7 @@ export type Database = {
           created_at: string
           data_admissao: string | null
           data_desligamento: string | null
+          data_nascimento: string | null
           dependentes: number
           desconto_vt: boolean
           email: string | null
@@ -853,6 +854,7 @@ export type Database = {
           created_at?: string
           data_admissao?: string | null
           data_desligamento?: string | null
+          data_nascimento?: string | null
           dependentes?: number
           desconto_vt?: boolean
           email?: string | null
@@ -887,6 +889,7 @@ export type Database = {
           created_at?: string
           data_admissao?: string | null
           data_desligamento?: string | null
+          data_nascimento?: string | null
           dependentes?: number
           desconto_vt?: boolean
           email?: string | null
