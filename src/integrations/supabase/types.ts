@@ -20,10 +20,9 @@ export type Database = {
           created_at: string
           descricao: string | null
           id: string
-          insalubridade_grau: number
+          motivo_insalubridade: Database["public"]["Enums"]["motivo_insalubridade"]
           nome: string
           periculosidade_pct: number
-          quebra_caixa_pct: number
           salario_base: number
           tem_periculosidade: boolean
           tem_quebra_caixa: boolean
@@ -34,10 +33,9 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
-          insalubridade_grau?: number
+          motivo_insalubridade?: Database["public"]["Enums"]["motivo_insalubridade"]
           nome: string
           periculosidade_pct?: number
-          quebra_caixa_pct?: number
           salario_base?: number
           tem_periculosidade?: boolean
           tem_quebra_caixa?: boolean
@@ -48,10 +46,9 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           id?: string
-          insalubridade_grau?: number
+          motivo_insalubridade?: Database["public"]["Enums"]["motivo_insalubridade"]
           nome?: string
           periculosidade_pct?: number
-          quebra_caixa_pct?: number
           salario_base?: number
           tem_periculosidade?: boolean
           tem_quebra_caixa?: boolean
@@ -764,22 +761,22 @@ export type Database = {
           desconto_vt: boolean
           email: string | null
           empresa_id: string | null
-          encargos: number
           id: string
-          insalubridade_pct: number
           loja_id: string
+          motivo_insalubridade: Database["public"]["Enums"]["motivo_insalubridade"]
           nome: string
           observacoes: string | null
           periculosidade_pct: number
           plano_odontologico: number
           plano_saude: number
           prestador_id: string | null
-          quebra_caixa_pct: number
           regime_tributario: string
           salario_base: number
           salario_familia: number
           situacao: string | null
           telefone: string | null
+          tem_periculosidade: boolean
+          tem_quebra_caixa: boolean
           updated_at: string
           vale_alimentacao: number
           vale_transporte: number
@@ -797,22 +794,22 @@ export type Database = {
           desconto_vt?: boolean
           email?: string | null
           empresa_id?: string | null
-          encargos?: number
           id?: string
-          insalubridade_pct?: number
           loja_id: string
+          motivo_insalubridade?: Database["public"]["Enums"]["motivo_insalubridade"]
           nome: string
           observacoes?: string | null
           periculosidade_pct?: number
           plano_odontologico?: number
           plano_saude?: number
           prestador_id?: string | null
-          quebra_caixa_pct?: number
           regime_tributario?: string
           salario_base?: number
           salario_familia?: number
           situacao?: string | null
           telefone?: string | null
+          tem_periculosidade?: boolean
+          tem_quebra_caixa?: boolean
           updated_at?: string
           vale_alimentacao?: number
           vale_transporte?: number
@@ -830,22 +827,22 @@ export type Database = {
           desconto_vt?: boolean
           email?: string | null
           empresa_id?: string | null
-          encargos?: number
           id?: string
-          insalubridade_pct?: number
           loja_id?: string
+          motivo_insalubridade?: Database["public"]["Enums"]["motivo_insalubridade"]
           nome?: string
           observacoes?: string | null
           periculosidade_pct?: number
           plano_odontologico?: number
           plano_saude?: number
           prestador_id?: string | null
-          quebra_caixa_pct?: number
           regime_tributario?: string
           salario_base?: number
           salario_familia?: number
           situacao?: string | null
           telefone?: string | null
+          tem_periculosidade?: boolean
+          tem_quebra_caixa?: boolean
           updated_at?: string
           vale_alimentacao?: number
           vale_transporte?: number
@@ -1775,6 +1772,10 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "diretoria" | "controladoria" | "gerente"
+      motivo_insalubridade:
+        | "nenhum"
+        | "asg_limpeza_terceirizada"
+        | "frio_camara_fria"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1903,6 +1904,11 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "diretoria", "controladoria", "gerente"],
+      motivo_insalubridade: [
+        "nenhum",
+        "asg_limpeza_terceirizada",
+        "frio_camara_fria",
+      ],
     },
   },
 } as const
