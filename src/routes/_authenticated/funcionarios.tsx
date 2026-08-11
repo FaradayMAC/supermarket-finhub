@@ -506,6 +506,8 @@ function FuncForm({
             cargo: cargo ? cargo.nome : String(fd.get("cargo") || "").trim() || null,
             salario_base: sal,
             data_admissao: String(fd.get("admissao") || "") || null,
+            data_desligamento: String(fd.get("desligamento") || "") || null,
+
             vale_transporte: _vt,
             vale_alimentacao: _va,
             plano_saude: _ps,
@@ -525,7 +527,7 @@ function FuncForm({
             situacao: String(fd.get("situacao") || "").trim() || null,
             observacoes: String(fd.get("observacoes") || "").trim() || null,
             beneficios: _vt + _va + _ps + _po + _ve,
-            ativo: true,
+            ativo: !String(fd.get("desligamento") || ""),
 
           });
 
@@ -660,6 +662,19 @@ function FuncForm({
           <div>
             <Label htmlFor="admissao">Data de admissão</Label>
             <Input id="admissao" name="admissao" type="date" defaultValue={initial?.data_admissao ?? ""} />
+          </div>
+          <div>
+            <Label htmlFor="desligamento">Data de desligamento</Label>
+            <Input
+              id="desligamento"
+              name="desligamento"
+              type="date"
+              defaultValue={initial?.data_desligamento ?? ""}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Sai das folhas a partir do mês seguinte; competências já fechadas ficam intactas.
+            </p>
+
           </div>
           <div>
             <Label htmlFor="dependentes">Dependentes</Label>
