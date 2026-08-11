@@ -496,21 +496,20 @@ function DetalheContracheque({
         <Linha label="INSS" valor={cc.inss} negativo />
         <Linha label="IRRF" valor={cc.irrf} negativo />
         <Linha label="Vale-transporte (6%)" valor={cc.descontoVt} negativo />
-        <Linha label="Plano de saúde" valor={cc.planoSaude} negativo />
-        <Linha label="Plano odontológico" valor={cc.planoOdonto} negativo />
         <Linha label="Convênio (compras na loja)" valor={cc.convenio} negativo />
         <div className="mt-1 flex justify-between border-t pt-1 text-sm font-semibold">
           <span>Total de descontos</span><span className="text-destructive">- {fmtBRL(cc.totalDescontos)}</span>
         </div>
       </div>
 
-      {(cc.va > 0 || cc.vt > 0) && (
+      {(cc.va > 0 || cc.vt > 0 || cc.planoSaude > 0 || cc.planoOdonto > 0) && (
         <div className="rounded-md border p-3">
-          <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Benefícios (proporcionais às faltas)</div>
-          <Linha label="Vale-alimentação" valor={cc.vaLiquido} muted />
+          <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Benefícios</div>
+          <Linha label="Vale-alimentação (proporcional às faltas)" valor={cc.vaLiquido} muted />
           <Linha label="Redução por faltas (VA)" valor={cc.descVa} negativo muted />
           <Linha label="Vale-transporte" valor={cc.vtLiquido} muted />
-          <Linha label="Redução por faltas (VT)" valor={cc.descVtBeneficio} negativo muted />
+          <Linha label="Plano de saúde" valor={cc.planoSaude} muted />
+          <Linha label="Plano odontológico" valor={cc.planoOdonto} muted />
         </div>
       )}
 
