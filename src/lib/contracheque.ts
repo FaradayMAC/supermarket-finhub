@@ -1,6 +1,8 @@
 import { adicionaisDoCargo, SALARIO_MINIMO_FEDERAL } from "@/lib/cargos";
 import { adicionaisFonte, type FonteAdicionais } from "@/lib/custo-funcionario";
 import { FGTS_PCT } from "@/lib/encargos";
+import { calcSalarioFamilia } from "@/lib/salario-familia";
+
 
 // ============================================================================
 // Cálculo do contracheque — legislação trabalhista aplicada ao Espírito Santo
