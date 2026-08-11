@@ -549,6 +549,7 @@ function FuncForm({
             periculosidade_pct: !cargo && adicCfg.tem_periculosidade ? adicCfg.periculosidade_pct : 0,
             tem_quebra_caixa: cargo ? false : adicCfg.tem_quebra_caixa,
             desconto_vt: descontoVt,
+            calcula_encargos: calculaEncargos,
             situacao: String(fd.get("situacao") || "").trim() || null,
             observacoes: String(fd.get("observacoes") || "").trim() || null,
             beneficios: _vt + _va + _ps + _po + _ve,
