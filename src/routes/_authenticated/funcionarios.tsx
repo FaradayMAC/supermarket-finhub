@@ -502,6 +502,7 @@ function FuncForm({
       salario_familia: sf,
       valor_extra_salarial: ve,
       lojas: { empresas: { regime_tributario: regime } },
+      calcula_encargos: calculaEncargos,
       ...adicCfg,
     },
     salarioMinimoFederal,
