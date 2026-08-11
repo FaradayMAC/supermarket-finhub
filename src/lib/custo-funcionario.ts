@@ -71,7 +71,7 @@ export function custoReal(
   const va = Number(f.vale_alimentacao) || 0;
   const ps = Number(f.plano_saude) || 0;
   const po = Number(f.plano_odontologico) || 0;
-  const sf = Number(f.salario_familia) || 0;
+  const sf = calcSalarioFamilia(salario, Number(f.dependentes) || 0);
   const ve = Number(f.valor_extra_salarial) || 0;
 
   const a = adicionaisDoCargo(adicionaisFonte(f), salario, salarioMinimoFederal);
