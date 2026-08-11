@@ -74,6 +74,7 @@ function FuncPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Func | null>(null);
   const [filtro, setFiltro] = useState("todas");
+  const { salarioMinimoFederal } = useReferenciasSalariais();
 
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas-min"],
