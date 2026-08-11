@@ -376,6 +376,17 @@ function DetalheContracheque({
         <span className="text-sm font-semibold">Líquido a receber</span>
         <span className="text-xl font-bold">{fmtBRL(cc.liquido)}</span>
       </div>
+
+      <div className="rounded-md border p-3">
+        <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">
+          Encargos da empresa (não descontados do funcionário)
+        </div>
+        <Linha label="FGTS do mês (8%)" valor={cc.fgts} muted />
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Base: {fmtBRL(cc.baseFgts)} — remuneração do mês já ajustada por faltas injustificadas e DSR perdido.
+        </p>
+      </div>
+
       <Button
         className="w-full"
         onClick={() => gerarContrachequePdf({ func, loja, mes, faltas, convenio })}
