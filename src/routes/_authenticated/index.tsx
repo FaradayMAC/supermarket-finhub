@@ -30,7 +30,7 @@ const monthLabel = (key: string) => {
 function Dashboard() {
   const periodoState = usePeriodo("1m");
 
-  const { salarioMinimoFederal } = useReferenciasSalariais();
+  const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
     queryFn: async () => {
@@ -77,7 +77,7 @@ function Dashboard() {
   const folhaPeriodo = folhaLancada.filter((f) => inWindow(f.competencia)).reduce((s, f) => s + Number(f.custo_total ?? 0), 0);
   const custoMensalFuncs = funcionarios
     .filter((f) => f.ativo)
-    .reduce((s, f) => s + custoReal(f, salarioMinimoFederal).total, 0);
+    .reduce((s, f) => s + custoReal(f, salarioMinimoFederal, planosCfg).total, 0);
   
   const totalFolha = folhaPeriodo > 0 ? folhaPeriodo : custoMensalFuncs * mesesJanela;
 
@@ -95,7 +95,7 @@ function Dashboard() {
       const cmv = compras.filter((c) => c.loja_id === l.id && inWindow(c.data_compra)).reduce((s, c) => s + Number(c.valor_total), 0);
       const imp = impostos.filter((i) => i.loja_id === l.id && inWindow(i.competencia)).reduce((s, i) => s + Number(i.valor), 0);
       const funcsLoja = funcionarios.filter((f) => f.loja_id === l.id && f.ativo);
-      const folhaLoja = funcsLoja.reduce((s, f) => s + custoReal(f, salarioMinimoFederal).total, 0) * mesesJanela;
+      const folhaLoja = funcsLoja.reduce((s, f) => s + custoReal(f, salarioMinimoFederal, planosCfg).total, 0) * mesesJanela;
       const rec = mov.filter((m) => m.loja_id === l.id && m.tipo === "entrada" && inWindow(m.data_movimentacao)).reduce((s, m) => s + Number(m.valor), 0);
       const custo = desp + cmv + imp + folhaLoja;
       return {

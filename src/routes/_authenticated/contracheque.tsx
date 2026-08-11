@@ -39,6 +39,7 @@ type Func = FuncionarioCC & {
   loja_id: string;
   ativo?: boolean;
   data_admissao?: string | null;
+  data_nascimento?: string | null;
   data_desligamento?: string | null;
 };
 
@@ -66,7 +67,7 @@ function ContrachequePage() {
   const [lojaFiltro, setLojaFiltro] = useState<string>("todas");
   const [detalhe, setDetalhe] = useState<Func | null>(null);
   const [convOpen, setConvOpen] = useState<Func | null>(null);
-  const { salarioMinimoFederal } = useReferenciasSalariais();
+  const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
 
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas"],
@@ -83,7 +84,7 @@ function ContrachequePage() {
       const { data, error } = await supabase
         .from("funcionarios")
         .select(
-          "id,nome,cargo,loja_id,ativo,data_admissao,data_desligamento,salario_base,vale_transporte,vale_alimentacao,plano_saude,plano_odontologico,salario_familia,valor_extra_salarial,cargo_id,motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa,dependentes,desconto_vt,cargos(motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa),lojas(empresa_id,empresas(regime_tributario))",
+          "id,nome,cargo,loja_id,ativo,data_admissao,data_desligamento,salario_base,vale_transporte,vale_alimentacao,data_nascimento,salario_familia,valor_extra_salarial,cargo_id,motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa,dependentes,desconto_vt,cargos(motivo_insalubridade,tem_periculosidade,periculosidade_pct,tem_quebra_caixa),lojas(empresa_id,empresas(regime_tributario))",
         )
         .order("nome");
       if (error) throw error;
@@ -170,13 +171,14 @@ function ContrachequePage() {
         f,
         hist: null,
         cc: calcContracheque(f, {
+          planos: planosCfg,
           mes,
           faltas: faltasMap.get(f.id) ?? [],
           convenio: Number(convMap.get(f.id)?.valor ?? 0),
           salarioMinimoFederal,
         }),
       }));
-  }, [fechada, folha, funcMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal]);
+  }, [fechada, folha, funcMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg]);
 
   const totalLiquido = lista.reduce((s, i) => s + (i.hist ? Number(i.hist.liquido) : i.cc!.liquido), 0);
   const totalDescontos = lista.reduce(
@@ -193,6 +195,7 @@ function ContrachequePage() {
       const { data: userData } = await supabase.auth.getUser();
       const linhas = elegiveis.map((f) => {
         const cc = calcContracheque(f, {
+          planos: planosCfg,
           mes,
           faltas: faltasMap.get(f.id) ?? [],
           convenio: Number(convMap.get(f.id)?.valor ?? 0),
@@ -460,8 +463,8 @@ function Linha({ label, valor, negativo, muted }: { label: string; valor: number
 function DetalheContracheque({
   func, loja, mes, faltas, convenio,
 }: { func: Func; loja: string; mes: string; faltas: FaltaDia[]; convenio: number }) {
-  const { salarioMinimoFederal } = useReferenciasSalariais();
-  const cc = calcContracheque(func, { mes, faltas, convenio, salarioMinimoFederal });
+  const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
+  const cc = calcContracheque(func, { mes, faltas, convenio, salarioMinimoFederal, planos: planosCfg });
   const [y, m] = mes.split("-");
   return (
     <>

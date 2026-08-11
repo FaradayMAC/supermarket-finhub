@@ -1,6 +1,13 @@
 import { adicionaisDoCargo, SALARIO_MINIMO_FEDERAL, type CargoAdicionais } from "@/lib/cargos";
 import { encargosRate, FGTS_PCT } from "@/lib/encargos";
 import { calcSalarioFamilia } from "@/lib/salario-familia";
+import {
+  hojeUTC,
+  planosDoFuncionario,
+  PLANOS_CONFIG_ZERO,
+  type PlanosConfig,
+} from "@/lib/planos";
+
 
 
 export type RegimeTributario = "simples" | "lucro_real";
@@ -43,8 +50,11 @@ export type FuncionarioCusto = FonteAdicionais & {
   salario_base: number | string;
   vale_transporte?: number | string;
   vale_alimentacao?: number | string;
+  /** Somente leitura: os planos vêm da configuração global + carência + idade. */
   plano_saude?: number | string;
   plano_odontologico?: number | string;
+  data_admissao?: string | null;
+  data_nascimento?: string | null;
   /** Somente leitura: o salário-família é sempre recalculado. */
   salario_familia?: number | string;
   dependentes?: number | string;
@@ -65,12 +75,15 @@ export type FuncionarioCusto = FonteAdicionais & {
 export function custoReal(
   f: FuncionarioCusto,
   salarioMinimoFederal: number = SALARIO_MINIMO_FEDERAL,
+  planosConfig: PlanosConfig = PLANOS_CONFIG_ZERO,
+  dataReferencia: Date = hojeUTC(),
 ) {
   const salario = Number(f.salario_base) || 0;
   const vt = Number(f.vale_transporte) || 0;
   const va = Number(f.vale_alimentacao) || 0;
-  const ps = Number(f.plano_saude) || 0;
-  const po = Number(f.plano_odontologico) || 0;
+  const planos = planosDoFuncionario(f, planosConfig, dataReferencia);
+  const ps = planos.planoSaude;
+  const po = planos.planoOdonto;
   const sf = calcSalarioFamilia(salario, Number(f.dependentes) || 0);
   const ve = Number(f.valor_extra_salarial) || 0;
 
@@ -92,6 +105,7 @@ export function custoReal(
     va,
     ps,
     po,
+    planos,
     sf,
     ve,
     detalheAdicionais: a,
@@ -109,4 +123,5 @@ export function custoReal(
 
 /** Campos mínimos que toda tela precisa selecionar para calcular o custo ao vivo. */
 export const CUSTO_SELECT =
-  "id, loja_id, ativo, salario_base, vale_transporte, vale_alimentacao, plano_saude, plano_odontologico, salario_familia, dependentes, valor_extra_salarial, calcula_encargos, cargo_id, motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa, cargos(motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa), lojas(empresa_id, empresas(regime_tributario))";
+  "id, loja_id, ativo, salario_base, vale_transporte, vale_alimentacao, data_admissao, data_nascimento, salario_familia, dependentes, valor_extra_salarial, calcula_encargos, cargo_id, motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa, cargos(motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa), lojas(empresa_id, empresas(regime_tributario))";
+
