@@ -10,9 +10,17 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, Lock, ShoppingBasket } from "lucide-react";
+import { CalendarDays, Download, FileText, Lock, ShoppingBasket } from "lucide-react";
 import { toast } from "sonner";
-import { calcContracheque, calendarioMes, type FaltaDia, type FuncionarioCC } from "@/lib/contracheque";
+import {
+  calcContracheque,
+  calendarioMes,
+  MAX_DIAS_VENDIDOS,
+  type AfastamentoMes,
+  type FaltaDia,
+  type FeriasMes,
+  type FuncionarioCC,
+} from "@/lib/contracheque";
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { gerarContrachequePdf } from "@/lib/contracheque-pdf";
 import { competenciaDate, entraNaCompetencia, fmtDataHora, podeFechar } from "@/lib/folha-competencia";
@@ -67,6 +75,7 @@ function ContrachequePage() {
   const [lojaFiltro, setLojaFiltro] = useState<string>("todas");
   const [detalhe, setDetalhe] = useState<Func | null>(null);
   const [convOpen, setConvOpen] = useState<Func | null>(null);
+  const [eventoOpen, setEventoOpen] = useState<Func | null>(null);
   const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
 
   const { data: lojas = [] } = useQuery({
@@ -133,6 +142,39 @@ function ContrachequePage() {
     },
   });
 
+  const { data: feriasRows = [] } = useQuery({
+    queryKey: ["ferias-competencia", mes],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ferias_gozadas")
+        .select("id,funcionario_id,dias_gozados,dias_vendidos,data_inicio_gozo,periodo_aquisitivo_inicio,periodo_aquisitivo_fim")
+        .eq("competencia", `${mes}-01`);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data: afastRows = [] } = useQuery({
+    queryKey: ["afastamentos-competencia", mes],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("afastamentos_inss")
+        .select("id,funcionario_id,data_inicio,data_fim,tipo")
+        .eq("competencia", `${mes}-01`);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const feriasMap = useMemo(
+    () => new Map<string, any>(feriasRows.map((r) => [r.funcionario_id, r])),
+    [feriasRows],
+  );
+  const afastMap = useMemo(
+    () => new Map<string, any>(afastRows.map((r) => [r.funcionario_id, r])),
+    [afastRows],
+  );
+
   const faltasMap = useMemo(() => {
     const m = new Map<string, FaltaDia[]>();
     faltas.forEach((f) => {
@@ -176,9 +218,11 @@ function ContrachequePage() {
           faltas: faltasMap.get(f.id) ?? [],
           convenio: Number(convMap.get(f.id)?.valor ?? 0),
           salarioMinimoFederal,
+          ferias: (feriasMap.get(f.id) as FeriasMes | undefined) ?? null,
+          afastamento: (afastMap.get(f.id) as AfastamentoMes | undefined) ?? null,
         }),
       }));
-  }, [fechada, folha, funcMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg]);
+  }, [fechada, folha, funcMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg, feriasMap, afastMap]);
 
   const totalLiquido = lista.reduce((s, i) => s + (i.hist ? Number(i.hist.liquido) : i.cc!.liquido), 0);
   const totalDescontos = lista.reduce(
@@ -200,6 +244,8 @@ function ContrachequePage() {
           faltas: faltasMap.get(f.id) ?? [],
           convenio: Number(convMap.get(f.id)?.valor ?? 0),
           salarioMinimoFederal,
+          ferias: (feriasMap.get(f.id) as FeriasMes | undefined) ?? null,
+          afastamento: (afastMap.get(f.id) as AfastamentoMes | undefined) ?? null,
         });
         return {
           funcionario_id: f.id,
@@ -267,6 +313,81 @@ function ContrachequePage() {
       setConvOpen(null);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
+  });
+
+  // Férias: grava também em ferias_gozadas, fechando o período aquisitivo em
+  // curso e reiniciando a contagem para as provisões e para a Rescisão.
+  const saveFerias = useMutation({
+    mutationFn: async (v: {
+      funcionario: Func;
+      ativo: boolean;
+      dias_gozados: number;
+      dias_vendidos: number;
+      data_inicio_gozo: string;
+    }) => {
+      const existente = feriasMap.get(v.funcionario.id);
+      if (!v.ativo) {
+        if (existente) {
+          const { error } = await supabase.from("ferias_gozadas").delete().eq("id", existente.id);
+          if (error) throw error;
+        }
+        return;
+      }
+      const inicio = periodoAquisitivoEmCurso(v.funcionario.data_admissao, v.data_inicio_gozo);
+      const payload = {
+        funcionario_id: v.funcionario.id,
+        competencia: `${mes}-01`,
+        data_inicio_gozo: v.data_inicio_gozo,
+        dias_gozados: v.dias_gozados,
+        dias_vendidos: v.dias_vendidos,
+        periodo_aquisitivo_inicio: inicio.inicio,
+        periodo_aquisitivo_fim: inicio.fim,
+      };
+      const { error } = await supabase
+        .from("ferias_gozadas")
+        .upsert(payload as any, { onConflict: "funcionario_id,competencia" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Férias atualizadas");
+      qc.invalidateQueries();
+      setEventoOpen(null);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao salvar férias"),
+  });
+
+  const saveAfastamento = useMutation({
+    mutationFn: async (v: {
+      funcionario: Func;
+      ativo: boolean;
+      data_inicio: string;
+      tipo: string;
+    }) => {
+      const existente = afastMap.get(v.funcionario.id);
+      if (!v.ativo) {
+        if (existente) {
+          const { error } = await supabase.from("afastamentos_inss").delete().eq("id", existente.id);
+          if (error) throw error;
+        }
+        return;
+      }
+      const { error } = await supabase.from("afastamentos_inss").upsert(
+        {
+          funcionario_id: v.funcionario.id,
+          competencia: `${mes}-01`,
+          data_inicio: v.data_inicio,
+          tipo: v.tipo,
+        } as any,
+        { onConflict: "funcionario_id,competencia" },
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Afastamento atualizado");
+      qc.invalidateQueries();
+      setEventoOpen(null);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao salvar afastamento"),
   });
 
   return (
@@ -354,7 +475,15 @@ function ContrachequePage() {
                 <tr key={f.id} className="border-b last:border-0">
                   <td className="px-4 py-3">
                     <div className="font-medium">{f.nome}</div>
-                    <div className="text-xs text-muted-foreground">{f.cargo ?? "—"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {f.cargo ?? "—"}
+                      {afastMap.get(f.id) && (
+                        <Badge variant="destructive" className="ml-2">Afastado (INSS)</Badge>
+                      )}
+                      {!afastMap.get(f.id) && feriasMap.get(f.id) && (
+                        <Badge variant="secondary" className="ml-2">Férias</Badge>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">{lojaMap.get(f.loja_id)?.nome ?? "—"}</td>
                   <td className="px-4 py-3 text-center">
@@ -380,6 +509,14 @@ function ContrachequePage() {
                       <span className="text-xs text-muted-foreground">Somente leitura</span>
                     ) : (
                       <>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Férias / afastamento INSS"
+                          onClick={() => setEventoOpen(f)}
+                        >
+                          <CalendarDays className="h-4 w-4" />
+                        </Button>
                         <Button size="icon" variant="ghost" title="Lançar convênio" onClick={() => setConvOpen(f)}>
                           <ShoppingBasket className="h-4 w-4" />
                         </Button>
@@ -409,6 +546,8 @@ function ContrachequePage() {
               mes={mes}
               faltas={faltasMap.get(detalhe.id) ?? []}
               convenio={Number(convMap.get(detalhe.id)?.valor ?? 0)}
+              ferias={feriasMap.get(detalhe.id) ?? null}
+              afastamento={afastMap.get(detalhe.id) ?? null}
             />
           )}
         </DialogContent>
@@ -446,7 +585,169 @@ function ContrachequePage() {
           )}
         </DialogContent>
       </Dialog>
+      <Dialog open={!!eventoOpen} onOpenChange={(o) => !o && setEventoOpen(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Férias e afastamento — {eventoOpen?.nome}</DialogTitle>
+          </DialogHeader>
+          {eventoOpen && (
+            <EventosMes
+              func={eventoOpen}
+              mes={mes}
+              ferias={feriasMap.get(eventoOpen.id) ?? null}
+              afastamento={afastMap.get(eventoOpen.id) ?? null}
+              onFerias={(v) => saveFerias.mutate({ funcionario: eventoOpen, ...v })}
+              onAfastamento={(v) => saveAfastamento.mutate({ funcionario: eventoOpen, ...v })}
+              salvando={saveFerias.isPending || saveAfastamento.isPending}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AppShell>
+  );
+}
+
+/** Período aquisitivo de 12 meses em curso na data do gozo. */
+function periodoAquisitivoEmCurso(dataAdmissao: string | null | undefined, ref: string) {
+  const base = dataAdmissao ? dataAdmissao.slice(0, 10) : ref.slice(0, 10);
+  const [ay, am, ad] = base.split("-").map(Number);
+  const [ry, rm, rd] = ref.slice(0, 10).split("-").map(Number);
+  let inicio = new Date(Date.UTC(ay, am - 1, ad));
+  const refDate = new Date(Date.UTC(ry, rm - 1, rd));
+  let guard = 0;
+  while (guard++ < 80) {
+    const proximo = new Date(Date.UTC(inicio.getUTCFullYear() + 1, inicio.getUTCMonth(), inicio.getUTCDate()));
+    if (proximo > refDate) {
+      return {
+        inicio: inicio.toISOString().slice(0, 10),
+        fim: new Date(proximo.getTime() - 86400000).toISOString().slice(0, 10),
+      };
+    }
+    inicio = proximo;
+  }
+  return { inicio: base, fim: base };
+}
+
+function EventosMes({
+  func, mes, ferias, afastamento, onFerias, onAfastamento, salvando,
+}: {
+  func: Func;
+  mes: string;
+  ferias: any | null;
+  afastamento: any | null;
+  onFerias: (v: { ativo: boolean; dias_gozados: number; dias_vendidos: number; data_inicio_gozo: string }) => void;
+  onAfastamento: (v: { ativo: boolean; data_inicio: string; tipo: string }) => void;
+  salvando: boolean;
+}) {
+  const [emFerias, setEmFerias] = useState(!!ferias);
+  const [dias, setDias] = useState<number>(Number(ferias?.dias_gozados ?? 30));
+  const [vendeu, setVendeu] = useState<boolean>(Number(ferias?.dias_vendidos ?? 0) > 0);
+  const [vendidos, setVendidos] = useState<number>(Number(ferias?.dias_vendidos ?? 0));
+  const [inicioGozo, setInicioGozo] = useState<string>(ferias?.data_inicio_gozo ?? `${mes}-01`);
+
+  const [afastado, setAfastado] = useState(!!afastamento);
+  const [inicioAf, setInicioAf] = useState<string>(afastamento?.data_inicio ?? `${mes}-01`);
+  const [tipoAf, setTipoAf] = useState<string>(afastamento?.tipo ?? "comum");
+
+  const diasVendidosOk = !vendeu || (vendidos <= MAX_DIAS_VENDIDOS && dias + vendidos <= 30);
+
+  return (
+    <div className="space-y-5">
+      <section className="space-y-3 rounded-md border p-3">
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input type="checkbox" checked={emFerias} onChange={(e) => setEmFerias(e.target.checked)} />
+          Em férias neste mês
+        </label>
+        {emFerias && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Dias gozados</Label>
+              <Input type="number" min={1} max={30} value={dias} onChange={(e) => setDias(Number(e.target.value))} />
+            </div>
+            <div>
+              <Label>Início do gozo</Label>
+              <Input type="date" value={inicioGozo} onChange={(e) => setInicioGozo(e.target.value)} />
+            </div>
+            <label className="col-span-2 flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={vendeu} onChange={(e) => setVendeu(e.target.checked)} />
+              Vendeu parte das férias (abono pecuniário)
+            </label>
+            {vendeu && (
+              <div className="col-span-2">
+                <Label>Dias vendidos à empresa (máx. {MAX_DIAS_VENDIDOS})</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={MAX_DIAS_VENDIDOS}
+                  value={vendidos}
+                  onChange={(e) => setVendidos(Number(e.target.value))}
+                />
+                {!diasVendidosOk && (
+                  <p className="mt-1 text-xs text-destructive">
+                    Dias gozados + vendidos não podem passar de 30 (CLT Art. 143).
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        <Button
+          size="sm"
+          disabled={salvando || !diasVendidosOk}
+          onClick={() =>
+            onFerias({
+              ativo: emFerias,
+              dias_gozados: dias,
+              dias_vendidos: vendeu ? vendidos : 0,
+              data_inicio_gozo: inicioGozo,
+            })
+          }
+        >
+          Salvar férias
+        </Button>
+        <p className="text-[11px] text-muted-foreground">
+          Ao salvar, o período aquisitivo em curso é fechado e a contagem reinicia — refletindo na
+          provisão de férias e no módulo de Rescisão.
+        </p>
+      </section>
+
+      <section className="space-y-3 rounded-md border p-3">
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input type="checkbox" checked={afastado} onChange={(e) => setAfastado(e.target.checked)} />
+          Afastado pelo INSS neste mês
+        </label>
+        {afastado && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Início do afastamento</Label>
+              <Input type="date" value={inicioAf} onChange={(e) => setInicioAf(e.target.value)} />
+            </div>
+            <div>
+              <Label>Tipo</Label>
+              <Select value={tipoAf} onValueChange={setTipoAf}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="comum">Auxílio-doença comum</SelectItem>
+                  <SelectItem value="acidentario">Acidentário (B91)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+        <Button
+          size="sm"
+          disabled={salvando}
+          onClick={() => onAfastamento({ ativo: afastado, data_inicio: inicioAf, tipo: tipoAf })}
+        >
+          Salvar afastamento
+        </Button>
+        <p className="text-[11px] text-muted-foreground">
+          A empresa paga apenas os 15 primeiros dias de afastamento; a partir do 16º o benefício é
+          pago pelo INSS. Confirme casos específicos com a contabilidade — {func.nome} segue com FGTS
+          devido durante o afastamento.
+        </p>
+      </section>
+    </div>
   );
 }
 
@@ -461,10 +762,16 @@ function Linha({ label, valor, negativo, muted }: { label: string; valor: number
 }
 
 function DetalheContracheque({
-  func, loja, mes, faltas, convenio,
-}: { func: Func; loja: string; mes: string; faltas: FaltaDia[]; convenio: number }) {
+  func, loja, mes, faltas, convenio, ferias, afastamento,
+}: {
+  func: Func; loja: string; mes: string; faltas: FaltaDia[]; convenio: number;
+  ferias?: FeriasMes | null; afastamento?: AfastamentoMes | null;
+}) {
   const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
-  const cc = calcContracheque(func, { mes, faltas, convenio, salarioMinimoFederal, planos: planosCfg });
+  const cc = calcContracheque(func, {
+    mes, faltas, convenio, salarioMinimoFederal, planos: planosCfg,
+    ferias: ferias ?? null, afastamento: afastamento ?? null,
+  });
   const [y, m] = mes.split("-");
   return (
     <>
@@ -483,6 +790,11 @@ function DetalheContracheque({
         <Linha label="Quebra de caixa" valor={cc.quebraCaixa} />
         <Linha label="Valor extra salarial" valor={cc.extra} />
         <Linha label="Salário-família" valor={cc.salFamilia} />
+        <Linha label={`Férias — 1/3 constitucional (${cc.diasFerias} dia(s))`} valor={cc.feriasTerco} />
+        <Linha label={`Abono pecuniário (${cc.diasVendidos} dia(s) vendidos)`} valor={cc.abonoFerias} />
+        <Linha label="Abono pecuniário — 1/3" valor={cc.abonoTerco} />
+        <Linha label="13º salário — 1ª parcela (isenta)" valor={mes.endsWith("-11") ? cc.decimoNoMes : 0} />
+        <Linha label="13º salário — 2ª parcela" valor={mes.endsWith("-12") ? cc.decimoNoMes : 0} />
         <div className="mt-1 flex justify-between border-t pt-1 text-sm font-semibold">
           <span>Total de proventos</span><span>{fmtBRL(cc.proventos)}</span>
         </div>
@@ -493,6 +805,11 @@ function DetalheContracheque({
         <Linha label={`Faltas injustificadas (${cc.faltas} dia(s))`} valor={cc.descFaltas} negativo />
         <Linha label={`DSR perdido (${cc.dsrDias} semana(s))`} valor={cc.descDsr} negativo />
         <Linha label="Redução proporcional do valor extra" valor={cc.descExtra} negativo />
+        <Linha
+          label={`Afastamento INSS (${cc.diasSemPagamento} dia(s) pagos pelo INSS)`}
+          valor={cc.descAfastamento}
+          negativo
+        />
         <Linha label="INSS" valor={cc.inss} negativo />
         <Linha label="IRRF" valor={cc.irrf} negativo />
         <Linha label="Vale-transporte (6%)" valor={cc.descontoVt} negativo />

@@ -204,6 +204,57 @@ export function semanasComFaltaInjustificada(faltas: FaltaDia[], mes: string): n
   return semanas.size;
 }
 
+export type FeriasMes = {
+  /** dias de gozo dentro da competência (1..30) */
+  dias_gozados: number;
+  /** abono pecuniário — dias vendidos à empresa (máx. 10, CLT Art. 143) */
+  dias_vendidos?: number;
+};
+
+export type AfastamentoMes = {
+  /** ISO date do início do afastamento (pode ser em competência anterior) */
+  data_inicio: string;
+  tipo?: string;
+  data_fim?: string | null;
+};
+
+/** Máximo legal de dias de férias que podem ser vendidos (1/3 de 30). */
+export const MAX_DIAS_VENDIDOS = 10;
+
+/** Dias do mês em que a empresa ainda paga o salário durante afastamento INSS.
+ *  Lei 8.213/91: os 15 primeiros dias de afastamento são de responsabilidade
+ *  da empresa; a partir do 16º dia o benefício é pago pelo INSS. */
+export function diasPagosNoAfastamento(mes: string, af: AfastamentoMes, diasNoMes: number) {
+  const [y, m] = mes.split("-").map(Number);
+  const inicioMes = Date.UTC(y, m - 1, 1);
+  const [iy, im, id] = af.data_inicio.slice(0, 10).split("-").map(Number);
+  const inicio = Date.UTC(iy, im - 1, id);
+  // último dia pago pela empresa = 15º dia de afastamento (inclusive)
+  const ultimoPago = inicio + 14 * 86400000;
+
+  let diasPagos = 0;
+  for (let d = 1; d <= diasNoMes; d++) {
+    const dia = Date.UTC(y, m - 1, d);
+    if (dia < inicio) diasPagos++; // antes do afastamento: trabalhou normalmente
+    else if (dia <= ultimoPago) diasPagos++; // dentro dos 15 dias da empresa
+  }
+  if (inicio > Date.UTC(y, m - 1, diasNoMes)) diasPagos = diasNoMes; // começa depois do mês
+  if (inicio < inicioMes && ultimoPago < inicioMes) diasPagos = 0;
+  return Math.max(0, Math.min(diasNoMes, diasPagos));
+}
+
+/** Avos de 13º acumulados do ano até o mês informado (fração >= 15 dias = mês). */
+export function avos13(dataAdmissao: string | null | undefined, mes: string): number {
+  const [y, m] = mes.split("-").map(Number);
+  let inicioMes = 1;
+  if (dataAdmissao) {
+    const [ay, am, ad] = dataAdmissao.slice(0, 10).split("-").map(Number);
+    if (ay > y) return 0;
+    if (ay === y) inicioMes = ad > 16 ? am + 1 : am;
+  }
+  return Math.max(0, Math.min(12, m - inicioMes + 1));
+}
+
 export function calcContracheque(
   f: FuncionarioCC,
   opts: {
@@ -212,6 +263,8 @@ export function calcContracheque(
     convenio: number;
     salarioMinimoFederal?: number;
     planos?: PlanosConfig;
+    ferias?: FeriasMes | null;
+    afastamento?: AfastamentoMes | null;
   },
 ) {
 
@@ -252,20 +305,67 @@ export function calcContracheque(
   // Vale-transporte é fornecido em valor fixo (passagens do mês), sem redução por faltas.
   const descVtBeneficio = 0;
 
+  // --- Férias no mês (CLT Art. 129 e 143) ---
+  const emFerias = !!opts.ferias && Number(opts.ferias.dias_gozados) > 0;
+  const diasFerias = emFerias ? Math.min(30, Number(opts.ferias!.dias_gozados) || 0) : 0;
+  const diasVendidos = emFerias
+    ? Math.max(0, Math.min(MAX_DIAS_VENDIDOS, 30 - diasFerias, Number(opts.ferias!.dias_vendidos) || 0))
+    : 0;
+  // Salário integral do período já está em proventos; aqui entra o 1/3 constitucional.
+  const feriasBase = r2(baseDia * diasFerias);
+  const feriasTerco = r2(feriasBase / 3);
+  // Abono pecuniário (dias vendidos) + 1/3 — isento de INSS e IRRF.
+  const abonoFerias = r2(baseDia * diasVendidos);
+  const abonoTerco = r2(abonoFerias / 3);
+  const abonoTotal = r2(abonoFerias + abonoTerco);
 
-  const proventos = r2(salario + adicionais + extra + salFamilia);
+  // --- Afastamento pelo INSS (Lei 8.213/91, Art. 60 §3º) ---
+  const afastado = !!opts.afastamento?.data_inicio;
+  const diasPagosEmpresa = afastado
+    ? diasPagosNoAfastamento(opts.mes, opts.afastamento!, cal.diasNoMes)
+    : cal.diasNoMes;
+  const diasSemPagamento = afastado ? Math.max(0, cal.diasNoMes - diasPagosEmpresa) : 0;
+  const descAfastamento = afastado ? r2((baseDia * 30 * diasSemPagamento) / cal.diasNoMes) : 0;
+
+  // --- 13º salário parcelado (novembro = 1ª parcela, dezembro = 2ª) ---
+  const mesNum = Number(opts.mes.split("-")[1]);
+  const avosDez = avos13(f.data_admissao, `${opts.mes.split("-")[0]}-12`);
+  const avosNov = avos13(f.data_admissao, `${opts.mes.split("-")[0]}-11`);
+  const remuneracao13 = salario + adicionais;
+  const decimoPrimeiraParcela = mesNum >= 11 ? r2(((remuneracao13 / 12) * avosNov) / 2) : 0;
+  const decimoTotalAno = mesNum === 12 ? r2((remuneracao13 / 12) * avosDez) : 0;
+  const decimoSegundaParcela = mesNum === 12 ? r2(decimoTotalAno - decimoPrimeiraParcela) : 0;
+  // 1ª parcela (novembro) é isenta; em dezembro INSS/IRRF incidem sobre o total.
+  const decimoNoMes = mesNum === 11 ? decimoPrimeiraParcela : mesNum === 12 ? decimoSegundaParcela : 0;
+  const inss13 = mesNum === 12 && decimoTotalAno > 0 ? calcInss(decimoTotalAno) : 0;
+  const irrf13 =
+    mesNum === 12 && decimoTotalAno > 0
+      ? calcIrrf(decimoTotalAno, inss13, Number(f.dependentes) || 0)
+      : 0;
+
+  const proventos = r2(
+    salario + adicionais + extra + salFamilia + feriasTerco + abonoTotal + decimoNoMes,
+  );
   const vaLiquido = r2(va - descVa);
   const vtLiquido = r2(vt - descVtBeneficio);
 
   // --- Descontos legais ---
-  const baseInss = Math.max(0, r2(salario + adicionais + extra - descFaltas - descDsr - descExtra));
-  const inss = calcInss(baseInss);
+  const baseInss = Math.max(
+    0,
+    r2(salario + adicionais + extra + feriasTerco - descFaltas - descDsr - descExtra - descAfastamento),
+  );
+  const inssMes = calcInss(baseInss);
+  const inss = r2(inssMes + inss13);
 
   // --- FGTS do mês (Lei 8.036/90, Art. 15): 8% sobre a remuneração paga no mês.
   // Custo da empresa — não entra em totalDescontos nem no líquido.
-  const baseFgts = Math.max(0, r2(salario + adicionais + extra - descFaltas - descDsr));
+  // Durante o afastamento por doença o FGTS continua devido sobre o salário.
+  const baseFgts = Math.max(
+    0,
+    r2(salario + adicionais + extra + feriasTerco + decimoNoMes - descFaltas - descDsr),
+  );
   const fgts = r2(baseFgts * FGTS_PCT);
-  const irrf = calcIrrf(baseInss, inss, Number(f.dependentes) || 0);
+  const irrf = r2(calcIrrf(baseInss, inssMes, Number(f.dependentes) || 0) + irrf13);
   const descontoVt = f.desconto_vt ? r2(Math.min(salario * 0.06, vtLiquido)) : 0;
   // Planos de saúde e odontológico: benefício custeado pela empresa — não descontado.
   const planosCalc = planosDoFuncionario(
@@ -278,7 +378,7 @@ export function calcContracheque(
   const convenio = Math.max(0, Number(opts.convenio) || 0);
 
   const totalDescontos = r2(
-    descFaltas + descDsr + descExtra + inss + irrf + descontoVt + convenio,
+    descFaltas + descDsr + descExtra + descAfastamento + inss + irrf + descontoVt + convenio,
   );
   const liquido = r2(proventos - totalDescontos);
 
@@ -294,6 +394,25 @@ export function calcContracheque(
     adicionais,
     extra,
     salFamilia,
+    emFerias,
+    diasFerias,
+    diasVendidos,
+    feriasBase,
+    feriasTerco,
+    abonoFerias,
+    abonoTerco,
+    abonoTotal,
+    afastado,
+    tipoAfastamento: opts.afastamento?.tipo ?? null,
+    diasPagosEmpresa,
+    diasSemPagamento,
+    descAfastamento,
+    decimoPrimeiraParcela,
+    decimoSegundaParcela,
+    decimoTotalAno,
+    decimoNoMes,
+    inss13,
+    irrf13,
     proventos,
     descFaltas,
     descDsr,
@@ -320,3 +439,11 @@ export function calcContracheque(
 }
 
 export type Contracheque = ReturnType<typeof calcContracheque>;
+
+/** Situação do funcionário derivada do contracheque da competência aberta. */
+export function situacaoDerivada(o: { ferias?: unknown; afastamento?: unknown }) {
+  if (o.afastamento) return "Afastado (INSS)";
+  if (o.ferias) return "Férias";
+  return "Ativo";
+}
+

@@ -131,6 +131,42 @@ function FuncPage() {
     },
   });
 
+  // Situação derivada do Contracheque da competência aberta (mês corrente).
+  const mesAberto = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  })();
+
+  const { data: feriasMes = [] } = useQuery({
+    queryKey: ["ferias-competencia", mesAberto],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ferias_gozadas")
+        .select("funcionario_id")
+        .eq("competencia", `${mesAberto}-01`);
+      if (error) throw error;
+      return (data ?? []) as { funcionario_id: string }[];
+    },
+  });
+
+  const { data: afastMes = [] } = useQuery({
+    queryKey: ["afastamentos-competencia", mesAberto],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("afastamentos_inss")
+        .select("funcionario_id")
+        .eq("competencia", `${mesAberto}-01`);
+      if (error) throw error;
+      return (data ?? []) as { funcionario_id: string }[];
+    },
+  });
+
+  const situacaoDe = (id: string) =>
+    afastMes.some((a) => a.funcionario_id === id)
+      ? "Afastado (INSS)"
+      : feriasMes.some((a) => a.funcionario_id === id)
+        ? "Férias"
+        : "Ativo";
 
 
   const filtrados = useMemo(
@@ -314,9 +350,9 @@ function FuncPage() {
                     <tr key={f.id} className="border-b last:border-0">
                       <td className="px-4 py-3 font-medium">
                         {f.nome}
-                        {f.situacao && (
+                        {situacaoDe(f.id) !== "Ativo" && (
                           <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">
-                            {f.situacao}
+                            {situacaoDe(f.id)}
                           </span>
                         )}
                       </td>
@@ -545,7 +581,6 @@ function FuncForm({
             calcula_encargos: calculaEncargos,
             prestador_id: calculaEncargos ? null : prestadorId,
 
-            situacao: String(fd.get("situacao") || "").trim() || null,
             observacoes: String(fd.get("observacoes") || "").trim() || null,
             beneficios: _vt + _va + _ps + _po + _ve,
             ativo: !String(fd.get("desligamento") || ""),
@@ -894,14 +929,13 @@ function FuncForm({
 
 
           <div>
-            <Label htmlFor="situacao">Situação</Label>
-            <Input
-              id="situacao"
-              name="situacao"
-              maxLength={60}
-              placeholder="Férias, Afastado INSS…"
-              defaultValue={initial?.situacao ?? ""}
-            />
+            <Label>Situação</Label>
+            <div className="flex h-10 items-center rounded-md border bg-muted/40 px-3 text-sm text-muted-foreground">
+              Automática — vem do Contracheque da competência aberta
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Férias ou afastamento pelo INSS marcados no Contracheque definem a situação.
+            </p>
           </div>
           <div>
             <Label htmlFor="observacoes">Observações</Label>
