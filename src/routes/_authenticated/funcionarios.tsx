@@ -59,6 +59,7 @@ type Func = {
   periculosidade_pct: number;
   tem_quebra_caixa: boolean;
   desconto_vt: boolean;
+  calcula_encargos: boolean;
   situacao: string | null;
   observacoes: string | null;
   ativo: boolean;
@@ -387,10 +388,18 @@ function FuncPage() {
                       <td className="px-4 py-3 text-right">{fmtBRL(beneficios)}</td>
 
                       <td className="px-4 py-3 text-right">
-                        {fmtBRL(c.encargos)}
-                        <span className="ml-1 text-xs text-muted-foreground">
-                          ({Math.round(c.rate * 100)}%)
-                        </span>
+                        {c.comEncargos ? (
+                          <>
+                            {fmtBRL(c.encargos)}
+                            <span className="ml-1 text-xs text-muted-foreground">
+                              ({Math.round(c.rate * 100)}%)
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            terceirizado — via prestadora
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right font-semibold">{fmtBRL(c.total)}</td>
                       <td className="px-4 py-3 text-right">
@@ -454,6 +463,7 @@ function FuncForm({
   const [sf, setSf] = useState<number>(Number(initial?.salario_familia ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
   const [descontoVt, setDescontoVt] = useState<boolean>(Boolean(initial?.desconto_vt));
+  const [calculaEncargos, setCalculaEncargos] = useState<boolean>(initial?.calcula_encargos !== false);
 
   // Cargo selecionado define automaticamente os adicionais legais.
   const { salarioMinimoFederal } = useReferenciasSalariais();
@@ -492,6 +502,7 @@ function FuncForm({
       salario_familia: sf,
       valor_extra_salarial: ve,
       lojas: { empresas: { regime_tributario: regime } },
+      calcula_encargos: calculaEncargos,
       ...adicCfg,
     },
     salarioMinimoFederal,
@@ -538,6 +549,7 @@ function FuncForm({
             periculosidade_pct: !cargo && adicCfg.tem_periculosidade ? adicCfg.periculosidade_pct : 0,
             tem_quebra_caixa: cargo ? false : adicCfg.tem_quebra_caixa,
             desconto_vt: descontoVt,
+            calcula_encargos: calculaEncargos,
             situacao: String(fd.get("situacao") || "").trim() || null,
             observacoes: String(fd.get("observacoes") || "").trim() || null,
             beneficios: _vt + _va + _ps + _po + _ve,
@@ -567,15 +579,51 @@ function FuncForm({
               Loja onde o funcionário efetivamente trabalha.
             </p>
           </div>
-          <div className="col-span-2 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-            Regime tributário:{" "}
-            <span className="font-semibold text-foreground">
-              {regime === "lucro_real" ? "Lucro Real / Presumido" : "Simples Nacional"}
-            </span>{" "}
-            — definido pela empresa{empresa ? ` ${empresa.razao_social}` : ""} da unidade
-            selecionada (configurado em Lojas). Encargos patronais aplicados:{" "}
-            {Math.round(encargosRate(regime) * 100)}%.
+          <div className="col-span-2 rounded-md border p-3">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Vínculo empregatício
+            </div>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="vinculo"
+                  className="h-4 w-4 accent-primary"
+                  checked={calculaEncargos}
+                  onChange={() => setCalculaEncargos(true)}
+                />
+                Vínculo direto (CLT)
+              </label>
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="vinculo"
+                  className="h-4 w-4 accent-primary"
+                  checked={!calculaEncargos}
+                  onChange={() => setCalculaEncargos(false)}
+                />
+                Terceirizado via prestadora
+              </label>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {calculaEncargos ? (
+                <>
+                  Encargos patronais aplicados: <strong>{Math.round(encargosRate(regime) * 100)}%</strong>{" "}
+                  — regime{" "}
+                  <strong>{regime === "lucro_real" ? "Lucro Real / Presumido" : "Simples Nacional"}</strong>{" "}
+                  da empresa{empresa ? ` ${empresa.razao_social}` : ""} da unidade selecionada
+                  (configurado em Lojas).
+                </>
+              ) : (
+                <>
+                  INSS patronal e FGTS são obrigação da prestadora — não entram no custo deste
+                  funcionário. O repasse (DAS rateado + retenção de INSS sobre a nota) continua
+                  lançado como despesa, no módulo Prestadores.
+                </>
+              )}
+            </p>
           </div>
+
 
           <div className="col-span-2">
             <Label htmlFor="nome">Nome *</Label>
@@ -810,7 +858,10 @@ function FuncForm({
 
         <div className="rounded-md border bg-muted/40 p-3 text-sm">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Custo real do funcionário ({regime === "lucro_real" ? "Lucro Real" : "Simples Nacional"})
+            Custo real do funcionário{" "}
+            {calculaEncargos
+              ? `(${regime === "lucro_real" ? "Lucro Real" : "Simples Nacional"})`
+              : "(terceirizado — sem encargos patronais)"}
           </div>
           <div className="grid grid-cols-2 gap-y-1 sm:grid-cols-4">
             <div className="text-muted-foreground">Salário</div>
@@ -818,9 +869,16 @@ function FuncForm({
             <div className="text-muted-foreground">Adicionais legais</div>
             <div className="text-right font-medium">{fmtBRL(preview.adicionais)}</div>
             <div className="text-muted-foreground">
-              Encargos ({Math.round(preview.rate * 100)}%)
+              {calculaEncargos ? `Encargos (${Math.round(preview.rate * 100)}%)` : "Encargos patronais"}
             </div>
-            <div className="text-right font-medium">{fmtBRL(preview.encargos)}</div>
+            <div className="text-right font-medium">
+              {calculaEncargos ? (
+                fmtBRL(preview.encargos)
+              ) : (
+                <span className="text-xs text-muted-foreground">por conta da prestadora</span>
+              )}
+            </div>
+
 
             <div className="text-muted-foreground">VT + VA + Saúde + Odonto</div>
             <div className="text-right font-medium">

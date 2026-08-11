@@ -45,7 +45,13 @@ export type FuncionarioCusto = FonteAdicionais & {
   plano_odontologico?: number | string;
   salario_familia?: number | string;
   valor_extra_salarial?: number | string;
+  /**
+   * false = vínculo registrado por prestadora (terceirizado): INSS patronal e
+   * FGTS são obrigação da prestadora, então não entram no custo da empresa.
+   */
+  calcula_encargos?: boolean | null;
 };
+
 
 /**
  * Única função de custo do funcionário — sempre calculada ao vivo, nunca lida
@@ -64,7 +70,8 @@ export function custoReal(
   const ve = Number(f.valor_extra_salarial) || 0;
 
   const a = adicionaisDoCargo(adicionaisFonte(f), salario, salarioMinimoFederal);
-  const rate = encargosRate(regimeDoFuncionario(f));
+  const comEncargos = f.calcula_encargos !== false;
+  const rate = comEncargos ? encargosRate(regimeDoFuncionario(f)) : 0;
   const encargos = (salario + a.total) * rate;
 
   return {
@@ -77,6 +84,7 @@ export function custoReal(
     ve,
     detalheAdicionais: a,
     adicionais: a.total,
+    comEncargos,
     encargos,
     rate,
     beneficios: vt + va + ps + po,
@@ -86,4 +94,4 @@ export function custoReal(
 
 /** Campos mínimos que toda tela precisa selecionar para calcular o custo ao vivo. */
 export const CUSTO_SELECT =
-  "id, loja_id, ativo, salario_base, vale_transporte, vale_alimentacao, plano_saude, plano_odontologico, salario_familia, valor_extra_salarial, cargo_id, motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa, cargos(motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa), lojas(empresa_id, empresas(regime_tributario))";
+  "id, loja_id, ativo, salario_base, vale_transporte, vale_alimentacao, plano_saude, plano_odontologico, salario_familia, valor_extra_salarial, calcula_encargos, cargo_id, motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa, cargos(motivo_insalubridade, tem_periculosidade, periculosidade_pct, tem_quebra_caixa), lojas(empresa_id, empresas(regime_tributario))";
