@@ -18,8 +18,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { encargosRate, regimeFromPrestador } from "@/lib/encargos";
-import { adicionaisPct, type Cargo } from "@/lib/cargos";
-import { useSalarioMinimo } from "@/hooks/use-salario-minimo";
+import {
+  adicionaisDoCargo,
+  MOTIVOS_INSALUBRIDADE,
+  PERICULOSIDADE_PCT_PADRAO,
+  QUEBRA_CAIXA_PCT,
+  type Cargo,
+  type MotivoInsalubridade,
+} from "@/lib/cargos";
+import { custoReal } from "@/lib/custo-funcionario";
+import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
   head: () => ({ meta: [{ title: "Funcionários · MercadoGest" }] }),
