@@ -45,7 +45,13 @@ export type FuncionarioCusto = FonteAdicionais & {
   plano_odontologico?: number | string;
   salario_familia?: number | string;
   valor_extra_salarial?: number | string;
+  /**
+   * false = vínculo registrado por prestadora (terceirizado): INSS patronal e
+   * FGTS são obrigação da prestadora, então não entram no custo da empresa.
+   */
+  calcula_encargos?: boolean | null;
 };
+
 
 /**
  * Única função de custo do funcionário — sempre calculada ao vivo, nunca lida
