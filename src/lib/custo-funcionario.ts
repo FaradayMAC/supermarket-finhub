@@ -1,4 +1,5 @@
 import { adicionaisDoCargo, SALARIO_MINIMO_FEDERAL, type CargoAdicionais } from "@/lib/cargos";
+import { FGTS_PCT } from "@/lib/contracheque";
 import { encargosRate } from "@/lib/encargos";
 
 export type RegimeTributario = "simples" | "lucro_real";
