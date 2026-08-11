@@ -742,30 +742,63 @@ function FuncForm({
               onChange={(e) => setSalario(Number(e.target.value))}
             />
           </div>
-          <div>
-            <Label htmlFor="vt">Vale transporte (R$)</Label>
-            <Input
-              id="vt"
-              name="vt"
-              type="number"
-              min="0"
-              step="0.01"
-              value={vt}
-              onChange={(e) => setVt(Number(e.target.value))}
-            />
+          <div className="col-span-2 rounded-md border p-3">
+            <div className="flex items-center gap-2">
+              <input
+                id="tem_vt"
+                type="checkbox"
+                className="h-4 w-4 accent-primary"
+                checked={temVt}
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  setTemVt(on);
+                  if (!on) setVt(0);
+                  else setDescontoVt(true);
+                }}
+              />
+              <Label htmlFor="tem_vt" className="cursor-pointer">
+                Possui vale-transporte
+              </Label>
+            </div>
+            {temVt && (
+              <div className="mt-3 space-y-2">
+                <div>
+                  <Label htmlFor="vt">Valor mensal do vale-transporte (R$) *</Label>
+                  <Input
+                    id="vt"
+                    name="vt"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    required
+                    value={vt || ""}
+                    onChange={(e) => setVt(Number(e.target.value))}
+                  />
+                </div>
+                <div className="flex items-start gap-2">
+                  <input
+                    id="desconto_vt"
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 accent-primary"
+                    checked={descontoVt}
+                    onChange={(e) => setDescontoVt(e.target.checked)}
+                  />
+                  <Label htmlFor="desconto_vt" className="cursor-pointer text-xs font-normal text-muted-foreground">
+                    Aplicar o desconto legal de {VALE_TRANSPORTE_DESCONTO_PCT}% do salário (Lei 7.418/85).
+                    Desmarque apenas na exceção em que a empresa custeia integralmente o benefício.
+                  </Label>
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <Label htmlFor="va">Vale alimentação (R$)</Label>
-            <Input
-              id="va"
-              name="va"
-              type="number"
-              min="0"
-              step="0.01"
-              value={va}
-              onChange={(e) => setVa(Number(e.target.value))}
-            />
+            <Input id="va" name="va" type="number" value={va} readOnly disabled />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Valor fixo pela CCT Fecomércio-ES 2025-2027 (gêneros alimentícios).
+            </p>
           </div>
+
           <div>
             <Label htmlFor="ps">Plano de saúde (R$)</Label>
             <Input
