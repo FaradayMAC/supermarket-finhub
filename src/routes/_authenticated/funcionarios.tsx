@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,7 +41,6 @@ export { encargosRate, custoReal };
 type Func = {
   id: string;
   loja_id: string;
-  prestador_id: string | null;
   nome: string;
   cpf: string | null;
   cargo: string | null;
@@ -728,8 +727,10 @@ function FuncForm({
             <span className="ml-2 normal-case font-normal">
               {cargo ? (
                 <>
-                  — definidos pelo cargo <strong>{cargo.nome}</strong> e recalculados sobre o salário
-                  mínimo federal vigente
+                  — pertencem ao cargo <strong>{cargo.nome}</strong>; para alterar, edite em{" "}
+                  <Link to="/cargos" className="underline">
+                    Cargos
+                  </Link>
                 </>
               ) : (
                 "— selecione um cargo para aplicar os adicionais automaticamente"
