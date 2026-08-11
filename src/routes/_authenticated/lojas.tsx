@@ -23,6 +23,7 @@ type Loja = {
   cidade: string | null;
   estado: string | null;
   gerente: string | null;
+  empresa_id: string | null;
   ativo: boolean;
 };
 
@@ -40,8 +41,20 @@ function LojasPage() {
     },
   });
 
+  const { data: empresas = [] } = useQuery({
+    queryKey: ["empresas-regime"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("empresas")
+        .select("id, razao_social, regime_tributario")
+        .order("razao_social");
+      if (error) throw error;
+      return data as any as Empresa[];
+    },
+  });
+
   const save = useMutation({
-    mutationFn: async (payload: { codigo: string; nome: string; cidade: string | null; estado: string | null; gerente: string | null; ativo: boolean }) => {
+    mutationFn: async (payload: LojaPayload) => {
       if (edit) {
         const { error } = await supabase.from("lojas").update(payload).eq("id", edit.id);
         if (error) throw error;
@@ -83,13 +96,14 @@ function LojasPage() {
           </DialogTrigger>
           <LojaForm
             initial={edit}
+            empresas={empresas}
             onSubmit={(v) => save.mutate(v)}
             saving={save.isPending}
           />
         </Dialog>
       }
     >
-      <EmpresasRegime />
+      <EmpresasRegime empresas={empresas} />
       <Card>
 
         <CardContent className="overflow-x-auto p-0">
@@ -136,7 +150,27 @@ function LojasPage() {
   );
 }
 
-function LojaForm({ initial, onSubmit, saving }: { initial: Loja | null; onSubmit: (v: { codigo: string; nome: string; cidade: string | null; estado: string | null; gerente: string | null; ativo: boolean }) => void; saving: boolean }) {
+type LojaPayload = {
+  codigo: string;
+  nome: string;
+  cidade: string | null;
+  estado: string | null;
+  gerente: string | null;
+  empresa_id: string | null;
+  ativo: boolean;
+};
+
+function LojaForm({
+  initial,
+  empresas,
+  onSubmit,
+  saving,
+}: {
+  initial: Loja | null;
+  empresas: Empresa[];
+  onSubmit: (v: LojaPayload) => void;
+  saving: boolean;
+}) {
   return (
     <DialogContent>
       <DialogHeader><DialogTitle>{initial ? "Editar loja" : "Nova loja"}</DialogTitle></DialogHeader>
@@ -151,6 +185,7 @@ function LojaForm({ initial, onSubmit, saving }: { initial: Loja | null; onSubmi
             cidade: String(fd.get("cidade") || "").trim() || null,
             estado: String(fd.get("estado") || "").trim().toUpperCase() || null,
             gerente: String(fd.get("gerente") || "").trim() || null,
+            empresa_id: String(fd.get("empresa_id") || "") || null,
             ativo: fd.get("ativo") === "on",
           });
         }}
@@ -160,6 +195,25 @@ function LojaForm({ initial, onSubmit, saving }: { initial: Loja | null; onSubmi
           <div><Label htmlFor="nome">Nome *</Label><Input id="nome" name="nome" required maxLength={120} defaultValue={initial?.nome} placeholder="Unidade Centro" /></div>
           <div><Label htmlFor="cidade">Cidade</Label><Input id="cidade" name="cidade" maxLength={80} defaultValue={initial?.cidade ?? ""} /></div>
           <div><Label htmlFor="estado">UF</Label><Input id="estado" name="estado" maxLength={2} defaultValue={initial?.estado ?? ""} placeholder="SP" /></div>
+          <div className="col-span-2">
+            <Label htmlFor="empresa_id">Empresa</Label>
+            <select
+              id="empresa_id"
+              name="empresa_id"
+              defaultValue={initial?.empresa_id ?? ""}
+              className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+            >
+              <option value="">— Sem empresa —</option>
+              {empresas.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.razao_social}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Define o regime tributário usado nos encargos dos funcionários desta loja.
+            </p>
+          </div>
           <div className="col-span-2"><Label htmlFor="gerente">Gerente</Label><Input id="gerente" name="gerente" maxLength={120} defaultValue={initial?.gerente ?? ""} /></div>
         </div>
         <label className="flex items-center gap-2 text-sm">
@@ -179,19 +233,8 @@ type Empresa = { id: string; razao_social: string; regime_tributario: string | n
  * Regime tributário é um dado da empresa (vale para todas as lojas dela) e
  * define o percentual de encargos patronais de todos os seus funcionários.
  */
-function EmpresasRegime() {
+function EmpresasRegime({ empresas }: { empresas: Empresa[] }) {
   const qc = useQueryClient();
-  const { data: empresas = [] } = useQuery({
-    queryKey: ["empresas-regime"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("empresas")
-        .select("id, razao_social, regime_tributario")
-        .order("razao_social");
-      if (error) throw error;
-      return data as any as Empresa[];
-    },
-  });
 
   const salvar = useMutation({
     mutationFn: async ({ id, regime }: { id: string; regime: string }) => {
