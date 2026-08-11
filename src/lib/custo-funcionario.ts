@@ -99,6 +99,13 @@ export function custoReal(
   const fgtsEstimado = Math.round(salario * FGTS_PCT * 100) / 100;
   const fgtsNoTotal = comEncargos ? 0 : fgtsEstimado;
 
+  // Provisões mensais (não acumulativas): 1/12 avos por mês de férias + 1/3 e de 13º.
+  // O acúmulo (avos desde a admissão) só é usado no módulo de Rescisão.
+  const remuneracao = salario + a.total;
+  const provFeriasMes = Math.round((remuneracao / 12) * (4 / 3) * 100) / 100;
+  const prov13Mes = Math.round((remuneracao / 12) * 100) / 100;
+  const provisoesMensais = Math.round((provFeriasMes + prov13Mes) * 100) / 100;
+
   return {
     salario,
     vt,
@@ -115,10 +122,25 @@ export function custoReal(
     rate,
     fgtsEstimado,
     fgtsNoTotal,
+    provFeriasMes,
+    prov13Mes,
+    provisoesMensais,
     beneficios: vt + va + ps + po,
-    total: salario + a.total + encargos + fgtsNoTotal + vt + va + ps + po + sf + ve,
+    total:
+      salario +
+      a.total +
+      encargos +
+      fgtsNoTotal +
+      vt +
+      va +
+      ps +
+      po +
+      sf +
+      ve +
+      provisoesMensais,
   };
 }
+
 
 
 /** Campos mínimos que toda tela precisa selecionar para calcular o custo ao vivo. */
