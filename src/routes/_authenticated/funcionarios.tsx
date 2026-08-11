@@ -281,8 +281,18 @@ function FuncPage() {
                       <td className="px-4 py-3 text-right">{fmtBRL(c.sf)}</td>
                       <td className="px-4 py-3 text-right">
                         {fmtBRL(c.adicionais)}
-                        {c.pctAdic > 0 && (
-                          <span className="ml-1 text-xs text-muted-foreground">({c.pctAdic}%)</span>
+                        {c.adicionais > 0 && (
+                          <span className="ml-1 block text-[10px] text-muted-foreground">
+                            {[
+                              c.detalheAdicionais.periculosidade > 0 &&
+                                `peric. ${c.detalheAdicionais.pericPct}%`,
+                              c.detalheAdicionais.insalubridade > 0 &&
+                                `insal. ${c.detalheAdicionais.grauInsalubridade}%`,
+                              c.detalheAdicionais.quebraCaixa > 0 && `q. caixa ${QUEBRA_CAIXA_PCT}%`,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">{fmtBRL(beneficios)}</td>
