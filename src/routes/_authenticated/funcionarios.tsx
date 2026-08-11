@@ -537,6 +537,9 @@ function FuncForm({
         onSubmit={(e) => {
           e.preventDefault();
           if (!lojaId) return toast.error("Selecione a unidade");
+          if (!calculaEncargos && !prestadorId)
+            return toast.error("Selecione a empresa prestadora de serviços");
+
           const fd = new FormData(e.currentTarget);
           const sal = Number(fd.get("salario") || 0);
           const _vt = Number(fd.get("vt") || 0);
