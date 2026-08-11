@@ -388,10 +388,18 @@ function FuncPage() {
                       <td className="px-4 py-3 text-right">{fmtBRL(beneficios)}</td>
 
                       <td className="px-4 py-3 text-right">
-                        {fmtBRL(c.encargos)}
-                        <span className="ml-1 text-xs text-muted-foreground">
-                          ({Math.round(c.rate * 100)}%)
-                        </span>
+                        {c.comEncargos ? (
+                          <>
+                            {fmtBRL(c.encargos)}
+                            <span className="ml-1 text-xs text-muted-foreground">
+                              ({Math.round(c.rate * 100)}%)
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            terceirizado — via prestadora
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right font-semibold">{fmtBRL(c.total)}</td>
                       <td className="px-4 py-3 text-right">
