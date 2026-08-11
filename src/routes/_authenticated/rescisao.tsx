@@ -83,7 +83,10 @@ function RescisaoPage() {
       const { data, error } = await supabase
         .from("funcionarios")
         .select(
-          `${CUSTO_SELECT}, nome, cargo, dependentes, fgts_saldo_inicial, fgts_saldo_inicial_data, lojas(nome, codigo, empresa_id, empresas(regime_tributario))`,
+          `${CUSTO_SELECT.replace(
+            "lojas(empresa_id, empresas(regime_tributario))",
+            "lojas(nome, codigo, empresa_id, empresas(regime_tributario))",
+          )}, nome, cargo, fgts_saldo_inicial, fgts_saldo_inicial_data`,
         )
         .eq("ativo", true)
         .order("nome");
