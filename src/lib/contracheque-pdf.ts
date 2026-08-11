@@ -1,4 +1,4 @@
-import { calcContracheque, type FuncionarioCC } from "@/lib/contracheque";
+import { calcContracheque, type FaltaDia, type FuncionarioCC } from "@/lib/contracheque";
 
 const brl = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
@@ -14,7 +14,7 @@ export async function gerarContrachequePdf(params: {
   func: PdfFunc;
   loja: string;
   mes: string;
-  faltas: number;
+  faltas: FaltaDia[];
   convenio: number;
   salarioMinimoFederal?: number;
 }) {
@@ -46,7 +46,7 @@ export async function gerarContrachequePdf(params: {
   doc.text(`${func.cargo ?? "—"} · Regime: ${String(func.regime_tributario ?? "—")}`, L, y);
   y += 12;
   doc.text(
-    `Dias úteis: ${cc.calendario.diasUteis} · Dias de repouso (DSR): ${cc.calendario.diasRepouso} · Faltas: ${cc.faltas}`,
+    `Dias úteis: ${cc.calendario.diasUteis} · Dias de repouso (DSR): ${cc.calendario.diasRepouso} · Faltas injustificadas: ${cc.faltas} · Justificadas: ${cc.faltasJustificadas}`,
     L,
     y,
   );
@@ -85,8 +85,8 @@ export async function gerarContrachequePdf(params: {
   total("Total de proventos", cc.proventos);
 
   section("Descontos");
-  linha(`Faltas (${cc.faltas} dia(s))`, cc.descFaltas, true);
-  linha(`DSR sobre faltas (${cc.dsrDias} dia(s))`, cc.descDsr, true);
+  linha(`Faltas injustificadas (${cc.faltas} dia(s))`, cc.descFaltas, true);
+  linha(`DSR perdido (${cc.dsrDias} semana(s))`, cc.descDsr, true);
   linha("Redução proporcional do valor extra", cc.descExtra, true);
   linha("INSS", cc.inss, true);
   linha("IRRF", cc.irrf, true);

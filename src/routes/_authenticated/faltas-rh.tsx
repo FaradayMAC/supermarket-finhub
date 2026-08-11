@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,7 +27,16 @@ import { Plus, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/faltas-rh")({
-  head: () => ({ meta: [{ title: "Faltas RH · MercadoGest" }] }),
+  head: () => ({
+    meta: [
+      { title: "Faltas RH · MercadoGest" },
+      { name: "description", content: "Lançamento de faltas por data, com tipo justificada ou injustificada." },
+      { property: "og:title", content: "Faltas RH · MercadoGest" },
+      { property: "og:description", content: "Lançamento de faltas por data, com tipo justificada ou injustificada." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: FaltasPage,
 });
 
@@ -34,8 +44,9 @@ type Falta = {
   id: string;
   loja_id: string;
   funcionario_id: string;
-  quantidade: number;
-  mes_referencia: string;
+  data: string;
+  tipo: string;
+  motivo: string | null;
   observacoes: string | null;
 };
 
@@ -47,6 +58,11 @@ const MESES = [
 function fmtMes(iso: string) {
   const [y, m] = iso.split("-");
   return `${MESES[Number(m) - 1]}/${y}`;
+}
+
+function fmtData(iso: string) {
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return `${d}/${m}/${y}`;
 }
 
 function FaltasPage() {
@@ -75,7 +91,10 @@ function FaltasPage() {
   const { data: faltas = [], isLoading } = useQuery({
     queryKey: ["faltas-rh"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("faltas_rh").select("*").order("mes_referencia", { ascending: false });
+      const { data, error } = await supabase
+        .from("faltas_rh")
+        .select("id,loja_id,funcionario_id,data,tipo,motivo,observacoes")
+        .order("data", { ascending: false });
       if (error) throw error;
       return data as Falta[];
     },
@@ -83,6 +102,17 @@ function FaltasPage() {
 
   const lojaMap = useMemo(() => new Map(lojas.map((l) => [l.id, l])), [lojas]);
   const funcMap = useMemo(() => new Map(funcionarios.map((f) => [f.id, f])), [funcionarios]);
+
+  const grupos = useMemo(() => {
+    const m = new Map<string, Falta[]>();
+    faltas.forEach((f) => {
+      const k = f.data.slice(0, 7);
+      const arr = m.get(k) ?? [];
+      arr.push(f);
+      m.set(k, arr);
+    });
+    return [...m.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  }, [faltas]);
 
   const save = useMutation({
     mutationFn: async (payload: Omit<Falta, "id">) => {
@@ -100,7 +130,12 @@ function FaltasPage() {
       setOpen(false);
       setEdit(null);
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
+    onError: (e: any) =>
+      toast.error(
+        String(e?.message ?? "").includes("duplicate")
+          ? "Já existe uma falta lançada para este funcionário nesta data."
+          : e.message ?? "Erro ao salvar",
+      ),
   });
 
   const del = useMutation({
@@ -124,6 +159,7 @@ function FaltasPage() {
             <Button><Plus className="h-4 w-4" /> Lançar falta</Button>
           </DialogTrigger>
           <FaltaForm
+            key={edit?.id ?? "novo"}
             initial={edit}
             lojas={lojas}
             funcionarios={funcionarios}
@@ -138,42 +174,61 @@ function FaltasPage() {
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="px-4 py-3">Mês</th>
+                <th className="px-4 py-3">Data</th>
                 <th className="px-4 py-3">Loja</th>
                 <th className="px-4 py-3">Funcionário</th>
-                <th className="px-4 py-3 text-center">Faltas</th>
+                <th className="px-4 py-3">Tipo</th>
+                <th className="px-4 py-3">Motivo</th>
                 <th className="px-4 py-3">Observações</th>
                 <th className="px-4 py-3 text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {isLoading && <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>}
+              {isLoading && <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>}
               {!isLoading && faltas.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">Nenhuma falta lançada ainda. Clique em "Lançar falta".</td></tr>
+                <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">Nenhuma falta lançada ainda. Clique em "Lançar falta".</td></tr>
               )}
-              {faltas.map((f) => {
-                const loja = lojaMap.get(f.loja_id);
-                const func = funcMap.get(f.funcionario_id);
-                return (
-                  <tr key={f.id} className="border-b last:border-0">
-                    <td className="px-4 py-3 font-medium">{fmtMes(f.mes_referencia)}</td>
-                    <td className="px-4 py-3">{loja ? `${loja.nome}` : "—"}</td>
-                    <td className="px-4 py-3">{func?.nome ?? "—"}</td>
-                    <td className="px-4 py-3 text-center font-semibold">{f.quantidade}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{f.observacoes || "—"}</td>
-                    <td className="px-4 py-3 text-right">
-                      <Button size="icon" variant="ghost" onClick={() => { setEdit(f); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" onClick={() => { if (confirm("Excluir este lançamento?")) del.mutate(f.id); }}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+              {grupos.map(([mes, itens]) => (
+                <Fragment key={mes}>
+                  <tr className="border-b bg-muted/20">
+                    <td colSpan={7} className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {fmtMes(`${mes}-01`)} · {itens.length} falta(s)
                     </td>
                   </tr>
-                );
-              })}
+                  {itens.map((f) => {
+                    const loja = lojaMap.get(f.loja_id);
+                    const func = funcMap.get(f.funcionario_id);
+                    return (
+                      <tr key={f.id} className="border-b last:border-0">
+                        <td className="px-4 py-3 font-medium">{fmtData(f.data)}</td>
+                        <td className="px-4 py-3">{loja ? loja.nome : "—"}</td>
+                        <td className="px-4 py-3">{func?.nome ?? "—"}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant={f.tipo === "justificada" ? "secondary" : "destructive"}>
+                            {f.tipo === "justificada" ? "Justificada" : "Injustificada"}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">{f.motivo || "—"}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{f.observacoes || "—"}</td>
+                        <td className="px-4 py-3 text-right">
+                          <Button size="icon" variant="ghost" onClick={() => { setEdit(f); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                          <Button size="icon" variant="ghost" onClick={() => { if (confirm("Excluir este lançamento?")) del.mutate(f.id); }}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </Fragment>
+              ))}
             </tbody>
           </table>
         </CardContent>
       </Card>
+      <p className="mt-3 text-xs text-muted-foreground">
+        Apenas faltas <strong>injustificadas</strong> geram desconto do dia, perda do DSR da semana
+        (Lei 605/49, Art. 6º) e redução proporcional de benefícios no contracheque.
+      </p>
     </AppShell>
   );
 }
@@ -191,12 +246,12 @@ function FaltaForm({
   onSubmit: (v: Omit<Falta, "id">) => void;
   saving: boolean;
 }) {
-  const now = new Date();
-  const defaultMes = initial?.mes_referencia?.slice(0, 7) ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const hoje = new Date().toISOString().slice(0, 10);
   const [lojaId, setLojaId] = useState<string>(initial?.loja_id ?? "");
   const [funcId, setFuncId] = useState<string>(initial?.funcionario_id ?? "");
-  const [qtd, setQtd] = useState<number>(initial?.quantidade ?? 1);
-  const [mes, setMes] = useState<string>(defaultMes);
+  const [data, setData] = useState<string>(initial?.data?.slice(0, 10) ?? hoje);
+  const [tipo, setTipo] = useState<string>(initial?.tipo ?? "injustificada");
+  const [motivo, setMotivo] = useState<string>(initial?.motivo ?? "");
   const [obs, setObs] = useState<string>(initial?.observacoes ?? "");
 
   const funcsFiltrados = useMemo(
@@ -213,13 +268,14 @@ function FaltaForm({
           e.preventDefault();
           if (!lojaId) return toast.error("Selecione a loja");
           if (!funcId) return toast.error("Selecione o funcionário");
-          if (qtd < 1 || qtd > 31) return toast.error("Quantidade deve estar entre 1 e 31");
-          if (!mes) return toast.error("Informe o mês referente");
+          if (!data) return toast.error("Informe a data da falta");
+          if (tipo === "justificada" && !motivo.trim()) return toast.error("Informe o motivo da justificativa");
           onSubmit({
             loja_id: lojaId,
             funcionario_id: funcId,
-            quantidade: qtd,
-            mes_referencia: `${mes}-01`,
+            data,
+            tipo,
+            motivo: motivo.trim() || null,
             observacoes: obs.trim() || null,
           });
         }}
@@ -252,27 +308,28 @@ function FaltaForm({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Quantidade de faltas *</Label>
-            <Input
-              type="number"
-              min={1}
-              max={31}
-              step={1}
-              value={qtd}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                if (Number.isNaN(v)) return;
-                setQtd(Math.max(1, Math.min(31, Math.floor(v))));
-              }}
-              required
-            />
-            <p className="mt-1 text-xs text-muted-foreground">Máximo de 31 por mês.</p>
+            <Label>Data da falta *</Label>
+            <Input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+            <p className="mt-1 text-xs text-muted-foreground">Uma falta por funcionário por dia.</p>
           </div>
           <div>
-            <Label>Mês referente *</Label>
-            <Input type="month" value={mes} onChange={(e) => setMes(e.target.value)} required />
+            <Label>Tipo *</Label>
+            <Select value={tipo} onValueChange={setTipo}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="injustificada">Injustificada</SelectItem>
+                <SelectItem value="justificada">Justificada</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
+
+        {tipo === "justificada" && (
+          <div>
+            <Label>Motivo da justificativa *</Label>
+            <Input value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ex.: atestado médico" />
+          </div>
+        )}
 
         <div>
           <Label>Observações</Label>
