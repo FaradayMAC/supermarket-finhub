@@ -179,7 +179,11 @@ export async function runDriveSync(): Promise<SyncResult> {
           ignorados++;
           continue;
         }
-        const insalubridade = Math.max(pct(cIns10 >= 0 ? row[cIns10] : ""), pct(cIns20 >= 0 ? row[cIns20] : ""));
+        const ins20 = pct(cIns20 >= 0 ? row[cIns20] : "");
+        const ins10 = pct(cIns10 >= 0 ? row[cIns10] : "");
+        const motivoInsalubridade =
+          ins20 > 0 ? "frio_camara_fria" : ins10 > 0 ? "asg_limpeza_terceirizada" : "nenhum";
+        const pericPct = pct(cPeric >= 0 ? row[cPeric] : "");
         const payload = {
           nome,
           loja_id: lojaId,
@@ -188,9 +192,10 @@ export async function runDriveSync(): Promise<SyncResult> {
           salario_base: num(cSalario >= 0 ? row[cSalario] : ""),
           data_admissao: toDate(cAdmissao >= 0 ? row[cAdmissao] : ""),
           dependentes: Math.round(num(cDep >= 0 ? row[cDep] : "")),
-          insalubridade_pct: insalubridade,
-          periculosidade_pct: pct(cPeric >= 0 ? row[cPeric] : ""),
-          quebra_caixa_pct: pct(cQuebra >= 0 ? row[cQuebra] : ""),
+          motivo_insalubridade: motivoInsalubridade,
+          tem_periculosidade: pericPct > 0,
+          periculosidade_pct: pericPct > 0 ? pericPct : 0,
+          tem_quebra_caixa: pct(cQuebra >= 0 ? row[cQuebra] : "") > 0,
           desconto_vt: !!(cVT >= 0 && String(row[cVT] ?? "").trim()),
           situacao: (cSituacao >= 0 ? row[cSituacao] : "") || null,
           observacoes: (cObs >= 0 ? row[cObs] : "") || null,
