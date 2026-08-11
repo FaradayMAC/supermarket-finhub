@@ -159,13 +159,14 @@ export type FuncionarioCC = FonteAdicionais & {
   salario_base: number | string;
   vale_transporte: number | string;
   vale_alimentacao: number | string;
-  plano_saude: number | string;
-  plano_odontologico?: number | string;
+  data_admissao?: string | null;
+  data_nascimento?: string | null;
   salario_familia?: number | string;
   valor_extra_salarial?: number | string;
   dependentes?: number | string;
   desconto_vt?: boolean;
 };
+
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
