@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell, fmtBRL } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,28 @@ import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { dataFimCarencia } from "@/lib/planos";
 import { VALE_ALIMENTACAO_PADRAO_ES, VALE_TRANSPORTE_DESCONTO_PCT } from "@/lib/beneficios";
 import { TIPOS_RESCISAO } from "@/lib/rescisao";
+import { AlertTriangle, Info, UserX } from "lucide-react";
+
+
+/** Mantém só os dígitos do CPF (remove pontos/traços). */
+function normalizarCpf(v: string): string {
+  return (v ?? "").replace(/\D/g, "");
+}
+
+/** Formata dígitos para a máscara 000.000.000-00 (quando aplicável). */
+function fmtCpf(v: string | null | undefined): string {
+  const d = normalizarCpf(v ?? "");
+  if (d.length !== 11) return v ?? "—";
+  return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+}
+
+const labelRescisao = (v: string | null | undefined) =>
+  TIPOS_RESCISAO.find((t) => t.value === v)?.label ?? "Não informado";
+
+const fmtData = (v?: string | null) =>
+  v
+    ? new Date(String(v).slice(0, 10) + "T00:00:00Z").toLocaleDateString("pt-BR", { timeZone: "UTC" })
+    : "—";
 
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
@@ -381,7 +403,7 @@ function FuncPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{f.cpf ?? "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{fmtCpf(f.cpf)}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.cargo ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.lojas?.nome ?? "—"}</td>
                       <td className="px-4 py-3 text-xs">
@@ -487,6 +509,41 @@ function FuncForm({
   const [lojaId, setLojaId] = useState(initial?.loja_id ?? "");
   const [cargoId, setCargoId] = useState<string>(initial?.cargo_id ?? "none");
 
+  // CPF controlado para verificar histórico de admissões anteriores.
+  const [cpf, setCpf] = useState<string>(initial?.cpf ?? "");
+  const [historico, setHistorico] = useState<any[]>([]);
+  const [buscandoCpf, setBuscandoCpf] = useState(false);
+  const cpfTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (cpfTimer.current) clearTimeout(cpfTimer.current);
+    const digitos = normalizarCpf(cpf);
+    if (digitos.length !== 11) {
+      setHistorico([]);
+      setBuscandoCpf(false);
+      return;
+    }
+    setBuscandoCpf(true);
+    cpfTimer.current = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from("funcionarios")
+        .select(
+          "id, nome, cargo, loja_id, data_admissao, data_desligamento, motivo_desligamento, observacao_desligamento, lojas(nome)",
+        )
+        .eq("cpf", digitos)
+        .neq("id", initial?.id ?? "00000000-0000-0000-0000-000000000000");
+      if (!error && data) setHistorico(data);
+      setBuscandoCpf(false);
+    }, 500);
+    return () => {
+      if (cpfTimer.current) clearTimeout(cpfTimer.current);
+    };
+  }, [cpf, initial?.id]);
+
+  // Registros ativos (sem desligamento) = possível duplicidade de cadastro.
+  const ativosCpf = historico.filter((h) => !h.data_desligamento);
+  const desligadosCpf = historico.filter((h) => h.data_desligamento);
+
   const loja = lojas.find((l) => l.id === lojaId) ?? null;
   const empresa = loja?.empresas ?? null;
   const regime: RegimeTributario =
@@ -586,7 +643,7 @@ function FuncForm({
             loja_id: lojaId,
             cargo_id: cargoId === "none" ? null : cargoId,
             nome: String(fd.get("nome") || "").trim(),
-            cpf: String(fd.get("cpf") || "").trim() || null,
+            cpf: normalizarCpf(String(fd.get("cpf") || "")) || null,
             cargo: cargo ? cargo.nome : String(fd.get("cargo") || "").trim() || null,
             salario_base: sal,
             data_admissao: admissao || null,
@@ -715,11 +772,98 @@ function FuncForm({
             <Input
               id="cpf"
               name="cpf"
+              inputMode="numeric"
               maxLength={14}
               placeholder="000.000.000-00"
-              defaultValue={initial?.cpf ?? ""}
+              value={cpf}
+              onChange={(e) => {
+                const d = normalizarCpf(e.target.value).slice(0, 11);
+                setCpf(
+                  d
+                    .replace(/(\d{3})(\d)/, "$1.$2")
+                    .replace(/(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+                    .replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4"),
+                );
+              }}
             />
+            {buscandoCpf && (
+              <p className="mt-1 text-xs text-muted-foreground">Verificando histórico…</p>
+            )}
           </div>
+          {historico.length > 0 && (
+            <div className="col-span-2 space-y-2">
+              {ativosCpf.length > 0 && (
+                <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3">
+                  <div className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span className="text-sm font-semibold">
+                      Este CPF já está cadastrado como funcionário ativo
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Possível duplicidade de cadastro — confirme antes de continuar.
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm">
+                    {ativosCpf.map((h) => (
+                      <li key={h.id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        <span className="font-medium">{h.nome}</span>
+                        <span className="text-muted-foreground">· {h.lojas?.nome ?? "—"}</span>
+                        <span className="text-muted-foreground">
+                          · admitido em {fmtData(h.data_admissao)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {desligadosCpf.length > 0 && (
+                <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-3">
+                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                    <Info className="h-4 w-4" />
+                    <span className="text-sm font-semibold">
+                      Esse CPF já trabalhou aqui antes
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Histórico de admissões anteriores (em qualquer unidade). A recontratação
+                    continua sendo sua decisão — este é apenas um aviso.
+                  </p>
+                  <ul className="mt-2 space-y-2 text-sm">
+                    {desligadosCpf.map((h) => (
+                      <li
+                        key={h.id}
+                        className="flex flex-col gap-0.5 rounded border bg-background/60 p-2"
+                      >
+                        <div className="flex flex-wrap items-center gap-x-2">
+                          <span className="font-medium">{h.nome}</span>
+                          {h.cargo && (
+                            <span className="text-muted-foreground">· {h.cargo}</span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                          <span>Loja: {h.lojas?.nome ?? "—"}</span>
+                          <span>
+                            Período: {fmtData(h.data_admissao)} → {fmtData(h.data_desligamento)}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-2 text-xs">
+                          <span className="text-muted-foreground">Desligamento:</span>
+                          <span className="font-medium">
+                            {labelRescisao(h.motivo_desligamento)}
+                          </span>
+                          {h.observacao_desligamento && (
+                            <span className="text-muted-foreground">
+                              · {h.observacao_desligamento}
+                            </span>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
           <div>
             <Label>Cargo</Label>
             {cargos.length > 0 ? (
