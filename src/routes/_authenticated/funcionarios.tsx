@@ -772,10 +772,23 @@ function FuncForm({
             <Input
               id="cpf"
               name="cpf"
+              inputMode="numeric"
               maxLength={14}
               placeholder="000.000.000-00"
-              defaultValue={initial?.cpf ?? ""}
+              value={cpf}
+              onChange={(e) => {
+                const d = normalizarCpf(e.target.value).slice(0, 11);
+                setCpf(
+                  d
+                    .replace(/(\d{3})(\d)/, "$1.$2")
+                    .replace(/(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+                    .replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4"),
+                );
+              }}
             />
+            {buscandoCpf && (
+              <p className="mt-1 text-xs text-muted-foreground">Verificando histórico…</p>
+            )}
           </div>
           <div>
             <Label>Cargo</Label>
