@@ -509,6 +509,41 @@ function FuncForm({
   const [lojaId, setLojaId] = useState(initial?.loja_id ?? "");
   const [cargoId, setCargoId] = useState<string>(initial?.cargo_id ?? "none");
 
+  // CPF controlado para verificar histórico de admissões anteriores.
+  const [cpf, setCpf] = useState<string>(initial?.cpf ?? "");
+  const [historico, setHistorico] = useState<any[]>([]);
+  const [buscandoCpf, setBuscandoCpf] = useState(false);
+  const cpfTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (cpfTimer.current) clearTimeout(cpfTimer.current);
+    const digitos = normalizarCpf(cpf);
+    if (digitos.length !== 11) {
+      setHistorico([]);
+      setBuscandoCpf(false);
+      return;
+    }
+    setBuscandoCpf(true);
+    cpfTimer.current = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from("funcionarios")
+        .select(
+          "id, nome, cargo, loja_id, data_admissao, data_desligamento, motivo_desligamento, observacao_desligamento, lojas(nome)",
+        )
+        .filter("cpf", "imatches", `^${digitos}$`)
+        .neq("id", initial?.id ?? "00000000-0000-0000-0000-000000000000");
+      if (!error && data) setHistorico(data);
+      setBuscandoCpf(false);
+    }, 500);
+    return () => {
+      if (cpfTimer.current) clearTimeout(cpfTimer.current);
+    };
+  }, [cpf, initial?.id]);
+
+  // Registros ativos (sem desligamento) = possível duplicidade de cadastro.
+  const ativosCpf = historico.filter((h) => !h.data_desligamento);
+  const desligadosCpf = historico.filter((h) => h.data_desligamento);
+
   const loja = lojas.find((l) => l.id === lojaId) ?? null;
   const empresa = loja?.empresas ?? null;
   const regime: RegimeTributario =
