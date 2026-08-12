@@ -267,27 +267,40 @@ function FuncPage() {
       </Dialog>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Label className="text-xs uppercase tracking-wide text-muted-foreground">Loja:</Label>
-          <Select value={filtro} onValueChange={setFiltro}>
-            <SelectTrigger className="w-56">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as lojas</SelectItem>
-              {(lojas as any[]).map((l) => (
-                <SelectItem key={l.id} value={l.id}>
-                  {l.nome} ({l.codigo})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-1 flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Loja:</Label>
+            <Select value={filtro} onValueChange={setFiltro}>
+              <SelectTrigger className="w-56">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as lojas</SelectItem>
+                {(lojas as any[]).map((l) => (
+                  <SelectItem key={l.id} value={l.id}>
+                    {l.nome} ({l.codigo})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="relative flex-1 min-w-[16rem] max-w-sm">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar por nome, CPF, cargo ou unidade"
+              className="pl-9"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
         </div>
         <div className="text-sm text-muted-foreground">
           Custo real total (filtrado):{" "}
           <span className="font-semibold text-foreground">{fmtBRL(totalFolha)}</span>
         </div>
       </div>
+
 
       {revisaoVt.length > 0 && (
         <Card className="border-amber-500/50 bg-amber-500/5">
