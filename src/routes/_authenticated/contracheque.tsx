@@ -114,8 +114,8 @@ function ContrachequePage() {
     },
   });
 
-  const fechada = folha.length > 0;
-  const fechadaEm = folha[0]?.fechada_em ?? null;
+  const folhaMap = useMemo(() => new Map(folha.map((r) => [r.funcionario_id, r])), [folha]);
+
 
   const { data: faltas = [] } = useQuery({
     queryKey: ["faltas-mes", mes],
