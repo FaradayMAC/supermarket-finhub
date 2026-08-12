@@ -59,6 +59,12 @@ type FolhaRow = {
   total_descontos: number;
   liquido: number;
   fgts: number;
+  inss: number;
+  irrf: number;
+  desc_faltas: number;
+  desc_dsr: number;
+  desc_vt: number;
+  convenio: number;
   status: string;
   fechada_em: string | null;
 };
