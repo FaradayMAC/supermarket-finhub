@@ -403,7 +403,7 @@ function FuncPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{f.cpf ?? "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{fmtCpf(f.cpf)}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.cargo ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.lojas?.nome ?? "—"}</td>
                       <td className="px-4 py-3 text-xs">
