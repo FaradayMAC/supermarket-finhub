@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, Download, FileText, Lock, ShoppingBasket } from "lucide-react";
+import { CalendarDays, Download, FileText, Lock, LockOpen, ShoppingBasket } from "lucide-react";
 import { toast } from "sonner";
 import {
   calcContracheque,
