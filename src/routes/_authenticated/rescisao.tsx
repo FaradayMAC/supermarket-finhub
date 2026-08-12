@@ -1114,7 +1114,7 @@ function Rotatividade({ filtro }: { filtro: string }) {
       const { data, error } = await supabase
         .from("funcionarios")
         .select(
-          "id, nome, cargo, loja_id, data_admissao, data_desligamento, motivo_desligamento, observacao_desligamento, lojas(nome, codigo)",
+          "id, nome, cargo, cpf, loja_id, data_admissao, data_desligamento, motivo_desligamento, observacao_desligamento, lojas(nome, codigo)",
         )
         .not("data_desligamento", "is", null)
         .order("data_desligamento", { ascending: false });
