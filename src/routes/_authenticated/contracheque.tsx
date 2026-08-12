@@ -83,6 +83,9 @@ function ContrachequePage() {
   const [detalhe, setDetalhe] = useState<Func | null>(null);
   const [convOpen, setConvOpen] = useState<Func | null>(null);
   const [eventoOpen, setEventoOpen] = useState<Func | null>(null);
+  const [fecharOpen, setFecharOpen] = useState(false);
+  const [cofreValor, setCofreValor] = useState("");
+  const [cofreMotivo, setCofreMotivo] = useState("");
   const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
 
   const { data: lojas = [] } = useQuery({
