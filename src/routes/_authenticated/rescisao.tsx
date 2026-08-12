@@ -1101,12 +1101,10 @@ const fmtData = (v?: string | null) =>
   v ? new Date(String(v).slice(0, 10) + "T00:00:00Z").toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "—";
 
 function Rotatividade({ filtro }: { filtro: string }) {
-  const qc = useQueryClient();
   const agora = new Date();
   const [mes, setMes] = useState(
     `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}`,
   );
-  const [rascunhos, setRascunhos] = useState<Record<string, string>>({});
 
   const { data: desligados = [], isLoading } = useQuery({
     queryKey: ["rotatividade"],
@@ -1121,21 +1119,6 @@ function Rotatividade({ filtro }: { filtro: string }) {
       if (error) throw error;
       return (data ?? []) as any[];
     },
-  });
-
-  const salvarObs = useMutation({
-    mutationFn: async ({ id, texto }: { id: string; texto: string }) => {
-      const { error } = await supabase
-        .from("funcionarios")
-        .update({ observacao_desligamento: texto.trim() || null })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Observação salva");
-      qc.invalidateQueries({ queryKey: ["rotatividade"] });
-    },
-    onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
   const lista = useMemo(
