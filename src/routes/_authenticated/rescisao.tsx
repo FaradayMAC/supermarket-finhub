@@ -24,7 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Calculator, Plane, PiggyBank, Download, FileText } from "lucide-react";
+import { Plus, Trash2, Calculator, Plane, PiggyBank, Download, FileText, Search } from "lucide-react";
 import {
   exportarRotatividadeCsv,
   exportarRotatividadePdf,
