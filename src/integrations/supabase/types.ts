@@ -972,6 +972,7 @@ export type Database = {
           fgts_saldo_inicial_data: string | null
           id: string
           loja_id: string
+          motivo_desligamento: string | null
           motivo_insalubridade: Database["public"]["Enums"]["motivo_insalubridade"]
           nome: string
           observacoes: string | null
@@ -1009,6 +1010,7 @@ export type Database = {
           fgts_saldo_inicial_data?: string | null
           id?: string
           loja_id: string
+          motivo_desligamento?: string | null
           motivo_insalubridade?: Database["public"]["Enums"]["motivo_insalubridade"]
           nome: string
           observacoes?: string | null
@@ -1046,6 +1048,7 @@ export type Database = {
           fgts_saldo_inicial_data?: string | null
           id?: string
           loja_id?: string
+          motivo_desligamento?: string | null
           motivo_insalubridade?: Database["public"]["Enums"]["motivo_insalubridade"]
           nome?: string
           observacoes?: string | null
