@@ -127,8 +127,8 @@ export async function exportarRotatividadePdf(params: {
   y += 12;
   doc.setDrawColor(200).line(L, y, R, y);
 
-  const larguras = [170, 130, 110, 80, 90, 100, 0];
-  larguras[6] = R - L - larguras.slice(0, 6).reduce((a, b) => a + b, 0);
+  const larguras = [150, 110, 95, 72, 80, 90, 110, 0];
+  larguras[7] = R - L - larguras.slice(0, 7).reduce((a, b) => a + b, 0);
 
   const escreverLinha = (valores: string[], negrito: boolean) => {
     doc.setFont("helvetica", negrito ? "bold" : "normal").setFontSize(8.5);
