@@ -23,7 +23,11 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Calculator, Plane, PiggyBank } from "lucide-react";
+import { Plus, Trash2, Calculator, Plane, PiggyBank, Download, FileText } from "lucide-react";
+import {
+  exportarRotatividadeCsv,
+  exportarRotatividadePdf,
+} from "@/lib/rotatividade-export";
 import { toast } from "sonner";
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { CUSTO_SELECT } from "@/lib/custo-funcionario";
@@ -1100,6 +1104,28 @@ function Rotatividade({ filtro }: { filtro: string }) {
   const labelMotivo = (v: string | null) =>
     TIPOS_RESCISAO.find((t) => t.value === v)?.label ?? "Não informado";
 
+  const lojaLabel =
+    filtro === "todas" ? "Todas as lojas" : (lista[0]?.lojas?.nome ?? "Loja selecionada");
+
+  const linhasExport = useMemo(
+    () =>
+      lista.map((f) => ({
+        nome: f.nome,
+        cargo: f.cargo ?? "—",
+        loja: f.lojas?.nome ?? "—",
+        admissao: fmtData(f.data_admissao),
+        desligamento: fmtData(f.data_desligamento),
+        tempo: tempoDeCasa(f.data_admissao, f.data_desligamento),
+        motivo: labelMotivo(f.motivo_desligamento),
+      })),
+    [lista],
+  );
+
+  const resumoExport = porMotivo.map(([k, n]) => ({
+    motivo: labelMotivo(k === "nao_informado" ? null : k),
+    qtd: n,
+  }));
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -1115,6 +1141,37 @@ function Rotatividade({ filtro }: { filtro: string }) {
               {n} · {labelMotivo(k === "nao_informado" ? null : k)}
             </Badge>
           ))}
+        </div>
+        <div className="ml-auto flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!lista.length}
+            onClick={() =>
+              exportarRotatividadeCsv({ linhas: linhasExport, mes, loja: lojaLabel })
+            }
+          >
+            <Download className="mr-1 h-4 w-4" /> CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!lista.length}
+            onClick={async () => {
+              try {
+                await exportarRotatividadePdf({
+                  linhas: linhasExport,
+                  mes,
+                  loja: lojaLabel,
+                  resumo: resumoExport,
+                });
+              } catch (e: any) {
+                toast.error(e?.message ?? "Erro ao gerar PDF");
+              }
+            }}
+          >
+            <FileText className="mr-1 h-4 w-4" /> PDF
+          </Button>
         </div>
       </div>
 
