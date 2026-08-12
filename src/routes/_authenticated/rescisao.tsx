@@ -384,6 +384,13 @@ function RescisaoPage() {
         de usar os números para decisão financeira.
       </p>
 
+        </TabsContent>
+
+        <TabsContent value="rotatividade">
+          <Rotatividade filtro={filtro} />
+        </TabsContent>
+      </Tabs>
+
       {/* Simulação */}
       <Dialog open={!!sim} onOpenChange={(v) => !v && setSim(null)}>
         {sim && (
@@ -392,6 +399,10 @@ function RescisaoPage() {
             gozadas={feriasPorFunc.get(sim.id) ?? []}
             fgtsInput={fgtsInput}
             salarioMinimoFederal={salarioMinimoFederal}
+            confirmando={confirmarDesligamento.isPending}
+            onConfirmar={({ data, motivo }) =>
+              confirmarDesligamento.mutate({ id: sim.id, data, motivo })
+            }
           />
         )}
       </Dialog>
