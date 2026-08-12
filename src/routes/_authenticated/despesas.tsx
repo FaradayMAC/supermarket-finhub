@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { registrarSaidaCofre } from "@/components/cofre-tab";
 
 export const Route = createFileRoute("/_authenticated/despesas")({
   head: () => ({ meta: [{ title: "Despesas · MercadoGest" }] }),
