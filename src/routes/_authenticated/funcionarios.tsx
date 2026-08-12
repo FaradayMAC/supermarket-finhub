@@ -32,6 +32,28 @@ import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { dataFimCarencia } from "@/lib/planos";
 import { VALE_ALIMENTACAO_PADRAO_ES, VALE_TRANSPORTE_DESCONTO_PCT } from "@/lib/beneficios";
 import { TIPOS_RESCISAO } from "@/lib/rescisao";
+import { AlertTriangle, Info, UserX } from "lucide-react";
+
+
+/** Mantém só os dígitos do CPF (remove pontos/traços). */
+function normalizarCpf(v: string): string {
+  return (v ?? "").replace(/\D/g, "");
+}
+
+/** Formata dígitos para a máscara 000.000.000-00 (quando aplicável). */
+function fmtCpf(v: string | null | undefined): string {
+  const d = normalizarCpf(v ?? "");
+  if (d.length !== 11) return v ?? "—";
+  return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+}
+
+const labelRescisao = (v: string | null | undefined) =>
+  TIPOS_RESCISAO.find((t) => t.value === v)?.label ?? "Não informado";
+
+const fmtData = (v?: string | null) =>
+  v
+    ? new Date(String(v).slice(0, 10) + "T00:00:00Z").toLocaleDateString("pt-BR", { timeZone: "UTC" })
+    : "—";
 
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
