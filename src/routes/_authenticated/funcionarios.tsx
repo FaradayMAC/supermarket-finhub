@@ -790,6 +790,80 @@ function FuncForm({
               <p className="mt-1 text-xs text-muted-foreground">Verificando histórico…</p>
             )}
           </div>
+          {historico.length > 0 && (
+            <div className="col-span-2 space-y-2">
+              {ativosCpf.length > 0 && (
+                <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3">
+                  <div className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span className="text-sm font-semibold">
+                      Este CPF já está cadastrado como funcionário ativo
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Possível duplicidade de cadastro — confirme antes de continuar.
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm">
+                    {ativosCpf.map((h) => (
+                      <li key={h.id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        <span className="font-medium">{h.nome}</span>
+                        <span className="text-muted-foreground">· {h.lojas?.nome ?? "—"}</span>
+                        <span className="text-muted-foreground">
+                          · admitido em {fmtData(h.data_admissao)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {desligadosCpf.length > 0 && (
+                <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-3">
+                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                    <Info className="h-4 w-4" />
+                    <span className="text-sm font-semibold">
+                      Esse CPF já trabalhou aqui antes
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Histórico de admissões anteriores (em qualquer unidade). A recontratação
+                    continua sendo sua decisão — este é apenas um aviso.
+                  </p>
+                  <ul className="mt-2 space-y-2 text-sm">
+                    {desligadosCpf.map((h) => (
+                      <li
+                        key={h.id}
+                        className="flex flex-col gap-0.5 rounded border bg-background/60 p-2"
+                      >
+                        <div className="flex flex-wrap items-center gap-x-2">
+                          <span className="font-medium">{h.nome}</span>
+                          {h.cargo && (
+                            <span className="text-muted-foreground">· {h.cargo}</span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                          <span>Loja: {h.lojas?.nome ?? "—"}</span>
+                          <span>
+                            Período: {fmtData(h.data_admissao)} → {fmtData(h.data_desligamento)}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-2 text-xs">
+                          <span className="text-muted-foreground">Desligamento:</span>
+                          <span className="font-medium">
+                            {labelRescisao(h.motivo_desligamento)}
+                          </span>
+                          {h.observacao_desligamento && (
+                            <span className="text-muted-foreground">
+                              · {h.observacao_desligamento}
+                            </span>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
           <div>
             <Label>Cargo</Label>
             {cargos.length > 0 ? (
