@@ -36,8 +36,11 @@ import {
   provisaoFerias,
   saldoFgts,
   TIPOS_RESCISAO,
+  FORMAS_CUMPRIMENTO_AVISO,
   type FeriasGozadas,
   type TipoRescisao,
+  type ModalidadeAviso,
+  type FormaCumprimentoAviso,
 } from "@/lib/rescisao";
 
 export const Route = createFileRoute("/_authenticated/rescisao")({
@@ -459,16 +462,22 @@ function SimulacaoDialog({
   salarioMinimoFederal: number;
 }) {
   const [tipo, setTipo] = useState<TipoRescisao>("sem_justa_causa");
+  const [modalidadeAviso, setModalidadeAviso] = useState<ModalidadeAviso>("indenizado");
+  const [formaCumprimento, setFormaCumprimento] =
+    useState<FormaCumprimentoAviso>("reducao_7_dias");
   const [dataRef, setDataRef] = useState(isoDate(hojeUTCDate()));
   const ref = parseDateUTC(dataRef) ?? hojeUTCDate();
+  const temAviso = tipo === "sem_justa_causa" || tipo === "acordo_mutuo";
   const r = calcRescisao(f, {
     tipo,
     ref,
     gozadas,
     fgts: fgtsInput(f, ref),
     salarioMinimoFederal,
+    modalidadeAviso: temAviso ? modalidadeAviso : "indenizado",
   });
   const tipoInfo = TIPOS_RESCISAO.find((t) => t.value === tipo)!;
+  const trabalhado = temAviso && modalidadeAviso === "trabalhado";
 
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -502,6 +511,54 @@ function SimulacaoDialog({
         </div>
       </div>
 
+      {temAviso && (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label>Modalidade do aviso prévio</Label>
+            <Select
+              value={modalidadeAviso}
+              onValueChange={(v) => setModalidadeAviso(v as ModalidadeAviso)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="indenizado">Indenizado</SelectItem>
+                <SelectItem value="trabalhado">Trabalhado</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {trabalhado
+                ? `Somente os ${r.diasExcedentes} dia(s) excedentes a 30 são indenizados.`
+                : `Todos os ${r.diasAviso} dias entram como indenização.`}
+            </p>
+          </div>
+          {trabalhado && (
+            <div>
+              <Label>Forma de cumprimento</Label>
+              <Select
+                value={formaCumprimento}
+                onValueChange={(v) => setFormaCumprimento(v as FormaCumprimentoAviso)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {FORMAS_CUMPRIMENTO_AVISO.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Informativo: salário pago integral, sem efeito no valor calculado.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         <Card className="border-primary/40 bg-primary/5">
           <CardContent className="py-4">
@@ -534,12 +591,18 @@ function SimulacaoDialog({
           detalhe={`${r.diasTrabalhadosMes} dia(s) trabalhados no mês`}
         />
         <Linha
-          label="Aviso prévio indenizado"
+          label={
+            trabalhado
+              ? "Aviso prévio (dias excedentes indenizados)"
+              : "Aviso prévio indenizado"
+          }
           valor={r.avisoPrevio}
           detalhe={
             r.fatorAviso === 0
               ? "não devido neste tipo de rescisão"
-              : `${r.diasAviso} dias${r.fatorAviso < 1 ? " × 50% (acordo mútuo)" : ""}`
+              : trabalhado
+                ? `${r.diasAvisoIndenizados} de ${r.diasAviso} dias — os 30 dias-base são pagos pela folha normal${r.fatorAviso < 1 ? " × 50% (acordo mútuo)" : ""}`
+                : `${r.diasAviso} dias${r.fatorAviso < 1 ? " × 50% (acordo mútuo)" : ""}`
           }
         />
         <Linha

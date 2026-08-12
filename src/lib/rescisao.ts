@@ -226,12 +226,28 @@ export function saldoFgts(i: SaldoFgtsInput) {
   return r2(Math.max(0, (i.saldoInicial || 0) + (i.depositos || 0) - (i.saques || 0)));
 }
 
+export type ModalidadeAviso = "indenizado" | "trabalhado";
+
+export type FormaCumprimentoAviso = "reducao_7_dias" | "reducao_2_horas";
+
+export const FORMAS_CUMPRIMENTO_AVISO: {
+  value: FormaCumprimentoAviso;
+  label: string;
+}[] = [
+  { value: "reducao_7_dias", label: "Redução de 7 dias corridos ao final do aviso" },
+  { value: "reducao_2_horas", label: "Redução de 2 horas na jornada diária (Art. 488 CLT)" },
+];
+
+const addDias = (d: Date, n: number) => new Date(d.getTime() + n * 86400000);
+
 export type RescisaoInput = {
   tipo: TipoRescisao;
   ref: Date;
   gozadas: FeriasGozadas[];
   fgts: SaldoFgtsInput;
   salarioMinimoFederal?: number;
+  /** Modalidade do aviso prévio (padrão: indenizado). */
+  modalidadeAviso?: ModalidadeAviso;
 };
 
 export function calcRescisao(f: FuncionarioRescisao, i: RescisaoInput) {
@@ -244,20 +260,27 @@ export function calcRescisao(f: FuncionarioRescisao, i: RescisaoInput) {
   const diasTrabalhadosMes = ref.getUTCDate();
   const saldoSalario = r2((remuneracao / 30) * diasTrabalhadosMes);
 
-  // 2. Aviso prévio indenizado
+  // 2. Aviso prévio (indenizado ou trabalhado)
+  const modalidadeAviso: ModalidadeAviso = i.modalidadeAviso ?? "indenizado";
   const diasAviso = diasAvisoPrevio(f.data_admissao, ref);
+  const diasExcedentes = Math.max(0, diasAviso - 30);
   const fatorAviso = tipo === "sem_justa_causa" ? 1 : tipo === "acordo_mutuo" ? 0.5 : 0;
-  const avisoPrevio = r2((remuneracao / 30) * diasAviso * fatorAviso);
+  const diasAvisoIndenizados = modalidadeAviso === "indenizado" ? diasAviso : diasExcedentes;
+  const avisoPrevio = r2((remuneracao / 30) * diasAvisoIndenizados * fatorAviso);
+
+  // Projeção do aviso prévio (Súmula 371 TST): verbas proporcionais contam até
+  // a data de referência somada aos dias de aviso, em qualquer modalidade.
+  const dataProjetada = fatorAviso > 0 ? addDias(ref, diasAviso) : ref;
 
   // 3. Férias vencidas + 1/3 (devidas em qualquer tipo)
   const vencidas = feriasVencidas(f, i.gozadas, ref, sm);
 
   // 4. Férias proporcionais + 1/3 (não devidas na justa causa)
-  const propFerias = provisaoFerias(f, i.gozadas, ref, sm);
+  const propFerias = provisaoFerias(f, i.gozadas, dataProjetada, sm);
   const feriasProporcionais = tipo === "justa_causa" ? { ...propFerias, valor: 0, terco: 0, total: 0 } : propFerias;
 
   // 5. 13º proporcional (não devido na justa causa)
-  const prop13 = provisaoDecimoTerceiro(f, ref, sm);
+  const prop13 = provisaoDecimoTerceiro(f, dataProjetada, sm);
   const decimoTerceiro = tipo === "justa_causa" ? { ...prop13, valor: 0, total: 0 } : prop13;
 
   // 6. FGTS
@@ -307,6 +330,10 @@ export function calcRescisao(f: FuncionarioRescisao, i: RescisaoInput) {
     diasTrabalhadosMes,
     saldoSalario,
     diasAviso,
+    diasExcedentes,
+    diasAvisoIndenizados,
+    modalidadeAviso,
+    dataProjetada,
     fatorAviso,
     avisoPrevio,
     vencidas,
