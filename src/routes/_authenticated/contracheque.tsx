@@ -322,10 +322,27 @@ function ContrachequePage() {
       });
       const { error } = await supabase.from("folha_pagamento").insert(linhas as any);
       if (error) throw error;
+
+      // Parte da folha paga em espécie sai do cofre da loja
+      const valorCofre = Number(cofreValor.replace(",", ".")) || 0;
+      if (valorCofre > 0) {
+        if (lojaFiltro === "todas") throw new Error("Selecione uma loja para registrar a saída do cofre.");
+        await registrarSaidaCofre({
+          loja_id: lojaFiltro,
+          data: new Date().toISOString().slice(0, 10),
+          origem: "folha",
+          descricao: `Folha ${mes}`,
+          motivo: cofreMotivo.trim() || `Pagamento de folha — competência ${mes}`,
+          valor: valorCofre,
+        });
+      }
       return linhas.length;
     },
     onSuccess: (n) => {
       toast.success(`Folha de ${mes} fechada para ${n} funcionário(s) — ${escopoLabel}.`);
+      setFecharOpen(false);
+      setCofreValor("");
+      setCofreMotivo("");
       qc.invalidateQueries();
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao fechar a folha"),
