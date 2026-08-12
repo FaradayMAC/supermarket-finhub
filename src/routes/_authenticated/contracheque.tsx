@@ -441,33 +441,59 @@ function ContrachequePage() {
           </Select>
           {fechada ? (
             <Badge variant="secondary">Fechada em {fmtDataHora(fechadaEm)}</Badge>
+          ) : parcial ? (
+            <Badge variant="outline">
+              {escopo.fechados.length} fechado(s) · {escopo.abertos.length} aberto(s)
+            </Badge>
           ) : (
-            <>
-              <Badge variant="outline">Competência aberta</Badge>
-              {podeFechar(mes) && (
-                <Button
-                  variant="secondary"
-                  disabled={fecharFolha.isPending}
-                  onClick={() => {
-                    if (confirm(`Fechar a folha de ${mes}? Depois disso o mês vira histórico e não recalcula mais.`))
-                      fecharFolha.mutate();
-                  }}
-                >
-                  <Lock className="mr-2 h-4 w-4" />
-                  {fecharFolha.isPending ? "Fechando…" : "Fechar folha do mês"}
-                </Button>
-              )}
-            </>
+            <Badge variant="outline">Competência aberta</Badge>
+          )}
+          {escopo.abertos.length > 0 && podeFechar(mes) && (
+            <Button
+              variant="secondary"
+              disabled={fecharFolha.isPending}
+              onClick={() => {
+                if (
+                  confirm(
+                    `Fechar a folha de ${mes} para ${escopoLabel} (${escopo.abertos.length} funcionário(s))? O mês vira histórico e não recalcula mais.`,
+                  )
+                )
+                  fecharFolha.mutate();
+              }}
+            >
+              <Lock className="mr-2 h-4 w-4" />
+              {fecharFolha.isPending ? "Fechando…" : lojaFiltro === "todas" ? "Fechar folha do mês" : "Fechar folha da loja"}
+            </Button>
+          )}
+          {escopo.fechados.length > 0 && (
+            <Button
+              variant="outline"
+              disabled={reabrirFolha.isPending}
+              onClick={() => {
+                if (
+                  confirm(
+                    `Reabrir a folha de ${mes} para ${escopoLabel} (${escopo.fechados.length} funcionário(s))? O histórico gravado será apagado e os valores voltam a recalcular.`,
+                  )
+                )
+                  reabrirFolha.mutate();
+              }}
+            >
+              <LockOpen className="mr-2 h-4 w-4" />
+              {reabrirFolha.isPending ? "Reabrindo…" : lojaFiltro === "todas" ? "Reabrir folha do mês" : "Reabrir folha da loja"}
+            </Button>
           )}
         </div>
       }
     >
-      {fechada && (
+      {escopo.fechados.length > 0 && (
         <p className="mb-4 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-          Competência fechada — valores gravados no histórico. Alterações no cadastro de funcionários ou em faltas
-          não afetam mais este mês.
+          {fechada
+            ? "Competência fechada neste escopo — valores gravados no histórico."
+            : "Fechamento parcial — lojas já fechadas mostram o histórico; as demais continuam recalculando ao vivo."}{" "}
+          Reabrir apaga o histórico da seleção e devolve o cálculo ao vivo (somente administradores).
         </p>
       )}
+
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Líquido a pagar</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{fmtBRL(totalLiquido)}</CardContent></Card>
