@@ -192,37 +192,48 @@ function ContrachequePage() {
   const lojaMap = useMemo(() => new Map(lojas.map((l) => [l.id, l])), [lojas]);
   const funcMap = useMemo(() => new Map(funcionarios.map((f) => [f.id, f])), [funcionarios]);
 
-  // Competência fechada = histórico imutável; aberta = recálculo ao vivo.
+  // Fechamento é por loja: cada funcionário com linha em folha_pagamento vira
+  // histórico imutável; os demais continuam recalculando ao vivo.
   const lista = useMemo(() => {
-    if (fechada) {
-      return folha
-        .map((r) => ({ f: funcMap.get(r.funcionario_id), r }))
-        .filter((x) => !!x.f)
-        .filter((x) => lojaFiltro === "todas" || x.f!.loja_id === lojaFiltro)
-        .sort((a, b) => (a.f!.nome > b.f!.nome ? 1 : -1))
-        .map(({ f, r }) => ({
-          f: f as Func,
-          cc: null,
-          hist: r,
-        }));
-    }
     return funcionarios
-      .filter((f) => entraNaCompetencia(f, mes))
+      .filter((f) => entraNaCompetencia(f, mes) || folhaMap.has(f.id))
       .filter((f) => lojaFiltro === "todas" || f.loja_id === lojaFiltro)
-      .map((f) => ({
-        f,
-        hist: null,
-        cc: calcContracheque(f, {
-          planos: planosCfg,
-          mes,
-          faltas: faltasMap.get(f.id) ?? [],
-          convenio: Number(convMap.get(f.id)?.valor ?? 0),
-          salarioMinimoFederal,
-          ferias: (feriasMap.get(f.id) as FeriasMes | undefined) ?? null,
-          afastamento: (afastMap.get(f.id) as AfastamentoMes | undefined) ?? null,
-        }),
-      }));
-  }, [fechada, folha, funcMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg, feriasMap, afastMap]);
+      .sort((a, b) => (a.nome > b.nome ? 1 : -1))
+      .map((f) => {
+        const hist = folhaMap.get(f.id) ?? null;
+        return {
+          f,
+          hist,
+          cc: hist
+            ? null
+            : calcContracheque(f, {
+                planos: planosCfg,
+                mes,
+                faltas: faltasMap.get(f.id) ?? [],
+                convenio: Number(convMap.get(f.id)?.valor ?? 0),
+                salarioMinimoFederal,
+                ferias: (feriasMap.get(f.id) as FeriasMes | undefined) ?? null,
+                afastamento: (afastMap.get(f.id) as AfastamentoMes | undefined) ?? null,
+              }),
+        };
+      });
+  }, [folhaMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg, feriasMap, afastMap]);
+
+  // Escopo do botão: loja selecionada ou todas as lojas.
+  const escopo = useMemo(() => {
+    const elegiveis = funcionarios
+      .filter((f) => entraNaCompetencia(f, mes) || folhaMap.has(f.id))
+      .filter((f) => lojaFiltro === "todas" || f.loja_id === lojaFiltro);
+    const fechados = elegiveis.filter((f) => folhaMap.has(f.id));
+    const abertos = elegiveis.filter((f) => !folhaMap.has(f.id) && entraNaCompetencia(f, mes));
+    return { elegiveis, fechados, abertos };
+  }, [funcionarios, folhaMap, lojaFiltro, mes]);
+
+  const fechada = escopo.fechados.length > 0 && escopo.abertos.length === 0;
+  const parcial = escopo.fechados.length > 0 && escopo.abertos.length > 0;
+  const fechadaEm = escopo.fechados[0] ? folhaMap.get(escopo.fechados[0].id)?.fechada_em ?? null : null;
+  const escopoLabel = lojaFiltro === "todas" ? "todas as lojas" : lojaMap.get(lojaFiltro)?.nome ?? "loja";
+
 
   const totalLiquido = lista.reduce((s, i) => s + (i.hist ? Number(i.hist.liquido) : i.cc!.liquido), 0);
   const totalDescontos = lista.reduce(
