@@ -533,19 +533,41 @@ function ContrachequePage() {
       )}
 
 
+      {/* Linha 1 — visão geral da folha */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Líquido a pagar</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{fmtBRL(totalLiquido)}</CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Total de descontos</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{fmtBRL(totalDescontos)}</CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Convênio (loja)</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{fmtBRL(totalConvenio)}</CardContent></Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Calendário ES</CardTitle></CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {cal.diasUteis} dias úteis · {cal.diasRepouso} de repouso (DSR)
-            {cal.feriados.length > 0 && (
-              <div className="mt-1 text-xs">{cal.feriados.map((f) => `${String(f.dia).padStart(2, "0")} ${f.nome}`).join(" · ")}</div>
-            )}
-          </CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Proventos totais</CardTitle></CardHeader>
+          <CardContent className="text-2xl font-bold">{fmtBRL(resumo.proventos)}</CardContent>
         </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Descontos totais</CardTitle></CardHeader>
+          <CardContent className="text-2xl font-bold text-destructive">- {fmtBRL(resumo.descontos)}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Líquido a pagar</CardTitle></CardHeader>
+          <CardContent className="text-2xl font-bold">{fmtBRL(resumo.liquido)}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">FGTS do mês (empresa)</CardTitle></CardHeader>
+          <CardContent className="text-2xl font-bold">{fmtBRL(resumo.fgts)}</CardContent>
+        </Card>
+      </div>
+
+      {/* Linha 2 — discriminação dos descontos */}
+      <div className="mt-3 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+        <Card><CardHeader className="pb-1"><CardTitle className="text-[11px] uppercase text-muted-foreground">INSS</CardTitle></CardHeader><CardContent className="text-lg font-semibold">{fmtBRL(resumo.inss)}</CardContent></Card>
+        <Card><CardHeader className="pb-1"><CardTitle className="text-[11px] uppercase text-muted-foreground">IRRF</CardTitle></CardHeader><CardContent className="text-lg font-semibold">{fmtBRL(resumo.irrf)}</CardContent></Card>
+        <Card><CardHeader className="pb-1"><CardTitle className="text-[11px] uppercase text-muted-foreground">Faltas</CardTitle></CardHeader><CardContent className="text-lg font-semibold">{fmtBRL(resumo.descFaltas)}</CardContent></Card>
+        <Card><CardHeader className="pb-1"><CardTitle className="text-[11px] uppercase text-muted-foreground">DSR</CardTitle></CardHeader><CardContent className="text-lg font-semibold">{fmtBRL(resumo.descDsr)}</CardContent></Card>
+        <Card><CardHeader className="pb-1"><CardTitle className="text-[11px] uppercase text-muted-foreground">Vale-transporte</CardTitle></CardHeader><CardContent className="text-lg font-semibold">{fmtBRL(resumo.descVt)}</CardContent></Card>
+        <Card><CardHeader className="pb-1"><CardTitle className="text-[11px] uppercase text-muted-foreground">Convênio</CardTitle></CardHeader><CardContent className="text-lg font-semibold">{fmtBRL(resumo.convenio)}</CardContent></Card>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span>Calendário ES: {cal.diasUteis} dias úteis · {cal.diasRepouso} de repouso (DSR)</span>
+        {cal.feriados.length > 0 && (
+          <span>{cal.feriados.map((f) => `${String(f.dia).padStart(2, "0")} ${f.nome}`).join(" · ")}</span>
+        )}
       </div>
 
       <Card className="mt-6">
