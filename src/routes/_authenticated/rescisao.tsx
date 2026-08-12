@@ -280,6 +280,13 @@ function RescisaoPage() {
         </div>
       </div>
 
+      <Tabs defaultValue="simulacao">
+        <TabsList className="mb-4">
+          <TabsTrigger value="simulacao">Simulação</TabsTrigger>
+          <TabsTrigger value="rotatividade">Rotatividade</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="simulacao">
       <Card>
         <CardContent className="overflow-x-auto p-0">
           <table className="w-full text-sm">
