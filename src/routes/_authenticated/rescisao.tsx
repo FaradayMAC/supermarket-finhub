@@ -1259,8 +1259,7 @@ function Rotatividade({ filtro }: { filtro: string }) {
                 </tr>
               )}
               {lista.map((f) => {
-                const valor = rascunhos[f.id] ?? f.observacao_desligamento ?? "";
-                const alterado = valor !== (f.observacao_desligamento ?? "");
+                const valor = f.observacao_desligamento ?? "";
                 return (
                   <tr key={f.id} className="border-b last:border-0">
                     <td className="px-4 py-3 font-medium">{f.nome}</td>
@@ -1274,27 +1273,12 @@ function Rotatividade({ filtro }: { filtro: string }) {
                     <td className="px-4 py-3">
                       <Badge variant="outline">{labelMotivo(f.motivo_desligamento)}</Badge>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-start gap-2">
-                        <Textarea
-                          rows={2}
-                          placeholder="Descreva o motivo do desligamento"
-                          className="min-w-[220px] text-sm"
-                          value={valor}
-                          onChange={(e) =>
-                            setRascunhos((r) => ({ ...r, [f.id]: e.target.value }))
-                          }
-                        />
-                        {alterado && (
-                          <Button
-                            size="sm"
-                            disabled={salvarObs.isPending}
-                            onClick={() => salvarObs.mutate({ id: f.id, texto: valor })}
-                          >
-                            Salvar
-                          </Button>
-                        )}
-                      </div>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {valor ? (
+                        <span className="whitespace-pre-wrap text-sm">{valor}</span>
+                      ) : (
+                        <span className="italic text-muted-foreground/60">Sem observação</span>
+                      )}
                     </td>
                   </tr>
                 );
