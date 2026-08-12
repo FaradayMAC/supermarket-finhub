@@ -241,12 +241,40 @@ function ContrachequePage() {
   const escopoLabel = lojaFiltro === "todas" ? "todas as lojas" : lojaMap.get(lojaFiltro)?.nome ?? "loja";
 
 
-  const totalLiquido = lista.reduce((s, i) => s + (i.hist ? Number(i.hist.liquido) : i.cc!.liquido), 0);
-  const totalDescontos = lista.reduce(
-    (s, i) => s + (i.hist ? Number(i.hist.total_descontos) : i.cc!.totalDescontos),
-    0,
-  );
-  const totalConvenio = lista.reduce((s, i) => s + (i.hist ? 0 : i.cc!.convenio), 0);
+  // Resumo agregado da folha inteira do escopo (abertos + fechados).
+  // Para folhas fechadas usa os valores congelados em folha_pagamento;
+  // para as abertas recorre ao cálculo ao vivo de cada contracheque.
+  const resumo = useMemo(() => {
+    return lista.reduce(
+      (acc, { hist, cc }) => {
+        const h = hist;
+        const c = cc;
+        const proventos = h ? Number(h.total_proventos) : c!.proventos;
+        const descontos = h ? Number(h.total_descontos) : c!.totalDescontos;
+        const liquido = h ? Number(h.liquido) : c!.liquido;
+        const fgts = h ? Number(h.fgts) : c!.fgts;
+        const inss = h ? Number(h.inss) : c!.inss;
+        const irrf = h ? Number(h.irrf) : c!.irrf;
+        const descFaltas = h ? Number(h.desc_faltas) : c!.descFaltas;
+        const descDsr = h ? Number(h.desc_dsr) : c!.descDsr;
+        const descVt = h ? Number(h.desc_vt) : c!.descontoVt;
+        const convenio = h ? Number(h.convenio) : c!.convenio;
+        return {
+          proventos: acc.proventos + proventos,
+          descontos: acc.descontos + descontos,
+          liquido: acc.liquido + liquido,
+          fgts: acc.fgts + fgts,
+          inss: acc.inss + inss,
+          irrf: acc.irrf + irrf,
+          descFaltas: acc.descFaltas + descFaltas,
+          descDsr: acc.descDsr + descDsr,
+          descVt: acc.descVt + descVt,
+          convenio: acc.convenio + convenio,
+        };
+      },
+      { proventos: 0, descontos: 0, liquido: 0, fgts: 0, inss: 0, irrf: 0, descFaltas: 0, descDsr: 0, descVt: 0, convenio: 0 },
+    );
+  }, [lista]);
   const cal = calendarioMes(mes);
 
   const fecharFolha = useMutation({
