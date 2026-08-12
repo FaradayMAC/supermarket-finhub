@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, Download, FileText, Lock, ShoppingBasket } from "lucide-react";
+import { CalendarDays, Download, FileText, Lock, LockOpen, ShoppingBasket } from "lucide-react";
 import { toast } from "sonner";
 import {
   calcContracheque,
@@ -114,8 +114,8 @@ function ContrachequePage() {
     },
   });
 
-  const fechada = folha.length > 0;
-  const fechadaEm = folha[0]?.fechada_em ?? null;
+  const folhaMap = useMemo(() => new Map(folha.map((r) => [r.funcionario_id, r])), [folha]);
+
 
   const { data: faltas = [] } = useQuery({
     queryKey: ["faltas-mes", mes],
@@ -190,39 +190,50 @@ function ContrachequePage() {
     [convenios],
   );
   const lojaMap = useMemo(() => new Map(lojas.map((l) => [l.id, l])), [lojas]);
-  const funcMap = useMemo(() => new Map(funcionarios.map((f) => [f.id, f])), [funcionarios]);
+  
 
-  // Competência fechada = histórico imutável; aberta = recálculo ao vivo.
+  // Fechamento é por loja: cada funcionário com linha em folha_pagamento vira
+  // histórico imutável; os demais continuam recalculando ao vivo.
   const lista = useMemo(() => {
-    if (fechada) {
-      return folha
-        .map((r) => ({ f: funcMap.get(r.funcionario_id), r }))
-        .filter((x) => !!x.f)
-        .filter((x) => lojaFiltro === "todas" || x.f!.loja_id === lojaFiltro)
-        .sort((a, b) => (a.f!.nome > b.f!.nome ? 1 : -1))
-        .map(({ f, r }) => ({
-          f: f as Func,
-          cc: null,
-          hist: r,
-        }));
-    }
     return funcionarios
-      .filter((f) => entraNaCompetencia(f, mes))
+      .filter((f) => entraNaCompetencia(f, mes) || folhaMap.has(f.id))
       .filter((f) => lojaFiltro === "todas" || f.loja_id === lojaFiltro)
-      .map((f) => ({
-        f,
-        hist: null,
-        cc: calcContracheque(f, {
-          planos: planosCfg,
-          mes,
-          faltas: faltasMap.get(f.id) ?? [],
-          convenio: Number(convMap.get(f.id)?.valor ?? 0),
-          salarioMinimoFederal,
-          ferias: (feriasMap.get(f.id) as FeriasMes | undefined) ?? null,
-          afastamento: (afastMap.get(f.id) as AfastamentoMes | undefined) ?? null,
-        }),
-      }));
-  }, [fechada, folha, funcMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg, feriasMap, afastMap]);
+      .sort((a, b) => (a.nome > b.nome ? 1 : -1))
+      .map((f) => {
+        const hist = folhaMap.get(f.id) ?? null;
+        return {
+          f,
+          hist,
+          cc: hist
+            ? null
+            : calcContracheque(f, {
+                planos: planosCfg,
+                mes,
+                faltas: faltasMap.get(f.id) ?? [],
+                convenio: Number(convMap.get(f.id)?.valor ?? 0),
+                salarioMinimoFederal,
+                ferias: (feriasMap.get(f.id) as FeriasMes | undefined) ?? null,
+                afastamento: (afastMap.get(f.id) as AfastamentoMes | undefined) ?? null,
+              }),
+        };
+      });
+  }, [folhaMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg, feriasMap, afastMap]);
+
+  // Escopo do botão: loja selecionada ou todas as lojas.
+  const escopo = useMemo(() => {
+    const elegiveis = funcionarios
+      .filter((f) => entraNaCompetencia(f, mes) || folhaMap.has(f.id))
+      .filter((f) => lojaFiltro === "todas" || f.loja_id === lojaFiltro);
+    const fechados = elegiveis.filter((f) => folhaMap.has(f.id));
+    const abertos = elegiveis.filter((f) => !folhaMap.has(f.id) && entraNaCompetencia(f, mes));
+    return { elegiveis, fechados, abertos };
+  }, [funcionarios, folhaMap, lojaFiltro, mes]);
+
+  const fechada = escopo.fechados.length > 0 && escopo.abertos.length === 0;
+  const parcial = escopo.fechados.length > 0 && escopo.abertos.length > 0;
+  const fechadaEm = escopo.fechados[0] ? folhaMap.get(escopo.fechados[0].id)?.fechada_em ?? null : null;
+  const escopoLabel = lojaFiltro === "todas" ? "todas as lojas" : lojaMap.get(lojaFiltro)?.nome ?? "loja";
+
 
   const totalLiquido = lista.reduce((s, i) => s + (i.hist ? Number(i.hist.liquido) : i.cc!.liquido), 0);
   const totalDescontos = lista.reduce(
@@ -234,8 +245,9 @@ function ContrachequePage() {
 
   const fecharFolha = useMutation({
     mutationFn: async () => {
-      const elegiveis = funcionarios.filter((f) => entraNaCompetencia(f, mes));
-      if (elegiveis.length === 0) throw new Error("Nenhum funcionário elegível nesta competência.");
+      const elegiveis = escopo.abertos;
+      if (elegiveis.length === 0) throw new Error("Nenhum funcionário em aberto neste escopo.");
+
       const { data: userData } = await supabase.auth.getUser();
       const linhas = elegiveis.map((f) => {
         const cc = calcContracheque(f, {
@@ -271,11 +283,33 @@ function ContrachequePage() {
       return linhas.length;
     },
     onSuccess: (n) => {
-      toast.success(`Folha de ${mes} fechada para ${n} funcionário(s).`);
+      toast.success(`Folha de ${mes} fechada para ${n} funcionário(s) — ${escopoLabel}.`);
       qc.invalidateQueries();
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao fechar a folha"),
   });
+
+  const reabrirFolha = useMutation({
+    mutationFn: async () => {
+      const ids = escopo.fechados.map((f) => f.id);
+      if (ids.length === 0) throw new Error("Nenhuma folha fechada neste escopo.");
+      const { error } = await supabase
+        .from("folha_pagamento")
+        .delete()
+        .eq("competencia", competenciaDate(mes))
+        .in("funcionario_id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (n) => {
+      toast.success(`Folha de ${mes} reaberta para ${n} funcionário(s) — ${escopoLabel}.`);
+      qc.invalidateQueries();
+    },
+    onError: (e: any) =>
+      toast.error(e.message ?? "Erro ao reabrir a folha — apenas administradores podem reabrir."),
+  });
+
+
 
 
   const baixarPdf = async (f: Func) => {
@@ -407,33 +441,59 @@ function ContrachequePage() {
           </Select>
           {fechada ? (
             <Badge variant="secondary">Fechada em {fmtDataHora(fechadaEm)}</Badge>
+          ) : parcial ? (
+            <Badge variant="outline">
+              {escopo.fechados.length} fechado(s) · {escopo.abertos.length} aberto(s)
+            </Badge>
           ) : (
-            <>
-              <Badge variant="outline">Competência aberta</Badge>
-              {podeFechar(mes) && (
-                <Button
-                  variant="secondary"
-                  disabled={fecharFolha.isPending}
-                  onClick={() => {
-                    if (confirm(`Fechar a folha de ${mes}? Depois disso o mês vira histórico e não recalcula mais.`))
-                      fecharFolha.mutate();
-                  }}
-                >
-                  <Lock className="mr-2 h-4 w-4" />
-                  {fecharFolha.isPending ? "Fechando…" : "Fechar folha do mês"}
-                </Button>
-              )}
-            </>
+            <Badge variant="outline">Competência aberta</Badge>
+          )}
+          {escopo.abertos.length > 0 && podeFechar(mes) && (
+            <Button
+              variant="secondary"
+              disabled={fecharFolha.isPending}
+              onClick={() => {
+                if (
+                  confirm(
+                    `Fechar a folha de ${mes} para ${escopoLabel} (${escopo.abertos.length} funcionário(s))? O mês vira histórico e não recalcula mais.`,
+                  )
+                )
+                  fecharFolha.mutate();
+              }}
+            >
+              <Lock className="mr-2 h-4 w-4" />
+              {fecharFolha.isPending ? "Fechando…" : lojaFiltro === "todas" ? "Fechar folha do mês" : "Fechar folha da loja"}
+            </Button>
+          )}
+          {escopo.fechados.length > 0 && (
+            <Button
+              variant="outline"
+              disabled={reabrirFolha.isPending}
+              onClick={() => {
+                if (
+                  confirm(
+                    `Reabrir a folha de ${mes} para ${escopoLabel} (${escopo.fechados.length} funcionário(s))? O histórico gravado será apagado e os valores voltam a recalcular.`,
+                  )
+                )
+                  reabrirFolha.mutate();
+              }}
+            >
+              <LockOpen className="mr-2 h-4 w-4" />
+              {reabrirFolha.isPending ? "Reabrindo…" : lojaFiltro === "todas" ? "Reabrir folha do mês" : "Reabrir folha da loja"}
+            </Button>
           )}
         </div>
       }
     >
-      {fechada && (
+      {escopo.fechados.length > 0 && (
         <p className="mb-4 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-          Competência fechada — valores gravados no histórico. Alterações no cadastro de funcionários ou em faltas
-          não afetam mais este mês.
+          {fechada
+            ? "Competência fechada neste escopo — valores gravados no histórico."
+            : "Fechamento parcial — lojas já fechadas mostram o histórico; as demais continuam recalculando ao vivo."}{" "}
+          Reabrir apaga o histórico da seleção e devolve o cálculo ao vivo (somente administradores).
         </p>
       )}
+
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Líquido a pagar</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{fmtBRL(totalLiquido)}</CardContent></Card>
