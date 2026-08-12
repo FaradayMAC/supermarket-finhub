@@ -69,9 +69,21 @@ function DespesasPage() {
   const total = filtradas.reduce((s, d) => s + Number(d.valor), 0);
 
   const create = useMutation({
-    mutationFn: async (p: any) => {
-      const { error } = await supabase.from("despesas").insert(p);
+    mutationFn: async ({ motivoCofre, ...p }: any) => {
+      const { data, error } = await supabase.from("despesas").insert(p).select("id").single();
       if (error) throw error;
+      // Despesa paga em espécie sai do cofre da loja
+      if (p.forma_pagamento === "dinheiro_cofre" && p.status === "pago") {
+        await registrarSaidaCofre({
+          loja_id: p.loja_id,
+          data: p.data_pagamento || p.data_competencia,
+          origem: "despesa",
+          origem_id: data?.id ?? null,
+          descricao: p.descricao,
+          motivo: motivoCofre,
+          valor: Number(p.valor),
+        });
+      }
     },
     onSuccess: () => {
       toast.success("Despesa lançada");
