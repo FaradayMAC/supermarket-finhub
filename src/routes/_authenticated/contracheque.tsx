@@ -190,7 +190,7 @@ function ContrachequePage() {
     [convenios],
   );
   const lojaMap = useMemo(() => new Map(lojas.map((l) => [l.id, l])), [lojas]);
-  const funcMap = useMemo(() => new Map(funcionarios.map((f) => [f.id, f])), [funcionarios]);
+  
 
   // Fechamento é por loja: cada funcionário com linha em folha_pagamento vira
   // histórico imutável; os demais continuam recalculando ao vivo.
