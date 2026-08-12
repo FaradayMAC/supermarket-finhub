@@ -105,20 +105,17 @@ export async function exportarRotatividadePdf(params: {
   doc.text(`Loja: ${loja}`, L, y);
   y += 12;
   doc.text(`Total de desligamentos: ${linhas.length}`, L, y);
-  doc.text(`${linhas.length} desligamento(s)`, R, y, { align: "right" });
   if (resumo.length) {
-    y += 12;
+    y += 14;
     doc.setFont("helvetica", "bold").setFontSize(9);
     doc.text("Resumo por motivo:", L, y);
-    doc.setFont("helvetica", "normal").setFontSize(9);
     y += 12;
-    doc.setTextColor(110);
+    doc.setFont("helvetica", "normal").setTextColor(110);
+    const meio = L + (R - L) / 2;
     resumo.forEach((r, i) => {
       const col = i % 2;
-      const row = Math.floor(i / 2);
-      const x = col === 0 ? L : L + (R - L) / 2;
+      const x = col === 0 ? L : meio;
       if (col === 0 && i > 0) y += 13;
-      void row;
       doc.text(`${r.qtd} · ${r.motivo}`, x, y);
     });
     doc.setTextColor(0);
