@@ -720,22 +720,29 @@ function SimulacaoDialog({
       </div>
 
       <div className="space-y-1.5">
-        <Label>Observação do desligamento</Label>
+        <Label>
+          Motivo do desligamento <span className="text-destructive">*</span>
+        </Label>
         <Textarea
-          rows={2}
-          placeholder="Descreva o que motivou o desligamento"
+          rows={3}
+          required
+          placeholder="Descreva o que motivou o desligamento (obrigatório — será exibido na aba Rotatividade)"
           value={observacao}
           onChange={(e) => setObservacao(e.target.value)}
         />
+        <p className="text-xs text-muted-foreground">
+          Essa observação é registrada no momento do desligamento e aparece pronta na aba
+          Rotatividade.
+        </p>
       </div>
 
       <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
-          Confirmar grava a data de referência, o tipo de rescisão e a observação no cadastro e
+          Confirmar grava a data de referência, o tipo de rescisão e o motivo no cadastro e
           inativa o funcionário.
         </p>
         <Button
-          disabled={confirmando}
+          disabled={confirmando || !observacao.trim()}
           onClick={() => onConfirmar({ data: isoDate(ref), motivo: tipo, observacao })}
         >
           Confirmar desligamento
