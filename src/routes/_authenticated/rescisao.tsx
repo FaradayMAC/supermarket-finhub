@@ -1148,7 +1148,12 @@ function Rotatividade({ filtro }: { filtro: string }) {
             size="sm"
             disabled={!lista.length}
             onClick={() =>
-              exportarRotatividadeCsv({ linhas: linhasExport, mes, loja: lojaLabel })
+              exportarRotatividadeCsv({
+                linhas: linhasExport,
+                mes,
+                loja: lojaLabel,
+                resumo: resumoExport,
+              })
             }
           >
             <Download className="mr-1 h-4 w-4" /> CSV
