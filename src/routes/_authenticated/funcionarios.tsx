@@ -31,6 +31,7 @@ import { custoReal, regimeDoFuncionario, type RegimeTributario } from "@/lib/cus
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { dataFimCarencia } from "@/lib/planos";
 import { VALE_ALIMENTACAO_PADRAO_ES, VALE_TRANSPORTE_DESCONTO_PCT } from "@/lib/beneficios";
+import { TIPOS_RESCISAO } from "@/lib/rescisao";
 
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
