@@ -975,6 +975,7 @@ export type Database = {
           motivo_desligamento: string | null
           motivo_insalubridade: Database["public"]["Enums"]["motivo_insalubridade"]
           nome: string
+          observacao_desligamento: string | null
           observacoes: string | null
           periculosidade_pct: number
           plano_odontologico: number
@@ -1013,6 +1014,7 @@ export type Database = {
           motivo_desligamento?: string | null
           motivo_insalubridade?: Database["public"]["Enums"]["motivo_insalubridade"]
           nome: string
+          observacao_desligamento?: string | null
           observacoes?: string | null
           periculosidade_pct?: number
           plano_odontologico?: number
@@ -1051,6 +1053,7 @@ export type Database = {
           motivo_desligamento?: string | null
           motivo_insalubridade?: Database["public"]["Enums"]["motivo_insalubridade"]
           nome?: string
+          observacao_desligamento?: string | null
           observacoes?: string | null
           periculosidade_pct?: number
           plano_odontologico?: number
