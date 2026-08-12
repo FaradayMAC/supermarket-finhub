@@ -226,12 +226,28 @@ export function saldoFgts(i: SaldoFgtsInput) {
   return r2(Math.max(0, (i.saldoInicial || 0) + (i.depositos || 0) - (i.saques || 0)));
 }
 
+export type ModalidadeAviso = "indenizado" | "trabalhado";
+
+export type FormaCumprimentoAviso = "reducao_7_dias" | "reducao_2_horas";
+
+export const FORMAS_CUMPRIMENTO_AVISO: {
+  value: FormaCumprimentoAviso;
+  label: string;
+}[] = [
+  { value: "reducao_7_dias", label: "Redução de 7 dias corridos ao final do aviso" },
+  { value: "reducao_2_horas", label: "Redução de 2 horas na jornada diária (Art. 488 CLT)" },
+];
+
+const addDias = (d: Date, n: number) => new Date(d.getTime() + n * 86400000);
+
 export type RescisaoInput = {
   tipo: TipoRescisao;
   ref: Date;
   gozadas: FeriasGozadas[];
   fgts: SaldoFgtsInput;
   salarioMinimoFederal?: number;
+  /** Modalidade do aviso prévio (padrão: indenizado). */
+  modalidadeAviso?: ModalidadeAviso;
 };
 
 export function calcRescisao(f: FuncionarioRescisao, i: RescisaoInput) {
