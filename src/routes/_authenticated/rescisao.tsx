@@ -660,6 +660,18 @@ function SimulacaoDialog({
           detalhe="pago pela conta vinculada, fora do TRCT"
         />
       </div>
+
+      <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-muted-foreground">
+          Confirmar grava a data de referência e o motivo no cadastro e inativa o funcionário.
+        </p>
+        <Button
+          disabled={confirmando}
+          onClick={() => onConfirmar({ data: isoDate(ref), motivo: tipo })}
+        >
+          Confirmar desligamento
+        </Button>
+      </DialogFooter>
     </DialogContent>
   );
 }
