@@ -36,8 +36,11 @@ import {
   provisaoFerias,
   saldoFgts,
   TIPOS_RESCISAO,
+  FORMAS_CUMPRIMENTO_AVISO,
   type FeriasGozadas,
   type TipoRescisao,
+  type ModalidadeAviso,
+  type FormaCumprimentoAviso,
 } from "@/lib/rescisao";
 
 export const Route = createFileRoute("/_authenticated/rescisao")({
