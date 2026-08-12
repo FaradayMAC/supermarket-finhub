@@ -59,6 +59,12 @@ type FolhaRow = {
   total_descontos: number;
   liquido: number;
   fgts: number;
+  inss: number;
+  irrf: number;
+  desc_faltas: number;
+  desc_dsr: number;
+  desc_vt: number;
+  convenio: number;
   status: string;
   fechada_em: string | null;
 };
@@ -107,7 +113,7 @@ function ContrachequePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("folha_pagamento")
-        .select("funcionario_id,loja_id,salario_base,total_proventos,total_descontos,liquido,fgts,status,fechada_em")
+        .select("funcionario_id,loja_id,salario_base,total_proventos,total_descontos,liquido,fgts,inss,irrf,desc_faltas,desc_dsr,desc_vt,convenio,status,fechada_em")
         .eq("competencia", competenciaDate(mes));
       if (error) throw error;
       return data as FolhaRow[];
@@ -235,12 +241,40 @@ function ContrachequePage() {
   const escopoLabel = lojaFiltro === "todas" ? "todas as lojas" : lojaMap.get(lojaFiltro)?.nome ?? "loja";
 
 
-  const totalLiquido = lista.reduce((s, i) => s + (i.hist ? Number(i.hist.liquido) : i.cc!.liquido), 0);
-  const totalDescontos = lista.reduce(
-    (s, i) => s + (i.hist ? Number(i.hist.total_descontos) : i.cc!.totalDescontos),
-    0,
-  );
-  const totalConvenio = lista.reduce((s, i) => s + (i.hist ? 0 : i.cc!.convenio), 0);
+  // Resumo agregado da folha inteira do escopo (abertos + fechados).
+  // Para folhas fechadas usa os valores congelados em folha_pagamento;
+  // para as abertas recorre ao cálculo ao vivo de cada contracheque.
+  const resumo = useMemo(() => {
+    return lista.reduce(
+      (acc, { hist, cc }) => {
+        const h = hist;
+        const c = cc;
+        const proventos = h ? Number(h.total_proventos) : c!.proventos;
+        const descontos = h ? Number(h.total_descontos) : c!.totalDescontos;
+        const liquido = h ? Number(h.liquido) : c!.liquido;
+        const fgts = h ? Number(h.fgts) : c!.fgts;
+        const inss = h ? Number(h.inss) : c!.inss;
+        const irrf = h ? Number(h.irrf) : c!.irrf;
+        const descFaltas = h ? Number(h.desc_faltas) : c!.descFaltas;
+        const descDsr = h ? Number(h.desc_dsr) : c!.descDsr;
+        const descVt = h ? Number(h.desc_vt) : c!.descontoVt;
+        const convenio = h ? Number(h.convenio) : c!.convenio;
+        return {
+          proventos: acc.proventos + proventos,
+          descontos: acc.descontos + descontos,
+          liquido: acc.liquido + liquido,
+          fgts: acc.fgts + fgts,
+          inss: acc.inss + inss,
+          irrf: acc.irrf + irrf,
+          descFaltas: acc.descFaltas + descFaltas,
+          descDsr: acc.descDsr + descDsr,
+          descVt: acc.descVt + descVt,
+          convenio: acc.convenio + convenio,
+        };
+      },
+      { proventos: 0, descontos: 0, liquido: 0, fgts: 0, inss: 0, irrf: 0, descFaltas: 0, descDsr: 0, descVt: 0, convenio: 0 },
+    );
+  }, [lista]);
   const cal = calendarioMes(mes);
 
   const fecharFolha = useMutation({
@@ -268,7 +302,11 @@ function ContrachequePage() {
           inss: cc.inss,
           irrf: cc.irrf,
           fgts: cc.fgts,
-          outros_descontos: Math.round((cc.totalDescontos - cc.inss - cc.irrf) * 100) / 100,
+          desc_faltas: cc.descFaltas,
+          desc_dsr: cc.descDsr,
+          desc_vt: cc.descontoVt,
+          convenio: cc.convenio,
+          outros_descontos: Math.round((cc.totalDescontos - cc.inss - cc.irrf - cc.descFaltas - cc.descDsr - cc.descontoVt - cc.convenio - cc.descExtra - cc.descAfastamento) * 100) / 100,
           total_proventos: cc.proventos,
           total_descontos: cc.totalDescontos,
           liquido: cc.liquido,
@@ -495,19 +533,41 @@ function ContrachequePage() {
       )}
 
 
+      {/* Linha 1 — visão geral da folha */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Líquido a pagar</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{fmtBRL(totalLiquido)}</CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Total de descontos</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{fmtBRL(totalDescontos)}</CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Convênio (loja)</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{fmtBRL(totalConvenio)}</CardContent></Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Calendário ES</CardTitle></CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {cal.diasUteis} dias úteis · {cal.diasRepouso} de repouso (DSR)
-            {cal.feriados.length > 0 && (
-              <div className="mt-1 text-xs">{cal.feriados.map((f) => `${String(f.dia).padStart(2, "0")} ${f.nome}`).join(" · ")}</div>
-            )}
-          </CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Proventos totais</CardTitle></CardHeader>
+          <CardContent className="text-2xl font-bold">{fmtBRL(resumo.proventos)}</CardContent>
         </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Descontos totais</CardTitle></CardHeader>
+          <CardContent className="text-2xl font-bold text-destructive">- {fmtBRL(resumo.descontos)}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Líquido a pagar</CardTitle></CardHeader>
+          <CardContent className="text-2xl font-bold">{fmtBRL(resumo.liquido)}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">FGTS do mês (empresa)</CardTitle></CardHeader>
+          <CardContent className="text-2xl font-bold">{fmtBRL(resumo.fgts)}</CardContent>
+        </Card>
+      </div>
+
+      {/* Linha 2 — discriminação dos descontos */}
+      <div className="mt-3 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+        <Card><CardHeader className="pb-1"><CardTitle className="text-[11px] uppercase text-muted-foreground">INSS</CardTitle></CardHeader><CardContent className="text-lg font-semibold">{fmtBRL(resumo.inss)}</CardContent></Card>
+        <Card><CardHeader className="pb-1"><CardTitle className="text-[11px] uppercase text-muted-foreground">IRRF</CardTitle></CardHeader><CardContent className="text-lg font-semibold">{fmtBRL(resumo.irrf)}</CardContent></Card>
+        <Card><CardHeader className="pb-1"><CardTitle className="text-[11px] uppercase text-muted-foreground">Faltas</CardTitle></CardHeader><CardContent className="text-lg font-semibold">{fmtBRL(resumo.descFaltas)}</CardContent></Card>
+        <Card><CardHeader className="pb-1"><CardTitle className="text-[11px] uppercase text-muted-foreground">DSR</CardTitle></CardHeader><CardContent className="text-lg font-semibold">{fmtBRL(resumo.descDsr)}</CardContent></Card>
+        <Card><CardHeader className="pb-1"><CardTitle className="text-[11px] uppercase text-muted-foreground">Vale-transporte</CardTitle></CardHeader><CardContent className="text-lg font-semibold">{fmtBRL(resumo.descVt)}</CardContent></Card>
+        <Card><CardHeader className="pb-1"><CardTitle className="text-[11px] uppercase text-muted-foreground">Convênio</CardTitle></CardHeader><CardContent className="text-lg font-semibold">{fmtBRL(resumo.convenio)}</CardContent></Card>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span>Calendário ES: {cal.diasUteis} dias úteis · {cal.diasRepouso} de repouso (DSR)</span>
+        {cal.feriados.length > 0 && (
+          <span>{cal.feriados.map((f) => `${String(f.dia).padStart(2, "0")} ${f.nome}`).join(" · ")}</span>
+        )}
       </div>
 
       <Card className="mt-6">

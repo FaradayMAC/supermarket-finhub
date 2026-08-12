@@ -786,9 +786,13 @@ export type Database = {
           beneficios: number
           comissoes: number
           competencia: string
+          convenio: number
           created_at: string
           custo_total: number
           data_pagamento: string | null
+          desc_dsr: number
+          desc_faltas: number
+          desc_vt: number
           empresa_id: string | null
           fechada_em: string | null
           fechada_por: string | null
@@ -812,9 +816,13 @@ export type Database = {
           beneficios?: number
           comissoes?: number
           competencia: string
+          convenio?: number
           created_at?: string
           custo_total?: number
           data_pagamento?: string | null
+          desc_dsr?: number
+          desc_faltas?: number
+          desc_vt?: number
           empresa_id?: string | null
           fechada_em?: string | null
           fechada_por?: string | null
@@ -838,9 +846,13 @@ export type Database = {
           beneficios?: number
           comissoes?: number
           competencia?: string
+          convenio?: number
           created_at?: string
           custo_total?: number
           data_pagamento?: string | null
+          desc_dsr?: number
+          desc_faltas?: number
+          desc_vt?: number
           empresa_id?: string | null
           fechada_em?: string | null
           fechada_por?: string | null
