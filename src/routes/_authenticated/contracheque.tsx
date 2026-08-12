@@ -245,8 +245,9 @@ function ContrachequePage() {
 
   const fecharFolha = useMutation({
     mutationFn: async () => {
-      const elegiveis = funcionarios.filter((f) => entraNaCompetencia(f, mes));
-      if (elegiveis.length === 0) throw new Error("Nenhum funcionário elegível nesta competência.");
+      const elegiveis = escopo.abertos;
+      if (elegiveis.length === 0) throw new Error("Nenhum funcionário em aberto neste escopo.");
+
       const { data: userData } = await supabase.auth.getUser();
       const linhas = elegiveis.map((f) => {
         const cc = calcContracheque(f, {
