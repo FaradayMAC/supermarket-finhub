@@ -50,13 +50,25 @@ export function exportarRotatividadeCsv(params: {
   linhas: LinhaRotatividade[];
   mes: string;
   loja: string;
+  resumo: { motivo: string; qtd: number }[];
 }) {
-  const { linhas, mes, loja } = params;
+  const { linhas, mes, loja, resumo } = params;
   const esc = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const conteudo = [
+  const total = linhas.length;
+  const cabecalho: string[][] = [
     [`Relatório de Rotatividade`],
     [`Competência: ${mes}`],
     [`Loja: ${loja}`],
+    [`Total de desligamentos: ${total}`],
+  ];
+  if (resumo.length) {
+    cabecalho.push([`Resumo por motivo:`]);
+    cabecalho.push(
+      ...resumo.map((r) => [`  ${r.qtd} · ${r.motivo}`]),
+    );
+  }
+  const conteudo = [
+    ...cabecalho,
     [],
     [...COLUNAS],
     ...linhas.map(linhaValores),
