@@ -720,22 +720,29 @@ function SimulacaoDialog({
       </div>
 
       <div className="space-y-1.5">
-        <Label>Observação do desligamento</Label>
+        <Label>
+          Motivo do desligamento <span className="text-destructive">*</span>
+        </Label>
         <Textarea
-          rows={2}
-          placeholder="Descreva o que motivou o desligamento"
+          rows={3}
+          required
+          placeholder="Descreva o que motivou o desligamento (obrigatório — será exibido na aba Rotatividade)"
           value={observacao}
           onChange={(e) => setObservacao(e.target.value)}
         />
+        <p className="text-xs text-muted-foreground">
+          Essa observação é registrada no momento do desligamento e aparece pronta na aba
+          Rotatividade.
+        </p>
       </div>
 
       <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
-          Confirmar grava a data de referência, o tipo de rescisão e a observação no cadastro e
+          Confirmar grava a data de referência, o tipo de rescisão e o motivo no cadastro e
           inativa o funcionário.
         </p>
         <Button
-          disabled={confirmando}
+          disabled={confirmando || !observacao.trim()}
           onClick={() => onConfirmar({ data: isoDate(ref), motivo: tipo, observacao })}
         >
           Confirmar desligamento
@@ -1094,12 +1101,10 @@ const fmtData = (v?: string | null) =>
   v ? new Date(String(v).slice(0, 10) + "T00:00:00Z").toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "—";
 
 function Rotatividade({ filtro }: { filtro: string }) {
-  const qc = useQueryClient();
   const agora = new Date();
   const [mes, setMes] = useState(
     `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}`,
   );
-  const [rascunhos, setRascunhos] = useState<Record<string, string>>({});
 
   const { data: desligados = [], isLoading } = useQuery({
     queryKey: ["rotatividade"],
@@ -1114,21 +1119,6 @@ function Rotatividade({ filtro }: { filtro: string }) {
       if (error) throw error;
       return (data ?? []) as any[];
     },
-  });
-
-  const salvarObs = useMutation({
-    mutationFn: async ({ id, texto }: { id: string; texto: string }) => {
-      const { error } = await supabase
-        .from("funcionarios")
-        .update({ observacao_desligamento: texto.trim() || null })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Observação salva");
-      qc.invalidateQueries({ queryKey: ["rotatividade"] });
-    },
-    onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
   const lista = useMemo(
@@ -1259,8 +1249,7 @@ function Rotatividade({ filtro }: { filtro: string }) {
                 </tr>
               )}
               {lista.map((f) => {
-                const valor = rascunhos[f.id] ?? f.observacao_desligamento ?? "";
-                const alterado = valor !== (f.observacao_desligamento ?? "");
+                const valor = f.observacao_desligamento ?? "";
                 return (
                   <tr key={f.id} className="border-b last:border-0">
                     <td className="px-4 py-3 font-medium">{f.nome}</td>
@@ -1274,27 +1263,12 @@ function Rotatividade({ filtro }: { filtro: string }) {
                     <td className="px-4 py-3">
                       <Badge variant="outline">{labelMotivo(f.motivo_desligamento)}</Badge>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-start gap-2">
-                        <Textarea
-                          rows={2}
-                          placeholder="Descreva o motivo do desligamento"
-                          className="min-w-[220px] text-sm"
-                          value={valor}
-                          onChange={(e) =>
-                            setRascunhos((r) => ({ ...r, [f.id]: e.target.value }))
-                          }
-                        />
-                        {alterado && (
-                          <Button
-                            size="sm"
-                            disabled={salvarObs.isPending}
-                            onClick={() => salvarObs.mutate({ id: f.id, texto: valor })}
-                          >
-                            Salvar
-                          </Button>
-                        )}
-                      </div>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {valor ? (
+                        <span className="whitespace-pre-wrap text-sm">{valor}</span>
+                      ) : (
+                        <span className="italic text-muted-foreground/60">Sem observação</span>
+                      )}
                     </td>
                   </tr>
                 );
