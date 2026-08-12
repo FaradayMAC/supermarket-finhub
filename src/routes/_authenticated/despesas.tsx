@@ -282,6 +282,26 @@ function DespesaForm({
           <div className="col-span-2"><Label htmlFor="descricao">Descrição *</Label><Input id="descricao" name="descricao" required maxLength={200} /></div>
           <div><Label htmlFor="valor">Valor (R$) *</Label><Input id="valor" name="valor" type="number" step="0.01" min="0" required /></div>
           <div><Label htmlFor="data">Data de competência *</Label><Input id="data" name="data" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} /></div>
+          <div className="col-span-2">
+            <Label>Forma de pagamento</Label>
+            <Select value={forma} onValueChange={setForma}>
+              <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="dinheiro_cofre">Dinheiro (cofre)</SelectItem>
+                <SelectItem value="pix">PIX</SelectItem>
+                <SelectItem value="boleto">Boleto</SelectItem>
+                <SelectItem value="cartao">Cartão</SelectItem>
+                <SelectItem value="transferencia">Transferência</SelectItem>
+                <SelectItem value="outro">Outro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {isCofre && (
+            <div className="col-span-2">
+              <Label htmlFor="motivo_cofre">Motivo da saída do cofre *</Label>
+              <Input id="motivo_cofre" name="motivo_cofre" maxLength={200} placeholder="Pré-preenchido com a descrição — edite se quiser detalhar" />
+            </div>
+          )}
           <div className="col-span-2"><Label htmlFor="centro">Centro de custo</Label><Input id="centro" name="centro" maxLength={80} placeholder="Opcional" /></div>
         </div>
         <DialogFooter>
