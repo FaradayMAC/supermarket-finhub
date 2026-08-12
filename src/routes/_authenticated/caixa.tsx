@@ -284,6 +284,7 @@ function CaixaPage() {
           <TabsList>
             <TabsTrigger value="realizado">Realizado</TabsTrigger>
             <TabsTrigger value="projetado">Projetado</TabsTrigger>
+            <TabsTrigger value="cofre">Cofre</TabsTrigger>
           </TabsList>
 
           <TabsContent value="realizado" className="mt-4 space-y-6">
