@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Calculator, Plane, PiggyBank, Download, FileText } from "lucide-react";
 import {
@@ -255,10 +256,25 @@ function RescisaoPage() {
   });
 
   const confirmarDesligamento = useMutation({
-    mutationFn: async ({ id, data, motivo }: { id: string; data: string; motivo: TipoRescisao }) => {
+    mutationFn: async ({
+      id,
+      data,
+      motivo,
+      observacao,
+    }: {
+      id: string;
+      data: string;
+      motivo: TipoRescisao;
+      observacao: string;
+    }) => {
       const { error } = await supabase
         .from("funcionarios")
-        .update({ ativo: false, data_desligamento: data, motivo_desligamento: motivo })
+        .update({
+          ativo: false,
+          data_desligamento: data,
+          motivo_desligamento: motivo,
+          observacao_desligamento: observacao.trim() || null,
+        })
         .eq("id", id);
       if (error) throw error;
     },
@@ -430,8 +446,8 @@ function RescisaoPage() {
             fgtsInput={fgtsInput}
             salarioMinimoFederal={salarioMinimoFederal}
             confirmando={confirmarDesligamento.isPending}
-            onConfirmar={({ data, motivo }) =>
-              confirmarDesligamento.mutate({ id: sim.id, data, motivo })
+            onConfirmar={({ data, motivo, observacao }) =>
+              confirmarDesligamento.mutate({ id: sim.id, data, motivo, observacao })
             }
           />
         )}
@@ -503,10 +519,11 @@ function SimulacaoDialog({
   gozadas: FeriasGozadas[];
   fgtsInput: (f: any, ref: Date) => { saldoInicial: number; depositos: number; saques: number };
   salarioMinimoFederal: number;
-  onConfirmar: (p: { data: string; motivo: TipoRescisao }) => void;
+  onConfirmar: (p: { data: string; motivo: TipoRescisao; observacao: string }) => void;
   confirmando: boolean;
 }) {
   const [tipo, setTipo] = useState<TipoRescisao>("sem_justa_causa");
+  const [observacao, setObservacao] = useState("");
   const [modalidadeAviso, setModalidadeAviso] = useState<ModalidadeAviso>("indenizado");
   const [formaCumprimento, setFormaCumprimento] =
     useState<FormaCumprimentoAviso>("reducao_7_dias");
@@ -702,13 +719,24 @@ function SimulacaoDialog({
         />
       </div>
 
+      <div className="space-y-1.5">
+        <Label>Observação do desligamento</Label>
+        <Textarea
+          rows={2}
+          placeholder="Descreva o que motivou o desligamento"
+          value={observacao}
+          onChange={(e) => setObservacao(e.target.value)}
+        />
+      </div>
+
       <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
-          Confirmar grava a data de referência e o motivo no cadastro e inativa o funcionário.
+          Confirmar grava a data de referência, o tipo de rescisão e a observação no cadastro e
+          inativa o funcionário.
         </p>
         <Button
           disabled={confirmando}
-          onClick={() => onConfirmar({ data: isoDate(ref), motivo: tipo })}
+          onClick={() => onConfirmar({ data: isoDate(ref), motivo: tipo, observacao })}
         >
           Confirmar desligamento
         </Button>
