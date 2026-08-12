@@ -778,7 +778,25 @@ function FuncForm({
             <p className="mt-1 text-xs text-muted-foreground">
               Sai das folhas a partir do mês seguinte; competências já fechadas ficam intactas.
             </p>
-
+          </div>
+          <div>
+            <Label>Motivo do desligamento</Label>
+            <Select value={motivoDesl} onValueChange={setMotivoDesl}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">—</SelectItem>
+                {TIPOS_RESCISAO.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Alimenta o relatório de rotatividade no módulo Rescisão.
+            </p>
           </div>
           <div>
             <Label htmlFor="dependentes">Dependentes</Label>
