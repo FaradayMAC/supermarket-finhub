@@ -986,3 +986,133 @@ function FgtsDialog({
     </DialogContent>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Relatório de rotatividade — funcionários desligados por competência
+// ---------------------------------------------------------------------------
+
+function tempoDeCasa(admissao?: string | null, desligamento?: string | null) {
+  const a = parseDateUTC(admissao);
+  const d = parseDateUTC(desligamento);
+  if (!a || !d || d < a) return "—";
+  let meses =
+    (d.getUTCFullYear() - a.getUTCFullYear()) * 12 + (d.getUTCMonth() - a.getUTCMonth());
+  if (d.getUTCDate() < a.getUTCDate()) meses -= 1;
+  meses = Math.max(0, meses);
+  const anos = Math.floor(meses / 12);
+  const resto = meses % 12;
+  if (anos === 0) return `${resto} mês(es)`;
+  return resto === 0 ? `${anos} ano(s)` : `${anos} ano(s) e ${resto} mês(es)`;
+}
+
+const fmtData = (v?: string | null) =>
+  v ? new Date(String(v).slice(0, 10) + "T00:00:00Z").toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "—";
+
+function Rotatividade({ filtro }: { filtro: string }) {
+  const agora = new Date();
+  const [mes, setMes] = useState(
+    `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}`,
+  );
+
+  const { data: desligados = [], isLoading } = useQuery({
+    queryKey: ["rotatividade"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("funcionarios")
+        .select("id, nome, cargo, loja_id, data_admissao, data_desligamento, motivo_desligamento, lojas(nome, codigo)")
+        .not("data_desligamento", "is", null)
+        .order("data_desligamento", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const lista = useMemo(
+    () =>
+      desligados
+        .filter((f) => String(f.data_desligamento).slice(0, 7) === mes)
+        .filter((f) => filtro === "todas" || f.loja_id === filtro),
+    [desligados, mes, filtro],
+  );
+
+  const porMotivo = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const f of lista) {
+      const k = f.motivo_desligamento ?? "nao_informado";
+      m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return [...m.entries()];
+  }, [lista]);
+
+  const labelMotivo = (v: string | null) =>
+    TIPOS_RESCISAO.find((t) => t.value === v)?.label ?? "Não informado";
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <Label className="text-xs uppercase tracking-wide text-muted-foreground">Competência:</Label>
+        <Input type="month" className="w-44" value={mes} onChange={(e) => setMes(e.target.value)} />
+        <span className="text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">{lista.length}</span> desligamento(s) no
+          período
+        </span>
+        <div className="flex flex-wrap gap-1">
+          {porMotivo.map(([k, n]) => (
+            <Badge key={k} variant="secondary">
+              {n} · {labelMotivo(k === "nao_informado" ? null : k)}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="overflow-x-auto p-0">
+          <table className="w-full text-sm">
+            <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3">Nome</th>
+                <th className="px-4 py-3">Cargo</th>
+                <th className="px-4 py-3">Loja</th>
+                <th className="px-4 py-3">Admissão</th>
+                <th className="px-4 py-3">Desligamento</th>
+                <th className="px-4 py-3">Tempo de casa</th>
+                <th className="px-4 py-3">Motivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                    Carregando…
+                  </td>
+                </tr>
+              )}
+              {!isLoading && lista.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
+                    Nenhum desligamento neste período.
+                  </td>
+                </tr>
+              )}
+              {lista.map((f) => (
+                <tr key={f.id} className="border-b last:border-0">
+                  <td className="px-4 py-3 font-medium">{f.nome}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{f.cargo ?? "—"}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{f.lojas?.nome ?? "—"}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{fmtData(f.data_admissao)}</td>
+                  <td className="px-4 py-3">{fmtData(f.data_desligamento)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {tempoDeCasa(f.data_admissao, f.data_desligamento)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant="outline">{labelMotivo(f.motivo_desligamento)}</Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
