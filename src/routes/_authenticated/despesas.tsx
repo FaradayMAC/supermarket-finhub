@@ -90,6 +90,7 @@ function DespesasPage() {
       toast.success("Despesa lançada");
       qc.invalidateQueries({ queryKey: ["despesas"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["cofre-movs"] });
       setOpen(false);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
