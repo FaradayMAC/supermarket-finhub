@@ -216,15 +216,21 @@ function DespesaForm({
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
           if (!lojaId) return toast.error("Selecione a loja");
+          const descricao = String(fd.get("descricao") || "").trim();
+          const motivoCofre = String(fd.get("motivo_cofre") || "").trim() || descricao;
+          if (isCofre && !motivoCofre) return toast.error("Informe o motivo da saída do cofre");
           onSubmit({
             loja_id: lojaId,
             categoria_id: catId || null,
             fornecedor_id: fornecedorId || null,
-            descricao: String(fd.get("descricao") || "").trim(),
+            descricao,
             valor: Number(fd.get("valor")),
             data_competencia: String(fd.get("data") || ""),
+            data_pagamento: status === "pago" ? String(fd.get("data") || "") : null,
+            forma_pagamento: forma || null,
             centro_custo: String(fd.get("centro") || "").trim() || null,
             status,
+            motivoCofre,
           });
         }}
       >
