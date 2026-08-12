@@ -591,6 +591,7 @@ function FuncForm({
             data_admissao: admissao || null,
             data_nascimento: nascimento || null,
             data_desligamento: String(fd.get("desligamento") || "") || null,
+            motivo_desligamento: motivoDesl === "none" ? null : motivoDesl,
 
             vale_transporte: _vt,
             vale_alimentacao: _va,
