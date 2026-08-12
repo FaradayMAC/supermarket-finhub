@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search } from "lucide-react";
 
 import { toast } from "sonner";
 import { encargosRate } from "@/lib/encargos";
@@ -89,6 +89,8 @@ function FuncPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Func | null>(null);
   const [filtro, setFiltro] = useState("todas");
+  const [busca, setBusca] = useState("");
+
   const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
 
   const { data: lojas = [] } = useQuery({
@@ -169,10 +171,19 @@ function FuncPage() {
         : "Ativo";
 
 
-  const filtrados = useMemo(
-    () => (filtro === "todas" ? funcs : funcs.filter((f) => f.loja_id === filtro)),
-    [funcs, filtro],
-  );
+  const filtrados = useMemo(() => {
+    const porLoja = filtro === "todas" ? funcs : funcs.filter((f) => f.loja_id === filtro);
+    const termo = busca.trim().toLowerCase();
+    if (!termo) return porLoja;
+    return porLoja.filter(
+      (f) =>
+        f.nome.toLowerCase().includes(termo) ||
+        (f.cpf ?? "").toLowerCase().includes(termo) ||
+        (f.cargo ?? "").toLowerCase().includes(termo) ||
+        (f.lojas?.nome ?? "").toLowerCase().includes(termo),
+    );
+  }, [funcs, filtro, busca]);
+
   const totalFolha = filtrados.reduce((s, f) => s + custoReal(f, salarioMinimoFederal, planosCfg).total, 0);
   // Casos herdados: recebem VT mas não têm o desconto de 6% ativo — revisão manual.
   const revisaoVt = useMemo(
@@ -256,27 +267,40 @@ function FuncPage() {
       </Dialog>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Label className="text-xs uppercase tracking-wide text-muted-foreground">Loja:</Label>
-          <Select value={filtro} onValueChange={setFiltro}>
-            <SelectTrigger className="w-56">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as lojas</SelectItem>
-              {(lojas as any[]).map((l) => (
-                <SelectItem key={l.id} value={l.id}>
-                  {l.nome} ({l.codigo})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-1 flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Loja:</Label>
+            <Select value={filtro} onValueChange={setFiltro}>
+              <SelectTrigger className="w-56">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as lojas</SelectItem>
+                {(lojas as any[]).map((l) => (
+                  <SelectItem key={l.id} value={l.id}>
+                    {l.nome} ({l.codigo})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="relative flex-1 min-w-[16rem] max-w-sm">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar por nome, CPF, cargo ou unidade"
+              className="pl-9"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
         </div>
         <div className="text-sm text-muted-foreground">
           Custo real total (filtrado):{" "}
           <span className="font-semibold text-foreground">{fmtBRL(totalFolha)}</span>
         </div>
       </div>
+
 
       {revisaoVt.length > 0 && (
         <Card className="border-amber-500/50 bg-amber-500/5">
