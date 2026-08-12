@@ -5,6 +5,7 @@ export type LinhaRotatividade = {
   admissao: string;
   desligamento: string;
   tempo: string;
+  tipo: string;
   motivo: string;
 };
 
@@ -15,7 +16,8 @@ const COLUNAS = [
   "Admissão",
   "Desligamento",
   "Tempo de casa",
-  "Motivo",
+  "Tipo de rescisão",
+  "Motivo (observação)",
 ] as const;
 
 const linhaValores = (l: LinhaRotatividade) => [
@@ -25,6 +27,7 @@ const linhaValores = (l: LinhaRotatividade) => [
   l.admissao,
   l.desligamento,
   l.tempo,
+  l.tipo,
   l.motivo,
 ];
 

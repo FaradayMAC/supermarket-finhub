@@ -1094,22 +1094,41 @@ const fmtData = (v?: string | null) =>
   v ? new Date(String(v).slice(0, 10) + "T00:00:00Z").toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "—";
 
 function Rotatividade({ filtro }: { filtro: string }) {
+  const qc = useQueryClient();
   const agora = new Date();
   const [mes, setMes] = useState(
     `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}`,
   );
+  const [rascunhos, setRascunhos] = useState<Record<string, string>>({});
 
   const { data: desligados = [], isLoading } = useQuery({
     queryKey: ["rotatividade"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("funcionarios")
-        .select("id, nome, cargo, loja_id, data_admissao, data_desligamento, motivo_desligamento, lojas(nome, codigo)")
+        .select(
+          "id, nome, cargo, loja_id, data_admissao, data_desligamento, motivo_desligamento, observacao_desligamento, lojas(nome, codigo)",
+        )
         .not("data_desligamento", "is", null)
         .order("data_desligamento", { ascending: false });
       if (error) throw error;
       return (data ?? []) as any[];
     },
+  });
+
+  const salvarObs = useMutation({
+    mutationFn: async ({ id, texto }: { id: string; texto: string }) => {
+      const { error } = await supabase
+        .from("funcionarios")
+        .update({ observacao_desligamento: texto.trim() || null })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Observação salva");
+      qc.invalidateQueries({ queryKey: ["rotatividade"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
   const lista = useMemo(
@@ -1144,7 +1163,8 @@ function Rotatividade({ filtro }: { filtro: string }) {
         admissao: fmtData(f.data_admissao),
         desligamento: fmtData(f.data_desligamento),
         tempo: tempoDeCasa(f.data_admissao, f.data_desligamento),
-        motivo: labelMotivo(f.motivo_desligamento),
+        tipo: labelMotivo(f.motivo_desligamento),
+        motivo: f.observacao_desligamento ?? "—",
       })),
     [lista],
   );
@@ -1219,39 +1239,66 @@ function Rotatividade({ filtro }: { filtro: string }) {
                 <th className="px-4 py-3">Admissão</th>
                 <th className="px-4 py-3">Desligamento</th>
                 <th className="px-4 py-3">Tempo de casa</th>
-                <th className="px-4 py-3">Motivo</th>
+                <th className="px-4 py-3">Tipo de rescisão</th>
+                <th className="px-4 py-3 min-w-[260px]">Motivo (observação)</th>
               </tr>
             </thead>
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                     Carregando…
                   </td>
                 </tr>
               )}
               {!isLoading && lista.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
                     Nenhum desligamento neste período.
                   </td>
                 </tr>
               )}
-              {lista.map((f) => (
-                <tr key={f.id} className="border-b last:border-0">
-                  <td className="px-4 py-3 font-medium">{f.nome}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{f.cargo ?? "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{f.lojas?.nome ?? "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{fmtData(f.data_admissao)}</td>
-                  <td className="px-4 py-3">{fmtData(f.data_desligamento)}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {tempoDeCasa(f.data_admissao, f.data_desligamento)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant="outline">{labelMotivo(f.motivo_desligamento)}</Badge>
-                  </td>
-                </tr>
-              ))}
+              {lista.map((f) => {
+                const valor = rascunhos[f.id] ?? f.observacao_desligamento ?? "";
+                const alterado = valor !== (f.observacao_desligamento ?? "");
+                return (
+                  <tr key={f.id} className="border-b last:border-0">
+                    <td className="px-4 py-3 font-medium">{f.nome}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{f.cargo ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{f.lojas?.nome ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{fmtData(f.data_admissao)}</td>
+                    <td className="px-4 py-3">{fmtData(f.data_desligamento)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {tempoDeCasa(f.data_admissao, f.data_desligamento)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant="outline">{labelMotivo(f.motivo_desligamento)}</Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-start gap-2">
+                        <Textarea
+                          rows={2}
+                          placeholder="Descreva o motivo do desligamento"
+                          className="min-w-[220px] text-sm"
+                          value={valor}
+                          onChange={(e) =>
+                            setRascunhos((r) => ({ ...r, [f.id]: e.target.value }))
+                          }
+                        />
+                        {alterado && (
+                          <Button
+                            size="sm"
+                            disabled={salvarObs.isPending}
+                            onClick={() => salvarObs.mutate({ id: f.id, texto: valor })}
+                          >
+                            Salvar
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </CardContent>
