@@ -113,7 +113,7 @@ function ContrachequePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("folha_pagamento")
-        .select("funcionario_id,loja_id,salario_base,total_proventos,total_descontos,liquido,fgts,status,fechada_em")
+        .select("funcionario_id,loja_id,salario_base,total_proventos,total_descontos,liquido,fgts,inss,irrf,desc_faltas,desc_dsr,desc_vt,convenio,status,fechada_em")
         .eq("competencia", competenciaDate(mes));
       if (error) throw error;
       return data as FolhaRow[];
