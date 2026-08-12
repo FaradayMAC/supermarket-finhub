@@ -24,7 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Calculator, Plane, PiggyBank, Download, FileText } from "lucide-react";
+import { Plus, Trash2, Calculator, Plane, PiggyBank, Download, FileText, Search } from "lucide-react";
 import {
   exportarRotatividadeCsv,
   exportarRotatividadePdf,
@@ -1105,6 +1105,8 @@ function Rotatividade({ filtro }: { filtro: string }) {
   const [mes, setMes] = useState(
     `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}`,
   );
+  const [busca, setBusca] = useState("");
+  const [tipoFiltro, setTipoFiltro] = useState("todos");
 
   const { data: desligados = [], isLoading } = useQuery({
     queryKey: ["rotatividade"],
@@ -1112,7 +1114,7 @@ function Rotatividade({ filtro }: { filtro: string }) {
       const { data, error } = await supabase
         .from("funcionarios")
         .select(
-          "id, nome, cargo, loja_id, data_admissao, data_desligamento, motivo_desligamento, observacao_desligamento, lojas(nome, codigo)",
+          "id, nome, cargo, cpf, loja_id, data_admissao, data_desligamento, motivo_desligamento, observacao_desligamento, lojas(nome, codigo)",
         )
         .not("data_desligamento", "is", null)
         .order("data_desligamento", { ascending: false });
@@ -1121,12 +1123,25 @@ function Rotatividade({ filtro }: { filtro: string }) {
     },
   });
 
+  const termoBusca = busca.trim().toLowerCase();
   const lista = useMemo(
     () =>
       desligados
         .filter((f) => String(f.data_desligamento).slice(0, 7) === mes)
-        .filter((f) => filtro === "todas" || f.loja_id === filtro),
-    [desligados, mes, filtro],
+        .filter((f) => filtro === "todas" || f.loja_id === filtro)
+        .filter(
+          (f) =>
+            tipoFiltro === "todos" ||
+            (f.motivo_desligamento ?? "nao_informado") === tipoFiltro,
+        )
+        .filter(
+          (f) =>
+            !termoBusca ||
+            f.nome.toLowerCase().includes(termoBusca) ||
+            (f.cpf ?? "").replace(/\D/g, "").includes(termoBusca.replace(/\D/g, "")) ||
+            (f.cargo ?? "").toLowerCase().includes(termoBusca),
+        ),
+    [desligados, mes, filtro, tipoFiltro, termoBusca],
   );
 
   const porMotivo = useMemo(() => {
@@ -1169,6 +1184,31 @@ function Rotatividade({ filtro }: { filtro: string }) {
       <div className="flex flex-wrap items-center gap-3">
         <Label className="text-xs uppercase tracking-wide text-muted-foreground">Competência:</Label>
         <Input type="month" className="w-44" value={mes} onChange={(e) => setMes(e.target.value)} />
+        <div className="flex items-center gap-1">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome, CPF ou cargo…"
+              className="w-64 pl-9"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
+          <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Tipo de rescisão" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os tipos</SelectItem>
+              {TIPOS_RESCISAO.map((t) => (
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label}
+                </SelectItem>
+              ))}
+              <SelectItem value="nao_informado">Não informado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <span className="text-sm text-muted-foreground">
           <span className="font-semibold text-foreground">{lista.length}</span> desligamento(s) no
           período
