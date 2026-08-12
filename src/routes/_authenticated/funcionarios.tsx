@@ -497,6 +497,9 @@ function FuncForm({
   const va = VALE_ALIMENTACAO_PADRAO_ES;
   const [nascimento, setNascimento] = useState<string>((initial as any)?.data_nascimento ?? "");
   const [admissao, setAdmissao] = useState<string>(initial?.data_admissao ?? "");
+  const [motivoDesl, setMotivoDesl] = useState<string>(
+    (initial as any)?.motivo_desligamento ?? "none",
+  );
   const [dependentes, setDependentes] = useState<number>(Number(initial?.dependentes ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
   // Um único controle: possuir VT já implica o desconto de até 6%.
