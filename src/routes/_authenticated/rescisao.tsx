@@ -455,11 +455,15 @@ function SimulacaoDialog({
   gozadas,
   fgtsInput,
   salarioMinimoFederal,
+  onConfirmar,
+  confirmando,
 }: {
   f: any;
   gozadas: FeriasGozadas[];
   fgtsInput: (f: any, ref: Date) => { saldoInicial: number; depositos: number; saques: number };
   salarioMinimoFederal: number;
+  onConfirmar: (p: { data: string; motivo: TipoRescisao }) => void;
+  confirmando: boolean;
 }) {
   const [tipo, setTipo] = useState<TipoRescisao>("sem_justa_causa");
   const [modalidadeAviso, setModalidadeAviso] = useState<ModalidadeAviso>("indenizado");
