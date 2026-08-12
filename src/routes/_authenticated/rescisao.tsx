@@ -250,6 +250,24 @@ function RescisaoPage() {
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
+  const confirmarDesligamento = useMutation({
+    mutationFn: async ({ id, data, motivo }: { id: string; data: string; motivo: TipoRescisao }) => {
+      const { error } = await supabase
+        .from("funcionarios")
+        .update({ ativo: false, data_desligamento: data, motivo_desligamento: motivo })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Desligamento confirmado");
+      setSim(null);
+      qc.invalidateQueries({ queryKey: ["rescisao-funcionarios"] });
+      qc.invalidateQueries({ queryKey: ["rotatividade"] });
+      qc.invalidateQueries({ queryKey: ["funcionarios"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro"),
+  });
+
   return (
     <AppShell title="Rescisão">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
