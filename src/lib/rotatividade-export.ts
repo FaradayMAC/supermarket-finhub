@@ -50,13 +50,25 @@ export function exportarRotatividadeCsv(params: {
   linhas: LinhaRotatividade[];
   mes: string;
   loja: string;
+  resumo: { motivo: string; qtd: number }[];
 }) {
-  const { linhas, mes, loja } = params;
+  const { linhas, mes, loja, resumo } = params;
   const esc = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const conteudo = [
+  const total = linhas.length;
+  const cabecalho: string[][] = [
     [`Relatório de Rotatividade`],
     [`Competência: ${mes}`],
     [`Loja: ${loja}`],
+    [`Total de desligamentos: ${total}`],
+  ];
+  if (resumo.length) {
+    cabecalho.push([`Resumo por motivo:`]);
+    cabecalho.push(
+      ...resumo.map((r) => [`  ${r.qtd} · ${r.motivo}`]),
+    );
+  }
+  const conteudo = [
+    ...cabecalho,
     [],
     [...COLUNAS],
     ...linhas.map(linhaValores),
@@ -86,14 +98,26 @@ export async function exportarRotatividadePdf(params: {
 
   doc.setFont("helvetica", "bold").setFontSize(15);
   doc.text("Relatório de Rotatividade", L, y);
-  doc.setFont("helvetica", "normal").setFontSize(9);
   y += 15;
-  doc.text(`Competência ${mes} · ${loja}`, L, y);
-  doc.text(`${linhas.length} desligamento(s)`, R, y, { align: "right" });
+  doc.setFont("helvetica", "normal").setFontSize(9);
+  doc.text(`Competência: ${mes}`, L, y);
+  y += 12;
+  doc.text(`Loja: ${loja}`, L, y);
+  y += 12;
+  doc.text(`Total de desligamentos: ${linhas.length}`, L, y);
   if (resumo.length) {
+    y += 14;
+    doc.setFont("helvetica", "bold").setFontSize(9);
+    doc.text("Resumo por motivo:", L, y);
     y += 12;
-    doc.setTextColor(110);
-    doc.text(resumo.map((r) => `${r.qtd} · ${r.motivo}`).join("   |   "), L, y);
+    doc.setFont("helvetica", "normal").setTextColor(110);
+    const meio = L + (R - L) / 2;
+    resumo.forEach((r, i) => {
+      const col = i % 2;
+      const x = col === 0 ? L : meio;
+      if (col === 0 && i > 0) y += 13;
+      doc.text(`${r.qtd} · ${r.motivo}`, x, y);
+    });
     doc.setTextColor(0);
   }
 
