@@ -396,6 +396,10 @@ function CaixaPage() {
           <TabsContent value="projetado" className="mt-4">
             <Projecao lojaId={filtroLoja} saldoAtual={saldoAtual} />
           </TabsContent>
+
+          <TabsContent value="cofre" className="mt-4">
+            <CofreTab lojaId={filtroLoja} lojas={lojas as any} periodoState={periodoState} />
+          </TabsContent>
         </Tabs>
       </div>
     </AppShell>
