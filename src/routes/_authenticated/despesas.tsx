@@ -204,7 +204,9 @@ function DespesaForm({
   const [catId, setCatId] = useState("");
   const [fornecedorId, setFornecedorId] = useState("");
   const [status, setStatus] = useState("pago");
+  const [forma, setForma] = useState("");
   const fornecedorSel = fornecedores.find((x) => x.id === fornecedorId);
+  const isCofre = forma === "dinheiro_cofre" && status === "pago";
   return (
     <DialogContent>
       <DialogHeader><DialogTitle>Nova despesa</DialogTitle></DialogHeader>
