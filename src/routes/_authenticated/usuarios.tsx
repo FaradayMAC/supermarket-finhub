@@ -24,6 +24,15 @@ export const Route = createFileRoute("/_authenticated/usuarios")({
 
 const ROLES: AppRole[] = ["admin", "diretoria", "controladoria", "gerente"];
 
+function msgErro(e: any) {
+  const m = String(e?.message ?? e ?? "Erro inesperado");
+  if (/weak and easy to guess|pwned|leaked/i.test(m))
+    return "Senha muito fraca ou vazada. Use uma senha mais forte (evite sequências e palavras comuns).";
+  if (/at least 6 characters|Password should be/i.test(m)) return "A senha deve ter no mínimo 6 caracteres.";
+  if (/already registered|already been registered/i.test(m)) return "Já existe um usuário com este e-mail.";
+  return m;
+}
+
 function Usuarios() {
   const auth = useAuth();
   const qc = useQueryClient();
@@ -51,27 +60,27 @@ function Usuarios() {
   const createMut = useMutation({
     mutationFn: (v: any) => createFn({ data: v }),
     onSuccess: () => { invalidate(); toast.success("Usuário criado"); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(msgErro(e)),
   });
   const updateMut = useMutation({
     mutationFn: (v: any) => updateFn({ data: v }),
     onSuccess: () => { invalidate(); toast.success("Usuário atualizado"); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(msgErro(e)),
   });
   const deleteMut = useMutation({
     mutationFn: (userId: string) => deleteFn({ data: { userId } }),
     onSuccess: () => { invalidate(); toast.success("Usuário excluído"); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(msgErro(e)),
   });
   const resetMut = useMutation({
     mutationFn: (v: { userId: string; password: string }) => resetFn({ data: v }),
     onSuccess: () => toast.success("Senha redefinida"),
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(msgErro(e)),
   });
   const approveMut = useMutation({
     mutationFn: (v: { userId: string; approved: boolean }) => approveFn({ data: v }),
     onSuccess: (_d, v) => { invalidate(); toast.success(v.approved ? "Usuário aprovado" : "Acesso revogado"); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(msgErro(e)),
   });
 
   if (!auth.isAdmin) {
@@ -183,7 +192,7 @@ function CreateUserDialog({ lojas, onSubmit }: { lojas: any[]; onSubmit: (v: any
       await onSubmit({ ...form, loja_id: form.role === "gerente" ? (form.loja_id || null) : null });
       setOpen(false);
       setForm({ nome: "", email: "", password: "", role: "gerente", loja_id: "" });
-    } finally { setBusy(false); }
+    } catch { /* erro já exibido via toast */ } finally { setBusy(false); }
   }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -227,7 +236,7 @@ function EditUserDialog({ user, currentRole, lojas, onSubmit }: { user: any; cur
     try {
       await onSubmit({ nome: form.nome, email: form.email, role: form.role, loja_id: form.role === "gerente" ? (form.loja_id || null) : null });
       setOpen(false);
-    } finally { setBusy(false); }
+    } catch { /* erro já exibido via toast */ } finally { setBusy(false); }
   }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -267,7 +276,7 @@ function ResetPasswordDialog({ userId, email, onSubmit }: { userId: string; emai
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    try { await onSubmit(pwd); setOpen(false); setPwd(""); } finally { setBusy(false); }
+    try { await onSubmit(pwd); setOpen(false); setPwd(""); } catch { /* erro já exibido via toast */ } finally { setBusy(false); }
   }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
