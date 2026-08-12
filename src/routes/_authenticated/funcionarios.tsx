@@ -530,7 +530,7 @@ function FuncForm({
         .select(
           "id, nome, cargo, loja_id, data_admissao, data_desligamento, motivo_desligamento, observacao_desligamento, lojas(nome)",
         )
-        .filter("cpf", "imatches", `^${digitos}$`)
+        .eq("cpf", digitos)
         .neq("id", initial?.id ?? "00000000-0000-0000-0000-000000000000");
       if (!error && data) setHistorico(data);
       setBuscandoCpf(false);
