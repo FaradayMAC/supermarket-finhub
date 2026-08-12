@@ -31,6 +31,7 @@ import { custoReal, regimeDoFuncionario, type RegimeTributario } from "@/lib/cus
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { dataFimCarencia } from "@/lib/planos";
 import { VALE_ALIMENTACAO_PADRAO_ES, VALE_TRANSPORTE_DESCONTO_PCT } from "@/lib/beneficios";
+import { TIPOS_RESCISAO } from "@/lib/rescisao";
 
 
 export const Route = createFileRoute("/_authenticated/funcionarios")({
@@ -497,6 +498,9 @@ function FuncForm({
   const va = VALE_ALIMENTACAO_PADRAO_ES;
   const [nascimento, setNascimento] = useState<string>((initial as any)?.data_nascimento ?? "");
   const [admissao, setAdmissao] = useState<string>(initial?.data_admissao ?? "");
+  const [motivoDesl, setMotivoDesl] = useState<string>(
+    (initial as any)?.motivo_desligamento ?? "none",
+  );
   const [dependentes, setDependentes] = useState<number>(Number(initial?.dependentes ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
   // Um único controle: possuir VT já implica o desconto de até 6%.
@@ -588,6 +592,7 @@ function FuncForm({
             data_admissao: admissao || null,
             data_nascimento: nascimento || null,
             data_desligamento: String(fd.get("desligamento") || "") || null,
+            motivo_desligamento: motivoDesl === "none" ? null : motivoDesl,
 
             vale_transporte: _vt,
             vale_alimentacao: _va,
@@ -774,7 +779,25 @@ function FuncForm({
             <p className="mt-1 text-xs text-muted-foreground">
               Sai das folhas a partir do mês seguinte; competências já fechadas ficam intactas.
             </p>
-
+          </div>
+          <div>
+            <Label>Motivo do desligamento</Label>
+            <Select value={motivoDesl} onValueChange={setMotivoDesl}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">—</SelectItem>
+                {TIPOS_RESCISAO.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Alimenta o relatório de rotatividade no módulo Rescisão.
+            </p>
           </div>
           <div>
             <Label htmlFor="dependentes">Dependentes</Label>
