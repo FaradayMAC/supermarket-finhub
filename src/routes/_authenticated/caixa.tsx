@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PeriodFilter, usePeriodo } from "@/components/period-filter";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CofreTab } from "@/components/cofre-tab";
 import { Plus, Trash2, ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -284,6 +285,7 @@ function CaixaPage() {
           <TabsList>
             <TabsTrigger value="realizado">Realizado</TabsTrigger>
             <TabsTrigger value="projetado">Projetado</TabsTrigger>
+            <TabsTrigger value="cofre">Cofre</TabsTrigger>
           </TabsList>
 
           <TabsContent value="realizado" className="mt-4 space-y-6">
@@ -394,6 +396,10 @@ function CaixaPage() {
 
           <TabsContent value="projetado" className="mt-4">
             <Projecao lojaId={filtroLoja} saldoAtual={saldoAtual} />
+          </TabsContent>
+
+          <TabsContent value="cofre" className="mt-4">
+            <CofreTab lojaId={filtroLoja} lojas={lojas as any} periodoState={periodoState} />
           </TabsContent>
         </Tabs>
       </div>

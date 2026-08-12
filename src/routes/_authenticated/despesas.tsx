@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { registrarSaidaCofre } from "@/components/cofre-tab";
 
 export const Route = createFileRoute("/_authenticated/despesas")({
   head: () => ({ meta: [{ title: "Despesas · MercadoGest" }] }),
@@ -69,14 +70,27 @@ function DespesasPage() {
   const total = filtradas.reduce((s, d) => s + Number(d.valor), 0);
 
   const create = useMutation({
-    mutationFn: async (p: any) => {
-      const { error } = await supabase.from("despesas").insert(p);
+    mutationFn: async ({ motivoCofre, ...p }: any) => {
+      const { data, error } = await supabase.from("despesas").insert(p).select("id").single();
       if (error) throw error;
+      // Despesa paga em espécie sai do cofre da loja
+      if (p.forma_pagamento === "dinheiro_cofre" && p.status === "pago") {
+        await registrarSaidaCofre({
+          loja_id: p.loja_id,
+          data: p.data_pagamento || p.data_competencia,
+          origem: "despesa",
+          origem_id: data?.id ?? null,
+          descricao: p.descricao,
+          motivo: motivoCofre,
+          valor: Number(p.valor),
+        });
+      }
     },
     onSuccess: () => {
       toast.success("Despesa lançada");
       qc.invalidateQueries({ queryKey: ["despesas"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["cofre-movs"] });
       setOpen(false);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
@@ -190,7 +204,9 @@ function DespesaForm({
   const [catId, setCatId] = useState("");
   const [fornecedorId, setFornecedorId] = useState("");
   const [status, setStatus] = useState("pago");
+  const [forma, setForma] = useState("");
   const fornecedorSel = fornecedores.find((x) => x.id === fornecedorId);
+  const isCofre = forma === "dinheiro_cofre" && status === "pago";
   return (
     <DialogContent>
       <DialogHeader><DialogTitle>Nova despesa</DialogTitle></DialogHeader>
@@ -200,15 +216,21 @@ function DespesaForm({
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
           if (!lojaId) return toast.error("Selecione a loja");
+          const descricao = String(fd.get("descricao") || "").trim();
+          const motivoCofre = String(fd.get("motivo_cofre") || "").trim() || descricao;
+          if (isCofre && !motivoCofre) return toast.error("Informe o motivo da saída do cofre");
           onSubmit({
             loja_id: lojaId,
             categoria_id: catId || null,
             fornecedor_id: fornecedorId || null,
-            descricao: String(fd.get("descricao") || "").trim(),
+            descricao,
             valor: Number(fd.get("valor")),
             data_competencia: String(fd.get("data") || ""),
+            data_pagamento: status === "pago" ? String(fd.get("data") || "") : null,
+            forma_pagamento: forma || null,
             centro_custo: String(fd.get("centro") || "").trim() || null,
             status,
+            motivoCofre,
           });
         }}
       >
@@ -260,6 +282,26 @@ function DespesaForm({
           <div className="col-span-2"><Label htmlFor="descricao">Descrição *</Label><Input id="descricao" name="descricao" required maxLength={200} /></div>
           <div><Label htmlFor="valor">Valor (R$) *</Label><Input id="valor" name="valor" type="number" step="0.01" min="0" required /></div>
           <div><Label htmlFor="data">Data de competência *</Label><Input id="data" name="data" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} /></div>
+          <div className="col-span-2">
+            <Label>Forma de pagamento</Label>
+            <Select value={forma} onValueChange={setForma}>
+              <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="dinheiro_cofre">Dinheiro (cofre)</SelectItem>
+                <SelectItem value="pix">PIX</SelectItem>
+                <SelectItem value="boleto">Boleto</SelectItem>
+                <SelectItem value="cartao">Cartão</SelectItem>
+                <SelectItem value="transferencia">Transferência</SelectItem>
+                <SelectItem value="outro">Outro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {isCofre && (
+            <div className="col-span-2">
+              <Label htmlFor="motivo_cofre">Motivo da saída do cofre *</Label>
+              <Input id="motivo_cofre" name="motivo_cofre" maxLength={200} placeholder="Pré-preenchido com a descrição — edite se quiser detalhar" />
+            </div>
+          )}
           <div className="col-span-2"><Label htmlFor="centro">Centro de custo</Label><Input id="centro" name="centro" maxLength={80} placeholder="Opcional" /></div>
         </div>
         <DialogFooter>

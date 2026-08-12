@@ -24,6 +24,7 @@ import {
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { gerarContrachequePdf } from "@/lib/contracheque-pdf";
 import { competenciaDate, entraNaCompetencia, fmtDataHora, podeFechar } from "@/lib/folha-competencia";
+import { registrarSaidaCofre } from "@/components/cofre-tab";
 
 
 export const Route = createFileRoute("/_authenticated/contracheque")({
@@ -82,6 +83,9 @@ function ContrachequePage() {
   const [detalhe, setDetalhe] = useState<Func | null>(null);
   const [convOpen, setConvOpen] = useState<Func | null>(null);
   const [eventoOpen, setEventoOpen] = useState<Func | null>(null);
+  const [fecharOpen, setFecharOpen] = useState(false);
+  const [cofreValor, setCofreValor] = useState("");
+  const [cofreMotivo, setCofreMotivo] = useState("");
   const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
 
   const { data: lojas = [] } = useQuery({
@@ -318,10 +322,27 @@ function ContrachequePage() {
       });
       const { error } = await supabase.from("folha_pagamento").insert(linhas as any);
       if (error) throw error;
+
+      // Parte da folha paga em espécie sai do cofre da loja
+      const valorCofre = Number(cofreValor.replace(",", ".")) || 0;
+      if (valorCofre > 0) {
+        if (lojaFiltro === "todas") throw new Error("Selecione uma loja para registrar a saída do cofre.");
+        await registrarSaidaCofre({
+          loja_id: lojaFiltro,
+          data: new Date().toISOString().slice(0, 10),
+          origem: "folha",
+          descricao: `Folha ${mes}`,
+          motivo: cofreMotivo.trim() || `Pagamento de folha — competência ${mes}`,
+          valor: valorCofre,
+        });
+      }
       return linhas.length;
     },
     onSuccess: (n) => {
       toast.success(`Folha de ${mes} fechada para ${n} funcionário(s) — ${escopoLabel}.`);
+      setFecharOpen(false);
+      setCofreValor("");
+      setCofreMotivo("");
       qc.invalidateQueries();
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao fechar a folha"),
@@ -487,21 +508,55 @@ function ContrachequePage() {
             <Badge variant="outline">Competência aberta</Badge>
           )}
           {escopo.abertos.length > 0 && podeFechar(mes) && (
-            <Button
-              variant="secondary"
-              disabled={fecharFolha.isPending}
-              onClick={() => {
-                if (
-                  confirm(
-                    `Fechar a folha de ${mes} para ${escopoLabel} (${escopo.abertos.length} funcionário(s))? O mês vira histórico e não recalcula mais.`,
-                  )
-                )
-                  fecharFolha.mutate();
-              }}
-            >
-              <Lock className="mr-2 h-4 w-4" />
-              {fecharFolha.isPending ? "Fechando…" : lojaFiltro === "todas" ? "Fechar folha do mês" : "Fechar folha da loja"}
-            </Button>
+            <Dialog open={fecharOpen} onOpenChange={setFecharOpen}>
+              <Button variant="secondary" disabled={fecharFolha.isPending} onClick={() => setFecharOpen(true)}>
+                <Lock className="mr-2 h-4 w-4" />
+                {fecharFolha.isPending ? "Fechando…" : lojaFiltro === "todas" ? "Fechar folha do mês" : "Fechar folha da loja"}
+              </Button>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Fechar folha de {mes}</DialogTitle></DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    {escopoLabel} — {escopo.abertos.length} funcionário(s). O mês vira histórico e não recalcula mais.
+                  </p>
+                  <div>
+                    <Label htmlFor="cofre-valor">Valor pago em dinheiro (cofre)</Label>
+                    <Input
+                      id="cofre-valor"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0,00 — opcional"
+                      value={cofreValor}
+                      onChange={(e) => setCofreValor(e.target.value)}
+                      disabled={lojaFiltro === "todas"}
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {lojaFiltro === "todas"
+                        ? "Selecione uma loja para registrar saída do cofre."
+                        : "Quanto do líquido desta competência saiu do cofre em espécie."}
+                    </p>
+                  </div>
+                  {Number(cofreValor) > 0 && (
+                    <div>
+                      <Label htmlFor="cofre-motivo">Motivo da saída do cofre *</Label>
+                      <Input
+                        id="cofre-motivo"
+                        value={cofreMotivo}
+                        onChange={(e) => setCofreMotivo(e.target.value)}
+                        placeholder={`Pagamento de folha — competência ${mes}`}
+                      />
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setFecharOpen(false)}>Cancelar</Button>
+                  <Button disabled={fecharFolha.isPending} onClick={() => fecharFolha.mutate()}>
+                    {fecharFolha.isPending ? "Fechando…" : "Confirmar fechamento"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           )}
           {escopo.fechados.length > 0 && (
             <Button

@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.mirror_venda_dinheiro_to_cofre() FROM PUBLIC, anon, authenticated;

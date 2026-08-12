@@ -186,6 +186,59 @@ export type Database = {
           },
         ]
       }
+      cofre_movimentacoes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data: string
+          descricao: string | null
+          id: string
+          loja_id: string
+          motivo: string
+          origem: string
+          origem_id: string | null
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          descricao?: string | null
+          id?: string
+          loja_id: string
+          motivo: string
+          origem: string
+          origem_id?: string | null
+          tipo: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          descricao?: string | null
+          id?: string
+          loja_id?: string
+          motivo?: string
+          origem?: string
+          origem_id?: string | null
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cofre_movimentacoes_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compras_mercadoria: {
         Row: {
           created_at: string
