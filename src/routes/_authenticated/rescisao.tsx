@@ -23,7 +23,11 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Calculator, Plane, PiggyBank } from "lucide-react";
+import { Plus, Trash2, Calculator, Plane, PiggyBank, Download, FileText } from "lucide-react";
+import {
+  exportarRotatividadeCsv,
+  exportarRotatividadePdf,
+} from "@/lib/rotatividade-export";
 import { toast } from "sonner";
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { CUSTO_SELECT } from "@/lib/custo-funcionario";
