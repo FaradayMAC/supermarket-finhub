@@ -283,11 +283,33 @@ function ContrachequePage() {
       return linhas.length;
     },
     onSuccess: (n) => {
-      toast.success(`Folha de ${mes} fechada para ${n} funcionário(s).`);
+      toast.success(`Folha de ${mes} fechada para ${n} funcionário(s) — ${escopoLabel}.`);
       qc.invalidateQueries();
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao fechar a folha"),
   });
+
+  const reabrirFolha = useMutation({
+    mutationFn: async () => {
+      const ids = escopo.fechados.map((f) => f.id);
+      if (ids.length === 0) throw new Error("Nenhuma folha fechada neste escopo.");
+      const { error } = await supabase
+        .from("folha_pagamento")
+        .delete()
+        .eq("competencia", competenciaDate(mes))
+        .in("funcionario_id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (n) => {
+      toast.success(`Folha de ${mes} reaberta para ${n} funcionário(s) — ${escopoLabel}.`);
+      qc.invalidateQueries();
+    },
+    onError: (e: any) =>
+      toast.error(e.message ?? "Erro ao reabrir a folha — apenas administradores podem reabrir."),
+  });
+
+
 
 
   const baixarPdf = async (f: Func) => {
