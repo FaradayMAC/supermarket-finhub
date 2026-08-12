@@ -1105,6 +1105,8 @@ function Rotatividade({ filtro }: { filtro: string }) {
   const [mes, setMes] = useState(
     `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}`,
   );
+  const [busca, setBusca] = useState("");
+  const [tipoFiltro, setTipoFiltro] = useState("todos");
 
   const { data: desligados = [], isLoading } = useQuery({
     queryKey: ["rotatividade"],
@@ -1121,12 +1123,25 @@ function Rotatividade({ filtro }: { filtro: string }) {
     },
   });
 
+  const termoBusca = busca.trim().toLowerCase();
   const lista = useMemo(
     () =>
       desligados
         .filter((f) => String(f.data_desligamento).slice(0, 7) === mes)
-        .filter((f) => filtro === "todas" || f.loja_id === filtro),
-    [desligados, mes, filtro],
+        .filter((f) => filtro === "todas" || f.loja_id === filtro)
+        .filter(
+          (f) =>
+            tipoFiltro === "todos" ||
+            (f.motivo_desligamento ?? "nao_informado") === tipoFiltro,
+        )
+        .filter(
+          (f) =>
+            !termoBusca ||
+            f.nome.toLowerCase().includes(termoBusca) ||
+            (f.cpf ?? "").replace(/\D/g, "").includes(termoBusca.replace(/\D/g, "")) ||
+            (f.cargo ?? "").toLowerCase().includes(termoBusca),
+        ),
+    [desligados, mes, filtro, tipoFiltro, termoBusca],
   );
 
   const porMotivo = useMemo(() => {
