@@ -643,7 +643,7 @@ function FuncForm({
             loja_id: lojaId,
             cargo_id: cargoId === "none" ? null : cargoId,
             nome: String(fd.get("nome") || "").trim(),
-            cpf: String(fd.get("cpf") || "").trim() || null,
+            cpf: normalizarCpf(String(fd.get("cpf") || "")) || null,
             cargo: cargo ? cargo.nome : String(fd.get("cargo") || "").trim() || null,
             salario_base: sal,
             data_admissao: admissao || null,
