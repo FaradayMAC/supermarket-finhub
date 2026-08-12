@@ -24,6 +24,7 @@ import {
 import { useReferenciasSalariais } from "@/hooks/use-referencias-salariais";
 import { gerarContrachequePdf } from "@/lib/contracheque-pdf";
 import { competenciaDate, entraNaCompetencia, fmtDataHora, podeFechar } from "@/lib/folha-competencia";
+import { registrarSaidaCofre } from "@/components/cofre-tab";
 
 
 export const Route = createFileRoute("/_authenticated/contracheque")({
