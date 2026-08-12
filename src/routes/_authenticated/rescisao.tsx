@@ -1184,6 +1184,31 @@ function Rotatividade({ filtro }: { filtro: string }) {
       <div className="flex flex-wrap items-center gap-3">
         <Label className="text-xs uppercase tracking-wide text-muted-foreground">Competência:</Label>
         <Input type="month" className="w-44" value={mes} onChange={(e) => setMes(e.target.value)} />
+        <div className="flex items-center gap-1">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome, CPF ou cargo…"
+              className="w-64 pl-9"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
+          <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Tipo de rescisão" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os tipos</SelectItem>
+              {TIPOS_RESCISAO.map((t) => (
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label}
+                </SelectItem>
+              ))}
+              <SelectItem value="nao_informado">Não informado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <span className="text-sm text-muted-foreground">
           <span className="font-semibold text-foreground">{lista.length}</span> desligamento(s) no
           período
