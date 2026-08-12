@@ -508,21 +508,55 @@ function ContrachequePage() {
             <Badge variant="outline">Competência aberta</Badge>
           )}
           {escopo.abertos.length > 0 && podeFechar(mes) && (
-            <Button
-              variant="secondary"
-              disabled={fecharFolha.isPending}
-              onClick={() => {
-                if (
-                  confirm(
-                    `Fechar a folha de ${mes} para ${escopoLabel} (${escopo.abertos.length} funcionário(s))? O mês vira histórico e não recalcula mais.`,
-                  )
-                )
-                  fecharFolha.mutate();
-              }}
-            >
-              <Lock className="mr-2 h-4 w-4" />
-              {fecharFolha.isPending ? "Fechando…" : lojaFiltro === "todas" ? "Fechar folha do mês" : "Fechar folha da loja"}
-            </Button>
+            <Dialog open={fecharOpen} onOpenChange={setFecharOpen}>
+              <Button variant="secondary" disabled={fecharFolha.isPending} onClick={() => setFecharOpen(true)}>
+                <Lock className="mr-2 h-4 w-4" />
+                {fecharFolha.isPending ? "Fechando…" : lojaFiltro === "todas" ? "Fechar folha do mês" : "Fechar folha da loja"}
+              </Button>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Fechar folha de {mes}</DialogTitle></DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    {escopoLabel} — {escopo.abertos.length} funcionário(s). O mês vira histórico e não recalcula mais.
+                  </p>
+                  <div>
+                    <Label htmlFor="cofre-valor">Valor pago em dinheiro (cofre)</Label>
+                    <Input
+                      id="cofre-valor"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0,00 — opcional"
+                      value={cofreValor}
+                      onChange={(e) => setCofreValor(e.target.value)}
+                      disabled={lojaFiltro === "todas"}
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {lojaFiltro === "todas"
+                        ? "Selecione uma loja para registrar saída do cofre."
+                        : "Quanto do líquido desta competência saiu do cofre em espécie."}
+                    </p>
+                  </div>
+                  {Number(cofreValor) > 0 && (
+                    <div>
+                      <Label htmlFor="cofre-motivo">Motivo da saída do cofre *</Label>
+                      <Input
+                        id="cofre-motivo"
+                        value={cofreMotivo}
+                        onChange={(e) => setCofreMotivo(e.target.value)}
+                        placeholder={`Pagamento de folha — competência ${mes}`}
+                      />
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setFecharOpen(false)}>Cancelar</Button>
+                  <Button disabled={fecharFolha.isPending} onClick={() => fecharFolha.mutate()}>
+                    {fecharFolha.isPending ? "Fechando…" : "Confirmar fechamento"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           )}
           {escopo.fechados.length > 0 && (
             <Button
