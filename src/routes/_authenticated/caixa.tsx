@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PeriodFilter, usePeriodo } from "@/components/period-filter";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CofreTab } from "@/components/cofre-tab";
 import { Plus, Trash2, ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import {
