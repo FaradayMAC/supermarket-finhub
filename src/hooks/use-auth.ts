@@ -3,7 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
-export type AppRole = "admin" | "diretoria" | "controladoria" | "gerente";
+export type ModuloId =
+  | "vendas" | "compras" | "despesas" | "caixa" | "titulos" | "conciliacao"
+  | "impostos" | "metas" | "indicadores" | "dre" | "comparativo"
+  | "funcionarios" | "cargos" | "faltas_rh" | "contracheque" | "rescisao"
+  | "prestadores" | "lojas" | "usuarios";
 
 export function useAuthSession() {
   const [user, setUser] = useState<User | null>(null);
@@ -30,48 +34,67 @@ export function useAuth() {
     queryKey: ["auth-context", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const [{ data: profile }, { data: roles }] = await Promise.all([
-        supabase.from("profiles").select("id, nome, email, loja_id, approved").eq("id", user!.id).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", user!.id),
+      const [{ data: profile }, { data: mods }] = await Promise.all([
+        supabase.from("profiles").select("id, nome, email, loja_id, approved, admin_master").eq("id", user!.id).maybeSingle(),
+        supabase.from("usuario_modulos").select("modulo_id").eq("usuario_id", user!.id),
       ]);
-      return { profile, roles: (roles ?? []).map((r: any) => r.role as AppRole) };
+      return { profile, modulos: (mods ?? []).map((m: any) => m.modulo_id as ModuloId) };
     },
   });
 
-  const roles = data?.roles ?? [];
-  const role: AppRole | null =
-    roles.includes("admin") ? "admin"
-    : roles.includes("controladoria") ? "controladoria"
-    : roles.includes("diretoria") ? "diretoria"
-    : roles.includes("gerente") ? "gerente"
-    : null;
+  const adminMaster = !!(data?.profile as any)?.admin_master;
+  const modulos: ModuloId[] = adminMaster
+    ? (["vendas","compras","despesas","caixa","titulos","conciliacao","impostos","metas","indicadores","dre","comparativo","funcionarios","cargos","faltas_rh","contracheque","rescisao","prestadores","lojas","usuarios"] as ModuloId[])
+    : (data?.modulos ?? []);
 
-  const isAdmin = roles.includes("admin");
-  const isDiretoria = roles.includes("diretoria");
-  const isControladoria = roles.includes("controladoria");
-  const isGerente = roles.includes("gerente");
-  const canEditAll = isAdmin || isControladoria;
-  const canViewAll = isAdmin || isControladoria || isDiretoria;
-  const canEditOwnLoja = canEditAll || isGerente;
-  const lojaId = data?.profile?.loja_id ?? null;
-  const approved = !!data?.profile?.approved || isAdmin;
+  const approved = !!data?.profile?.approved || adminMaster;
+  const can = (m: ModuloId) => adminMaster || (approved && modulos.includes(m));
 
   return {
-    user, loading: loading || isLoading,
+    user,
+    loading: loading || isLoading,
     profile: data?.profile ?? null,
-    roles, role,
-    isAdmin, isDiretoria, isControladoria, isGerente,
-    canEditAll, canViewAll, canEditOwnLoja,
-    lojaId, approved,
+    adminMaster,
+    modulos,
+    can,
+    lojaId: data?.profile?.loja_id ?? null,
+    approved,
+    hasAnyModule: adminMaster || modulos.length > 0,
   };
 }
 
-export const ROLE_LABEL: Record<AppRole, string> = {
-  admin: "Administrador",
-  diretoria: "Diretoria",
-  controladoria: "Controladoria",
-  gerente: "Gerente de Unidade",
+export const MODULO_LABEL: Record<ModuloId, string> = {
+  vendas: "Vendas",
+  compras: "Compras",
+  despesas: "Despesas",
+  caixa: "Caixa",
+  titulos: "A pagar/receber",
+  conciliacao: "Conciliação",
+  impostos: "Impostos",
+  metas: "Metas",
+  indicadores: "Indicadores",
+  dre: "DRE",
+  comparativo: "Comparativo",
+  funcionarios: "Funcionários",
+  cargos: "Cargos",
+  faltas_rh: "Faltas RH",
+  contracheque: "Contra cheque",
+  rescisao: "Rescisão",
+  prestadores: "Prestadoras",
+  lojas: "Lojas",
+  usuarios: "Usuários",
 };
+
+export const MODULO_GRUPO: Record<ModuloId, string> = {
+  vendas: "Financeiro", compras: "Financeiro", despesas: "Financeiro", caixa: "Financeiro",
+  titulos: "Financeiro", conciliacao: "Financeiro", impostos: "Financeiro", metas: "Financeiro",
+  indicadores: "Relatórios", dre: "Relatórios", comparativo: "Relatórios",
+  funcionarios: "Pessoas (RH)", cargos: "Pessoas (RH)", faltas_rh: "Pessoas (RH)",
+  contracheque: "Pessoas (RH)", rescisao: "Pessoas (RH)", prestadores: "Pessoas (RH)",
+  lojas: "Administração", usuarios: "Administração",
+};
+
+export const TODOS_MODULOS = Object.keys(MODULO_LABEL) as ModuloId[];
 
 export async function signOut() {
   await supabase.auth.signOut();
