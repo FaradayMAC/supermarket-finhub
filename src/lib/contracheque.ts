@@ -384,7 +384,10 @@ export function calcContracheque(
   // --- Descontos legais ---
   const baseInss = Math.max(
     0,
-    r2(salario + adicionais + extra + feriasTerco - descFaltas - descDsr - descExtra - descAfastamento),
+    r2(
+      salario + adicionais + extra + feriasTerco -
+        descFaltas - descDsr - descExtra - descAfastamento - descSuspensao,
+    ),
   );
   const inssMes = calcInss(baseInss);
   const inss = r2(inssMes + inss13);
@@ -394,7 +397,10 @@ export function calcContracheque(
   // Durante o afastamento por doença o FGTS continua devido sobre o salário.
   const baseFgts = Math.max(
     0,
-    r2(salario + adicionais + extra + feriasTerco + decimoNoMes - descFaltas - descDsr),
+    r2(
+      salario + adicionais + extra + feriasTerco + decimoNoMes -
+        descFaltas - descDsr - descSuspensao,
+    ),
   );
   const fgts = r2(baseFgts * FGTS_PCT);
   const irrf = r2(calcIrrf(baseInss, inssMes, Number(f.dependentes) || 0) + irrf13);
@@ -410,8 +416,10 @@ export function calcContracheque(
   const convenio = Math.max(0, Number(opts.convenio) || 0);
 
   const totalDescontos = r2(
-    descFaltas + descDsr + descExtra + descAfastamento + inss + irrf + descontoVt + convenio,
+    descFaltas + descDsr + descExtra + descAfastamento + descSuspensao +
+      inss + irrf + descontoVt + convenio,
   );
+
   const liquido = r2(proventos - totalDescontos);
 
   return {
