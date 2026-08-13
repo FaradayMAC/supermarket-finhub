@@ -946,9 +946,26 @@ function FuncForm({
               name="admissao"
               type="date"
               value={admissao}
-              onChange={(e) => setAdmissao(e.target.value)}
+              onChange={(e) => {
+                setAdmissao(e.target.value);
+                setFimExperiencia(fimExperienciaPadrao(e.target.value));
+              }}
             />
           </div>
+          <div>
+            <Label htmlFor="fim_experiencia">Fim do período de experiência</Label>
+            <Input
+              id="fim_experiencia"
+              name="fim_experiencia"
+              type="date"
+              value={fimExperiencia}
+              onChange={(e) => setFimExperiencia(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Preenchido automaticamente com admissão + 90 dias (CLT Art. 445) — editável.
+            </p>
+          </div>
+
           <div>
             <Label htmlFor="desligamento">Data de desligamento</Label>
             <Input
