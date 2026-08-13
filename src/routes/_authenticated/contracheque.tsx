@@ -518,6 +518,42 @@ function ContrachequePage() {
     onError: (e: any) => toast.error(e.message ?? "Erro ao salvar afastamento"),
   });
 
+  const saveSuspensao = useMutation({
+    mutationFn: async (v: {
+      funcionario: Func;
+      ativo: boolean;
+      data_inicio: string;
+      data_fim: string;
+      motivo: string;
+    }) => {
+      const existentes = suspMap.get(v.funcionario.id) ?? [];
+      const existente = existentes[0] as any;
+      if (!v.ativo) {
+        if (existente) {
+          const { error } = await supabase.from("suspensoes" as any).delete().eq("id", existente.id);
+          if (error) throw error;
+        }
+        return;
+      }
+      const payload = {
+        funcionario_id: v.funcionario.id,
+        data_inicio: v.data_inicio,
+        data_fim: v.data_fim,
+        motivo: v.motivo || null,
+      };
+      const { error } = existente
+        ? await supabase.from("suspensoes" as any).update(payload as any).eq("id", existente.id)
+        : await supabase.from("suspensoes" as any).insert(payload as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Suspensão atualizada");
+      qc.invalidateQueries();
+      setEventoOpen(null);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao salvar suspensão"),
+  });
+
   return (
     <AppShell
       title="Contra cheque"
@@ -684,6 +720,9 @@ function ContrachequePage() {
                     <div className="font-medium">{f.nome}</div>
                     <div className="text-xs text-muted-foreground">
                       {f.cargo ?? "—"}
+                      {(suspMap.get(f.id)?.length ?? 0) > 0 && (
+                        <Badge variant="destructive" className="ml-2">Suspenso</Badge>
+                      )}
                       {afastMap.get(f.id) && (
                         <Badge variant="destructive" className="ml-2">Afastado (INSS)</Badge>
                       )}
@@ -807,7 +846,8 @@ function ContrachequePage() {
               suspensao={(suspMap.get(eventoOpen.id) ?? [])[0] ?? null}
               onFerias={(v) => saveFerias.mutate({ funcionario: eventoOpen, ...v })}
               onAfastamento={(v) => saveAfastamento.mutate({ funcionario: eventoOpen, ...v })}
-              salvando={saveFerias.isPending || saveAfastamento.isPending}
+              onSuspensao={(v) => saveSuspensao.mutate({ funcionario: eventoOpen, ...v })}
+              salvando={saveFerias.isPending || saveAfastamento.isPending || saveSuspensao.isPending}
             />
           )}
         </DialogContent>
@@ -838,14 +878,16 @@ function periodoAquisitivoEmCurso(dataAdmissao: string | null | undefined, ref: 
 }
 
 function EventosMes({
-  func, mes, ferias, afastamento, onFerias, onAfastamento, salvando,
+  func, mes, ferias, afastamento, suspensao, onFerias, onAfastamento, onSuspensao, salvando,
 }: {
   func: Func;
   mes: string;
   ferias: any | null;
   afastamento: any | null;
+  suspensao: any | null;
   onFerias: (v: { ativo: boolean; dias_gozados: number; dias_vendidos: number; data_inicio_gozo: string }) => void;
   onAfastamento: (v: { ativo: boolean; data_inicio: string; tipo: string }) => void;
+  onSuspensao: (v: { ativo: boolean; data_inicio: string; data_fim: string; motivo: string }) => void;
   salvando: boolean;
 }) {
   const [emFerias, setEmFerias] = useState(!!ferias);
@@ -853,6 +895,11 @@ function EventosMes({
   const [vendeu, setVendeu] = useState<boolean>(Number(ferias?.dias_vendidos ?? 0) > 0);
   const [vendidos, setVendidos] = useState<number>(Number(ferias?.dias_vendidos ?? 0));
   const [inicioGozo, setInicioGozo] = useState<string>(ferias?.data_inicio_gozo ?? `${mes}-01`);
+
+  const [suspenso, setSuspenso] = useState(!!suspensao);
+  const [inicioSusp, setInicioSusp] = useState<string>(suspensao?.data_inicio ?? `${mes}-01`);
+  const [fimSusp, setFimSusp] = useState<string>(suspensao?.data_fim ?? `${mes}-01`);
+  const [motivoSusp, setMotivoSusp] = useState<string>(suspensao?.motivo ?? "");
 
   const [afastado, setAfastado] = useState(!!afastamento);
   const [inicioAf, setInicioAf] = useState<string>(afastamento?.data_inicio ?? `${mes}-01`);
@@ -956,6 +1003,42 @@ function EventosMes({
           devido durante o afastamento.
         </p>
       </section>
+
+      <section className="space-y-3 rounded-md border p-3">
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input type="checkbox" checked={suspenso} onChange={(e) => setSuspenso(e.target.checked)} />
+          Suspensão disciplinar neste mês
+        </label>
+        {suspenso && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Início</Label>
+              <Input type="date" value={inicioSusp} onChange={(e) => setInicioSusp(e.target.value)} />
+            </div>
+            <div>
+              <Label>Fim</Label>
+              <Input type="date" value={fimSusp} onChange={(e) => setFimSusp(e.target.value)} />
+            </div>
+            <div className="col-span-2">
+              <Label>Motivo</Label>
+              <Input value={motivoSusp} onChange={(e) => setMotivoSusp(e.target.value)} placeholder="Opcional" />
+            </div>
+          </div>
+        )}
+        <Button
+          size="sm"
+          disabled={salvando || (suspenso && fimSusp < inicioSusp)}
+          onClick={() =>
+            onSuspensao({ ativo: suspenso, data_inicio: inicioSusp, data_fim: fimSusp, motivo: motivoSusp })
+          }
+        >
+          Salvar suspensão
+        </Button>
+        <p className="text-[11px] text-muted-foreground">
+          CLT Art. 474: dias de suspensão não são trabalhados nem pagos — descontados do líquido e
+          fora das bases de INSS, IRRF e FGTS.
+        </p>
+      </section>
     </div>
   );
 }
@@ -1017,6 +1100,11 @@ function DetalheContracheque({
         <Linha
           label={`Afastamento INSS (${cc.diasSemPagamento} dia(s) pagos pelo INSS)`}
           valor={cc.descAfastamento}
+          negativo
+        />
+        <Linha
+          label={`Suspensão disciplinar (${cc.diasSuspensos} dia(s))`}
+          valor={cc.descSuspensao}
           negativo
         />
         <Linha label="INSS" valor={cc.inss} negativo />
