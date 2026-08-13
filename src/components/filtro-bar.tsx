@@ -156,12 +156,14 @@ export function FiltroBar({
   lojas,
   state,
   busca = true,
+  periodo = true,
   buscaPlaceholder = "Buscar…",
   className = "",
 }: {
   lojas: LojaOpcao[];
   state: FiltroBarState;
   busca?: boolean;
+  periodo?: boolean;
   buscaPlaceholder?: string;
   className?: string;
 }) {
@@ -169,6 +171,7 @@ export function FiltroBar({
     <div className={`flex flex-wrap items-center gap-2 ${className}`}>
       <LojasSelect lojas={lojas} state={state} />
 
+      {periodo && (
       <div className="flex flex-wrap items-center gap-1">
         {ATALHOS.filter((a) => a.value !== "custom").map((a) => (
           <Button
@@ -182,7 +185,9 @@ export function FiltroBar({
           </Button>
         ))}
       </div>
+      )}
 
+      {periodo && (
       <div className="flex items-center gap-2">
         <Input
           type="date"
@@ -200,6 +205,7 @@ export function FiltroBar({
           onChange={(e) => state.setFim(e.target.value)}
         />
       </div>
+      )}
 
       {busca && (
         <div className="relative min-w-[14rem] flex-1">

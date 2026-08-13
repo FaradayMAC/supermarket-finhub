@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { FiltroBar, useFiltroBar } from "@/components/filtro-bar";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell, fmtBRL } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -75,7 +76,7 @@ type Func = any;
 function RescisaoPage() {
   const qc = useQueryClient();
   const { salarioMinimoFederal } = useReferenciasSalariais();
-  const [filtro, setFiltro] = useState("todas");
+  const filtro = useFiltroBar("tudo");
   const [sim, setSim] = useState<Func | null>(null);
   const [feriasDe, setFeriasDe] = useState<Func | null>(null);
   const [fgtsDe, setFgtsDe] = useState<Func | null>(null);
@@ -177,8 +178,11 @@ function RescisaoPage() {
 
   const hoje = hojeUTCDate();
   const filtrados = useMemo(
-    () => (filtro === "todas" ? funcs : funcs.filter((f) => f.loja_id === filtro)),
-    [funcs, filtro],
+    () =>
+      funcs.filter(
+        (f) => filtro.matchLoja(f.loja_id) && filtro.matchBusca(f.nome, f.cargo, f.cpf),
+      ),
+    [funcs, filtro.matchLoja, filtro.matchBusca],
   );
 
   const totais = useMemo(() => {
@@ -291,22 +295,12 @@ function RescisaoPage() {
   return (
     <AppShell title="Rescisão">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Label className="text-xs uppercase tracking-wide text-muted-foreground">Loja:</Label>
-          <Select value={filtro} onValueChange={setFiltro}>
-            <SelectTrigger className="w-56">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as lojas</SelectItem>
-              {(lojas as any[]).map((l) => (
-                <SelectItem key={l.id} value={l.id}>
-                  {l.nome} ({l.codigo})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FiltroBar
+          lojas={lojas as any}
+          state={filtro}
+          periodo={false}
+          buscaPlaceholder="Buscar por nome, cargo ou CPF…"
+        />
         <div className="flex gap-6 text-sm text-muted-foreground">
           <span>
             Provisão de férias:{" "}
@@ -433,7 +427,7 @@ function RescisaoPage() {
         </TabsContent>
 
         <TabsContent value="rotatividade">
-          <Rotatividade filtro={filtro} />
+          <Rotatividade lojas={lojas as any} />
         </TabsContent>
       </Tabs>
 
@@ -1100,12 +1094,8 @@ function tempoDeCasa(admissao?: string | null, desligamento?: string | null) {
 const fmtData = (v?: string | null) =>
   v ? new Date(String(v).slice(0, 10) + "T00:00:00Z").toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "—";
 
-function Rotatividade({ filtro }: { filtro: string }) {
-  const agora = new Date();
-  const [mes, setMes] = useState(
-    `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}`,
-  );
-  const [busca, setBusca] = useState("");
+function Rotatividade({ lojas }: { lojas: any[] }) {
+  const filtro = useFiltroBar("mes");
   const [tipoFiltro, setTipoFiltro] = useState("todos");
 
   const { data: desligados = [], isLoading } = useQuery({
@@ -1123,25 +1113,18 @@ function Rotatividade({ filtro }: { filtro: string }) {
     },
   });
 
-  const termoBusca = busca.trim().toLowerCase();
   const lista = useMemo(
     () =>
       desligados
-        .filter((f) => String(f.data_desligamento).slice(0, 7) === mes)
-        .filter((f) => filtro === "todas" || f.loja_id === filtro)
+        .filter((f) => filtro.inPeriodo(f.data_desligamento))
+        .filter((f) => filtro.matchLoja(f.loja_id))
         .filter(
           (f) =>
             tipoFiltro === "todos" ||
             (f.motivo_desligamento ?? "nao_informado") === tipoFiltro,
         )
-        .filter(
-          (f) =>
-            !termoBusca ||
-            f.nome.toLowerCase().includes(termoBusca) ||
-            (f.cpf ?? "").replace(/\D/g, "").includes(termoBusca.replace(/\D/g, "")) ||
-            (f.cargo ?? "").toLowerCase().includes(termoBusca),
-        ),
-    [desligados, mes, filtro, tipoFiltro, termoBusca],
+        .filter((f) => filtro.matchBusca(f.nome, f.cargo, f.cpf)),
+    [desligados, tipoFiltro, filtro.inPeriodo, filtro.matchLoja, filtro.matchBusca],
   );
 
   const porMotivo = useMemo(() => {
@@ -1157,7 +1140,11 @@ function Rotatividade({ filtro }: { filtro: string }) {
     TIPOS_RESCISAO.find((t) => t.value === v)?.label ?? "Não informado";
 
   const lojaLabel =
-    filtro === "todas" ? "Todas as lojas" : (lista[0]?.lojas?.nome ?? "Loja selecionada");
+    filtro.lojasSelecionadas.length === 0
+      ? "Todas as lojas"
+      : filtro.lojasSelecionadas.length === 1
+        ? (lojas.find((l: any) => l.id === filtro.lojasSelecionadas[0])?.nome ?? "Loja selecionada")
+        : `${filtro.lojasSelecionadas.length} lojas`;
 
   const linhasExport = useMemo(
     () =>
@@ -1182,18 +1169,8 @@ function Rotatividade({ filtro }: { filtro: string }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <Label className="text-xs uppercase tracking-wide text-muted-foreground">Competência:</Label>
-        <Input type="month" className="w-44" value={mes} onChange={(e) => setMes(e.target.value)} />
+        <FiltroBar lojas={lojas as any} state={filtro} buscaPlaceholder="Buscar por nome, CPF ou cargo…" />
         <div className="flex items-center gap-1">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome, CPF ou cargo…"
-              className="w-64 pl-9"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
-          </div>
           <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Tipo de rescisão" />
