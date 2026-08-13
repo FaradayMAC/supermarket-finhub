@@ -391,6 +391,8 @@ function FuncPage() {
                   <th className="px-4 py-3">CPF</th>
                   <th className="px-4 py-3">Cargo</th>
                   <th className="px-4 py-3">Unidade</th>
+                  <th className="px-4 py-3">Situação</th>
+
                   <th className="px-4 py-3">Regime</th>
                   <th className="px-4 py-3 text-center">Dep.</th>
                   <th className="px-4 py-3 text-right">Salário</th>
