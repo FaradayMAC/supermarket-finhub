@@ -124,6 +124,7 @@ function FuncPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Func | null>(null);
   const [filtro, setFiltro] = useState("todas");
+  const [filtroSituacao, setFiltroSituacao] = useState("todas");
   const [busca, setBusca] = useState("");
 
   const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
