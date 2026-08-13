@@ -18,6 +18,8 @@ import {
   calendarioMes,
   MAX_DIAS_VENDIDOS,
   type AfastamentoMes,
+  type SuspensaoMes,
+
   type FaltaDia,
   type FeriasMes,
   type FuncionarioCC,
