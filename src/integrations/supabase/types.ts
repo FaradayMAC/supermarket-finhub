@@ -105,6 +105,47 @@ export type Database = {
           },
         ]
       }
+      atestados_medicos: {
+        Row: {
+          cid: string
+          created_at: string
+          data_inicio: string
+          dias: number
+          funcionario_id: string
+          id: string
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          cid: string
+          created_at?: string
+          data_inicio: string
+          dias: number
+          funcionario_id: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cid?: string
+          created_at?: string
+          data_inicio?: string
+          dias?: number
+          funcionario_id?: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atestados_medicos_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           acao: string
