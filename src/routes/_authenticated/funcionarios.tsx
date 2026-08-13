@@ -717,6 +717,18 @@ function FuncForm({
           if (temVt && _vt <= 0) return toast.error("Informe o valor do vale-transporte");
           const _va = VALE_ALIMENTACAO_PADRAO_ES;
           if (!nascimento) return toast.error("Informe a data de nascimento");
+          // Estabilidade da gestante: dispensa arbitrária ou sem justa causa é vedada
+          // (ADCT Art. 10, II, "b"; vale também no contrato de experiência — STF Tema 542).
+          if (desligamento && gestacao && motivoDesl !== "justa_causa") {
+            const ok = window.confirm(
+              "ATENÇÃO — funcionária em período de estabilidade da gestante " +
+                `(${gestacao.situacao}${gestacao.fimEstabilidade ? `, até ${fmtData(gestacao.fimEstabilidade)}` : ""}).\n\n` +
+                "A lei veda a dispensa arbitrária ou sem justa causa nesse período — há risco de " +
+                "reintegração ou indenização judicial. Isso não se aplica a pedido de demissão da própria funcionária.\n\n" +
+                "Confirma mesmo assim o registro do desligamento?",
+            );
+            if (!ok) return;
+          }
           const _ps = preview.ps;
           const _po = preview.po;
           const _ve = Number(fd.get("ve") || 0);
@@ -730,8 +742,12 @@ function FuncForm({
             salario_base: sal,
             data_admissao: admissao || null,
             data_nascimento: nascimento || null,
-            data_desligamento: String(fd.get("desligamento") || "") || null,
+            data_desligamento: desligamento || null,
             data_fim_experiencia: fimExperiencia || null,
+            data_confirmacao_gravidez: confGravidez || null,
+            data_parto: dataParto || null,
+            data_retorno_licenca_maternidade: retornoLicenca || null,
+
 
             motivo_desligamento: motivoDesl === "none" ? null : motivoDesl,
 
