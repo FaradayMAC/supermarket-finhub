@@ -1136,6 +1136,11 @@ function Rotatividade({ lojas }: { lojas: any[] }) {
     return [...m.entries()];
   }, [lista]);
 
+  const periodoLabel =
+    filtro.inicio || filtro.fim
+      ? `${filtro.inicio || "início"} a ${filtro.fim || "hoje"}`
+      : "Todo o período";
+
   const labelMotivo = (v: string | null) =>
     TIPOS_RESCISAO.find((t) => t.value === v)?.label ?? "Não informado";
 
@@ -1205,7 +1210,7 @@ function Rotatividade({ lojas }: { lojas: any[] }) {
             onClick={() =>
               exportarRotatividadeCsv({
                 linhas: linhasExport,
-                mes,
+                mes: periodoLabel,
                 loja: lojaLabel,
                 resumo: resumoExport,
               })
@@ -1221,7 +1226,7 @@ function Rotatividade({ lojas }: { lojas: any[] }) {
               try {
                 await exportarRotatividadePdf({
                   linhas: linhasExport,
-                  mes,
+                  mes: periodoLabel,
                   loja: lojaLabel,
                   resumo: resumoExport,
                 });
