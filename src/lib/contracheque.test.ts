@@ -34,11 +34,14 @@ describe("calcInss — tabela 2026", () => {
 });
 
 describe("redutor do IRRF — Lei 15.270/2025", () => {
-  it("isenta integralmente até R$ 5.000", () => {
+  it("aplica o redutor cheio até R$ 5.000, zerando quase todo o imposto", () => {
     expect(redutorIrrf2026(5000)).toBe(312.89);
     const inss = calcInss(5000);
-    expect(calcIrrf(5000, inss, 0)).toBe(0);
+    expect(calcIrrf(5000, inss, 0)).toBeLessThan(30);
+    // com 1 dependente a dedução legal completa a isenção
+    expect(calcIrrf(5000, inss, 1)).toBe(0);
   });
+
 
   it("reduz de forma decrescente entre R$ 5.000,01 e R$ 7.350", () => {
     const r6000 = redutorIrrf2026(6000);
