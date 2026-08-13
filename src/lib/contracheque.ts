@@ -224,8 +224,27 @@ export type AfastamentoMes = {
   data_fim?: string | null;
 };
 
+/** Suspensão disciplinar (CLT Art. 474): dias não trabalhados e não pagos. */
+export type SuspensaoMes = { data_inicio: string; data_fim: string; motivo?: string };
+
+/** Dias da competência cobertos por suspensão disciplinar. */
+export function diasSuspensosNoMes(mes: string, suspensoes: SuspensaoMes[], diasNoMes: number) {
+  const dias = new Set<number>();
+  for (const s of suspensoes ?? []) {
+    const ini = s.data_inicio?.slice(0, 10);
+    const fim = (s.data_fim ?? s.data_inicio)?.slice(0, 10);
+    if (!ini || !fim) continue;
+    for (let d = 1; d <= diasNoMes; d++) {
+      const iso = `${mes}-${String(d).padStart(2, "0")}`;
+      if (iso >= ini && iso <= fim) dias.add(d);
+    }
+  }
+  return dias.size;
+}
+
 /** Máximo legal de dias de férias que podem ser vendidos (1/3 de 30). */
 export const MAX_DIAS_VENDIDOS = 10;
+
 
 /** Dias do mês em que a empresa ainda paga o salário durante afastamento INSS.
  *  Lei 8.213/91: os 15 primeiros dias de afastamento são de responsabilidade
