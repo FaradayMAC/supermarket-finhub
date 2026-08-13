@@ -1182,11 +1182,13 @@ function FuncForm({
           <div>
             <Label>Situação</Label>
             <div className="flex h-10 items-center rounded-md border bg-muted/40 px-3 text-sm text-muted-foreground">
-              Automática — vem do Contracheque da competência aberta
+              Automática — Desligado, Suspenso, Afastado (INSS), Férias, Experiência ou Ativo
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Férias ou afastamento pelo INSS marcados no Contracheque definem a situação.
+              Desligamento, suspensão, férias, afastamento pelo INSS e o fim da experiência definem
+              a situação, nessa ordem de prioridade.
             </p>
+
           </div>
           <div>
             <Label htmlFor="observacoes">Observações</Label>
