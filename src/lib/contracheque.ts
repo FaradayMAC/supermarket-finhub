@@ -290,6 +290,8 @@ export function calcContracheque(
     planos?: PlanosConfig;
     ferias?: FeriasMes | null;
     afastamento?: AfastamentoMes | null;
+    suspensoes?: SuspensaoMes[] | null;
+
   },
 ) {
 
