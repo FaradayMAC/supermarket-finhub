@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { FiltroBar, useFiltroBar } from "@/components/filtro-bar";
 import { AppShell, fmtBRL } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,7 +80,8 @@ const mesAtual = () => {
 function ContrachequePage() {
   const qc = useQueryClient();
   const [mes, setMes] = useState(mesAtual());
-  const [lojaFiltro, setLojaFiltro] = useState<string>("todas");
+  const filtro = useFiltroBar("tudo");
+  const lojaUnica = filtro.lojasSelecionadas.length === 1 ? filtro.lojasSelecionadas[0] : null;
   const [detalhe, setDetalhe] = useState<Func | null>(null);
   const [convOpen, setConvOpen] = useState<Func | null>(null);
   const [eventoOpen, setEventoOpen] = useState<Func | null>(null);
@@ -207,7 +209,7 @@ function ContrachequePage() {
   const lista = useMemo(() => {
     return funcionarios
       .filter((f) => entraNaCompetencia(f, mes) || folhaMap.has(f.id))
-      .filter((f) => lojaFiltro === "todas" || f.loja_id === lojaFiltro)
+      .filter((f) => filtro.matchLoja(f.loja_id) && filtro.matchBusca(f.nome, f.cargo, f.cpf))
       .sort((a, b) => (a.nome > b.nome ? 1 : -1))
       .map((f) => {
         const hist = folhaMap.get(f.id) ?? null;
@@ -227,22 +229,27 @@ function ContrachequePage() {
               }),
         };
       });
-  }, [folhaMap, funcionarios, lojaFiltro, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg, feriasMap, afastMap]);
+  }, [folhaMap, funcionarios, filtro.matchLoja, filtro.matchBusca, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg, feriasMap, afastMap]);
 
   // Escopo do botão: loja selecionada ou todas as lojas.
   const escopo = useMemo(() => {
     const elegiveis = funcionarios
       .filter((f) => entraNaCompetencia(f, mes) || folhaMap.has(f.id))
-      .filter((f) => lojaFiltro === "todas" || f.loja_id === lojaFiltro);
+      .filter((f) => filtro.matchLoja(f.loja_id));
     const fechados = elegiveis.filter((f) => folhaMap.has(f.id));
     const abertos = elegiveis.filter((f) => !folhaMap.has(f.id) && entraNaCompetencia(f, mes));
     return { elegiveis, fechados, abertos };
-  }, [funcionarios, folhaMap, lojaFiltro, mes]);
+  }, [funcionarios, folhaMap, filtro.matchLoja, mes]);
 
   const fechada = escopo.fechados.length > 0 && escopo.abertos.length === 0;
   const parcial = escopo.fechados.length > 0 && escopo.abertos.length > 0;
   const fechadaEm = escopo.fechados[0] ? folhaMap.get(escopo.fechados[0].id)?.fechada_em ?? null : null;
-  const escopoLabel = lojaFiltro === "todas" ? "todas as lojas" : lojaMap.get(lojaFiltro)?.nome ?? "loja";
+  const escopoLabel =
+    filtro.lojasSelecionadas.length === 0
+      ? "todas as lojas"
+      : lojaUnica
+        ? lojaMap.get(lojaUnica)?.nome ?? "loja"
+        : `${filtro.lojasSelecionadas.length} lojas selecionadas`;
 
 
   // Resumo agregado da folha inteira do escopo (abertos + fechados).
@@ -326,9 +333,9 @@ function ContrachequePage() {
       // Parte da folha paga em espécie sai do cofre da loja
       const valorCofre = Number(cofreValor.replace(",", ".")) || 0;
       if (valorCofre > 0) {
-        if (lojaFiltro === "todas") throw new Error("Selecione uma loja para registrar a saída do cofre.");
+        if (!lojaUnica) throw new Error("Selecione uma loja para registrar a saída do cofre.");
         await registrarSaidaCofre({
-          loja_id: lojaFiltro,
+          loja_id: lojaUnica,
           data: new Date().toISOString().slice(0, 10),
           origem: "folha",
           descricao: `Folha ${mes}`,
@@ -489,15 +496,12 @@ function ContrachequePage() {
       actions={
         <div className="flex items-center gap-2">
           <Input type="month" className="w-[10rem]" value={mes} onChange={(e) => setMes(e.target.value)} />
-          <Select value={lojaFiltro} onValueChange={setLojaFiltro}>
-            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as lojas</SelectItem>
-              {lojas.map((l) => (
-                <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FiltroBar
+            lojas={lojas as any}
+            state={filtro}
+            periodo={false}
+            buscaPlaceholder="Buscar funcionário…"
+          />
           {fechada ? (
             <Badge variant="secondary">Fechada em {fmtDataHora(fechadaEm)}</Badge>
           ) : parcial ? (
@@ -511,7 +515,7 @@ function ContrachequePage() {
             <Dialog open={fecharOpen} onOpenChange={setFecharOpen}>
               <Button variant="secondary" disabled={fecharFolha.isPending} onClick={() => setFecharOpen(true)}>
                 <Lock className="mr-2 h-4 w-4" />
-                {fecharFolha.isPending ? "Fechando…" : lojaFiltro === "todas" ? "Fechar folha do mês" : "Fechar folha da loja"}
+                {fecharFolha.isPending ? "Fechando…" : filtro.lojasSelecionadas.length === 0 ? "Fechar folha do mês" : "Fechar folha da(s) loja(s)"}
               </Button>
               <DialogContent>
                 <DialogHeader><DialogTitle>Fechar folha de {mes}</DialogTitle></DialogHeader>
@@ -529,10 +533,10 @@ function ContrachequePage() {
                       placeholder="0,00 — opcional"
                       value={cofreValor}
                       onChange={(e) => setCofreValor(e.target.value)}
-                      disabled={lojaFiltro === "todas"}
+                      disabled={!lojaUnica}
                     />
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {lojaFiltro === "todas"
+                      {!lojaUnica
                         ? "Selecione uma loja para registrar saída do cofre."
                         : "Quanto do líquido desta competência saiu do cofre em espécie."}
                     </p>
@@ -572,7 +576,7 @@ function ContrachequePage() {
               }}
             >
               <LockOpen className="mr-2 h-4 w-4" />
-              {reabrirFolha.isPending ? "Reabrindo…" : lojaFiltro === "todas" ? "Reabrir folha do mês" : "Reabrir folha da loja"}
+              {reabrirFolha.isPending ? "Reabrindo…" : filtro.lojasSelecionadas.length === 0 ? "Reabrir folha do mês" : "Reabrir folha da(s) loja(s)"}
             </Button>
           )}
         </div>
