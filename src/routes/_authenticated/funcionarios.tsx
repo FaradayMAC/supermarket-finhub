@@ -33,6 +33,16 @@ import { dataFimCarencia } from "@/lib/planos";
 import { VALE_ALIMENTACAO_PADRAO_ES, VALE_TRANSPORTE_DESCONTO_PCT } from "@/lib/beneficios";
 import { TIPOS_RESCISAO } from "@/lib/rescisao";
 import { AlertTriangle, Info, UserX } from "lucide-react";
+import {
+  CORES_SITUACAO,
+  fimExperienciaPadrao,
+  hojeISO,
+  situacaoAtual,
+  suspensaoVigente,
+  type SituacaoFuncionario,
+  type Suspensao,
+} from "@/lib/situacao-funcionario";
+
 
 
 /** Mantém só os dígitos do CPF (remove pontos/traços). */
