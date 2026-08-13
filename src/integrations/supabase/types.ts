@@ -58,6 +58,53 @@ export type Database = {
           },
         ]
       }
+      atestados_acidente_trabalho: {
+        Row: {
+          afastado_inss: boolean
+          created_at: string
+          data_inicio: string
+          data_retorno: string | null
+          dias_atestado: number
+          funcionario_id: string
+          id: string
+          numero_cat: string | null
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          afastado_inss?: boolean
+          created_at?: string
+          data_inicio: string
+          data_retorno?: string | null
+          dias_atestado: number
+          funcionario_id: string
+          id?: string
+          numero_cat?: string | null
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          afastado_inss?: boolean
+          created_at?: string
+          data_inicio?: string
+          data_retorno?: string | null
+          dias_atestado?: number
+          funcionario_id?: string
+          id?: string
+          numero_cat?: string | null
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atestados_acidente_trabalho_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           acao: string
