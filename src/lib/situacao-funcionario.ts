@@ -55,7 +55,37 @@ export function suspensaoVigente(
 export type FuncionarioSituacao = {
   data_desligamento?: string | null;
   data_fim_experiencia?: string | null;
+  data_confirmacao_gravidez?: string | null;
+  data_retorno_licenca_maternidade?: string | null;
 };
+
+/** Dias de estabilidade praticados pela empresa a partir do retorno da licença. */
+export const DIAS_ESTABILIDADE_GESTANTE = 90;
+
+export function addDiasISO(dataISO: string, dias: number): string {
+  const [y, m, d] = dataISO.slice(0, 10).split("-").map(Number);
+  if (!y || !m || !d) return "";
+  return new Date(Date.UTC(y, m - 1, d) + dias * 86400000).toISOString().slice(0, 10);
+}
+
+/**
+ * Regra operacional da empresa: 90 dias corridos de estabilidade contados do
+ * retorno da licença-maternidade. Enquanto não há retorno registrado, a
+ * funcionária segue como "Grávida" (gestação ou licença em curso).
+ * Referência legal mínima: ADCT Art. 10, II, "b" (5 meses após o parto).
+ */
+export function estabilidadeGestante(
+  dataConfirmacao: string | null | undefined,
+  dataRetorno: string | null | undefined,
+  hoje: string = hojeISO(),
+): { situacao: SituacaoFuncionario; fimEstabilidade: string | null } | null {
+  if (!dataConfirmacao) return null;
+  if (!dataRetorno) return { situacao: "Grávida", fimEstabilidade: null };
+  const fim = addDiasISO(dataRetorno, DIAS_ESTABILIDADE_GESTANTE);
+  if (hoje.slice(0, 10) <= fim)
+    return { situacao: "Estabilidade (gestante)", fimEstabilidade: fim };
+  return null;
+}
 
 export function situacaoAtual(
   f: FuncionarioSituacao,
@@ -66,6 +96,12 @@ export function situacaoAtual(
   if (f.data_desligamento) return "Desligado";
   if (suspensaoAtiva) return "Suspenso";
   if (situacaoMes === "Afastado (INSS)") return "Afastado (INSS)";
+  const gest = estabilidadeGestante(
+    f.data_confirmacao_gravidez,
+    f.data_retorno_licenca_maternidade,
+    hoje,
+  );
+  if (gest) return gest.situacao;
   if (situacaoMes === "Férias") return "Férias";
   const fim = f.data_fim_experiencia?.slice(0, 10);
   if (fim && hoje.slice(0, 10) <= fim) return "Experiência";
@@ -79,5 +115,8 @@ export const CORES_SITUACAO: Record<SituacaoFuncionario, string> = {
   Férias: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
   "Afastado (INSS)": "bg-orange-500/15 text-orange-700 dark:text-orange-400",
   Suspenso: "bg-orange-600/20 text-orange-800 dark:text-orange-300",
+  Grávida: "bg-pink-500/15 text-pink-700 dark:text-pink-400",
+  "Estabilidade (gestante)": "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-400",
   Desligado: "bg-muted text-muted-foreground",
+
 };
