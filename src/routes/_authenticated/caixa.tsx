@@ -450,7 +450,7 @@ function Projecao({ lojasSelecionadas, saldoAtual }: { lojasSelecionadas: string
   const meses = Number(horizonte);
 
   const filtrados = useMemo(
-    () => titulos.filter((t) => lojasSelecionadas.length === 0 || lojasSelecionadas.includes(t.loja_id)),
+    () => titulos.filter((t) => lojasSelecionadas.length === 0 || (!!t.loja_id && lojasSelecionadas.includes(t.loja_id))),
     [titulos, lojasSelecionadas],
   );
 
