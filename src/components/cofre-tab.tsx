@@ -156,7 +156,7 @@ export function CofreTab({
             </DialogTrigger>
             <SaidaForm
               lojas={lojas}
-              lojaPadrao={lojaId !== "todas" ? lojaId : ""}
+              lojaPadrao={lojasSelecionadas.length === 1 ? lojasSelecionadas[0] : ""}
               saving={criar.isPending}
               onSubmit={(v) => criar.mutate(v)}
             />
