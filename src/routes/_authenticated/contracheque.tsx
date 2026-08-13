@@ -178,6 +178,19 @@ function ContrachequePage() {
     },
   });
 
+  const { data: suspRows = [] } = useQuery({
+    queryKey: ["suspensoes-competencia", mes],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("suspensoes" as any)
+        .select("id,funcionario_id,data_inicio,data_fim,motivo")
+        .lte("data_inicio", `${mes}-31`)
+        .gte("data_fim", `${mes}-01`);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   const feriasMap = useMemo(
     () => new Map<string, any>(feriasRows.map((r) => [r.funcionario_id, r])),
     [feriasRows],
@@ -186,6 +199,16 @@ function ContrachequePage() {
     () => new Map<string, any>(afastRows.map((r) => [r.funcionario_id, r])),
     [afastRows],
   );
+  const suspMap = useMemo(() => {
+    const m = new Map<string, SuspensaoMes[]>();
+    suspRows.forEach((s) => {
+      const arr = m.get(s.funcionario_id) ?? [];
+      arr.push(s as SuspensaoMes);
+      m.set(s.funcionario_id, arr);
+    });
+    return m;
+  }, [suspRows]);
+
 
   const faltasMap = useMemo(() => {
     const m = new Map<string, FaltaDia[]>();
