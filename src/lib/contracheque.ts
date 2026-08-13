@@ -354,6 +354,11 @@ export function calcContracheque(
   const diasSemPagamento = afastado ? Math.max(0, cal.diasNoMes - diasPagosEmpresa) : 0;
   const descAfastamento = afastado ? r2((baseDia * 30 * diasSemPagamento) / cal.diasNoMes) : 0;
 
+  // --- Suspensão disciplinar (CLT Art. 474): dias não trabalhados e não pagos ---
+  const diasSuspensos = diasSuspensosNoMes(opts.mes, opts.suspensoes ?? [], cal.diasNoMes);
+  const descSuspensao = r2(baseDia * Math.min(diasSuspensos, 30));
+
+
   // --- 13º salário parcelado (novembro = 1ª parcela, dezembro = 2ª) ---
   const mesNum = Number(opts.mes.split("-")[1]);
   const avosDez = avos13(f.data_admissao, `${opts.mes.split("-")[0]}-12`);
