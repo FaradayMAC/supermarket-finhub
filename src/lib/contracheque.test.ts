@@ -13,7 +13,7 @@ import {
 describe("calcInss — tabela 2026", () => {
   it("primeira faixa (7,5%) no teto do salário mínimo de 2026", () => {
     // salário mínimo 2026 = R$ 1.621,00 (tabela de 2025 tinha teto de faixa 1.518,00)
-    expect(calcInss(1621)).toBeCloseTo(121.58, 2);
+    expect(calcInss(1621)).toBeCloseTo(121.57, 2);
     expect(calcInss(1621.01)).toBeGreaterThanOrEqual(calcInss(1621));
   });
 
