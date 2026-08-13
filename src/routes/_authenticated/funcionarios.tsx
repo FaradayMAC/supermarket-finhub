@@ -86,6 +86,9 @@ type Func = {
   data_nascimento: string | null;
   data_desligamento: string | null;
   data_fim_experiencia: string | null;
+  data_confirmacao_gravidez: string | null;
+  data_parto: string | null;
+  data_retorno_licenca_maternidade: string | null;
 
 
   vale_transporte: number;
