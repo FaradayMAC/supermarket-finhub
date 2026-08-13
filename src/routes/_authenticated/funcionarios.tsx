@@ -425,15 +425,9 @@ function FuncPage() {
                   const beneficios = c.beneficios;
                   return (
                     <tr key={f.id} className="border-b last:border-0">
-                      <td className="px-4 py-3 font-medium">
-                        {f.nome}
-                        {situacaoDe(f.id) !== "Ativo" && (
-                          <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">
-                            {situacaoDe(f.id)}
-                          </span>
-                        )}
-                      </td>
+                      <td className="px-4 py-3 font-medium">{f.nome}</td>
                       <td className="px-4 py-3 text-muted-foreground">{fmtCpf(f.cpf)}</td>
+
                       <td className="px-4 py-3 text-muted-foreground">{f.cargo ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.lojas?.nome ?? "—"}</td>
                       <td className="px-4 py-3 text-xs">
