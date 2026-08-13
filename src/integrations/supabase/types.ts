@@ -1555,6 +1555,44 @@ export type Database = {
           },
         ]
       }
+      notificacoes_lidas: {
+        Row: {
+          created_at: string
+          data_evento: string
+          funcionario_id: string
+          id: string
+          lida_em: string
+          lida_por: string | null
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          data_evento: string
+          funcionario_id: string
+          id?: string
+          lida_em?: string
+          lida_por?: string | null
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          data_evento?: string
+          funcionario_id?: string
+          id?: string
+          lida_em?: string
+          lida_por?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacoes_lidas_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perdas_estoque: {
         Row: {
           categoria: string | null
