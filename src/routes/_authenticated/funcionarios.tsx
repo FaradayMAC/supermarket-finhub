@@ -85,6 +85,8 @@ type Func = {
   data_admissao: string | null;
   data_nascimento: string | null;
   data_desligamento: string | null;
+  data_fim_experiencia: string | null;
+
 
   vale_transporte: number;
   vale_alimentacao: number;
