@@ -690,6 +690,8 @@ function FuncForm({
             data_admissao: admissao || null,
             data_nascimento: nascimento || null,
             data_desligamento: String(fd.get("desligamento") || "") || null,
+            data_fim_experiencia: fimExperiencia || null,
+
             motivo_desligamento: motivoDesl === "none" ? null : motivoDesl,
 
             vale_transporte: _vt,
