@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PeriodFilter, usePeriodo } from "@/components/period-filter";
+import { FiltroBar, useFiltroBar } from "@/components/filtro-bar";
 import { Plus, Trash2, Link2, Link2Off, Upload, ArrowDownCircle, ArrowUpCircle, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -71,10 +71,9 @@ function ConciliacaoPage() {
   const [open, setOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [matchFor, setMatchFor] = useState<Extrato | null>(null);
-  const [filtroLoja, setFiltroLoja] = useState("todas");
   const [filtroConta, setFiltroConta] = useState("todas");
   const [filtroStatus, setFiltroStatus] = useState("todos");
-  const periodoState = usePeriodo("1m");
+  const filtro = useFiltroBar("mes");
   const { inWindow } = periodoState;
 
   const { data: lojas = [] } = useQuery({

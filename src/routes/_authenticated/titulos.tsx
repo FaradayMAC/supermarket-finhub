@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { FiltroBar, useFiltroBar } from "@/components/filtro-bar";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell, fmtBRL } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -87,7 +88,7 @@ function TitulosPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<"pagar" | "receber">("pagar");
   const [open, setOpen] = useState(false);
-  const [filtroLoja, setFiltroLoja] = useState("todas");
+  const filtro = useFiltroBar("tudo");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [filtroOrigem, setFiltroOrigem] = useState("todas");
 
@@ -167,11 +168,13 @@ function TitulosPage() {
       titulos.filter(
         (t) =>
           t.tipo === tab &&
-          (filtroLoja === "todas" || t.loja_id === filtroLoja) &&
+          filtro.matchLoja(t.loja_id) &&
+          filtro.inPeriodo(t.data_vencimento) &&
+          filtro.matchBusca(t.descricao, t.numero_documento, (t as any).fornecedores?.razao_social) &&
           (filtroStatus === "todos" || t.status === filtroStatus) &&
           (filtroOrigem === "todas" || t.origem === filtroOrigem),
       ),
-    [titulos, tab, filtroLoja, filtroStatus, filtroOrigem],
+    [titulos, tab, filtroStatus, filtroOrigem, filtro.matchLoja, filtro.inPeriodo, filtro.matchBusca],
   );
 
   const resumo = useMemo(() => {
@@ -217,13 +220,6 @@ function TitulosPage() {
               <TabsTrigger value="pagar">A pagar</TabsTrigger>
               <TabsTrigger value="receber">A receber</TabsTrigger>
             </TabsList>
-            <Select value={filtroLoja} onValueChange={setFiltroLoja}>
-              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas as unidades</SelectItem>
-                {(lojas as any[]).map((l) => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
-              </SelectContent>
-            </Select>
             <Select value={filtroStatus} onValueChange={setFiltroStatus}>
               <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -244,6 +240,8 @@ function TitulosPage() {
             </Select>
           </div>
         </Tabs>
+
+        <FiltroBar lojas={lojas as any} state={filtro} buscaPlaceholder="Buscar por descrição, documento ou fornecedor…" />
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <ResumoCard titulo={`Em aberto (${labelTipo})`} valor={resumo.aberto} />
