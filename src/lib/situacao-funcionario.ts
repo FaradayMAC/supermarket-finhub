@@ -14,7 +14,59 @@ export type SituacaoFuncionario =
   | "Experiência"
   | "Suspenso"
   | "Grávida"
-  | "Estabilidade (gestante)";
+  | "Estabilidade (gestante)"
+  | "Afastado (Acidente de Trabalho)"
+  | "Estabilidade (acidente de trabalho)";
+
+/** Atestado por acidente de trabalho (Lei 8.213/91). */
+export type AtestadoAcidente = {
+  id?: string;
+  funcionario_id?: string;
+  data_inicio: string;
+  dias_atestado: number;
+  afastado_inss?: boolean;
+  numero_cat?: string | null;
+  data_retorno?: string | null;
+};
+
+/** Teto de dias de atestado pagos pela empresa (Lei 8.213/91, Art. 60, §3º).
+ *  Vale esteja o funcionário formalmente afastado pelo INSS ou não. */
+export function diasPagosEmpresa(diasAtestado: number): number {
+  return Math.max(0, Math.min(Number(diasAtestado) || 0, 15));
+}
+
+/** Estabilidade acidentária: 12 meses contados do retorno (Lei 8.213/91, Art. 118). */
+export const MESES_ESTABILIDADE_ACIDENTE = 12;
+
+export function fimEstabilidadeAcidente(dataRetorno: string): string {
+  const [y, m, d] = dataRetorno.slice(0, 10).split("-").map(Number);
+  if (!y || !m || !d) return "";
+  const dt = new Date(Date.UTC(y + 1, m - 1, d));
+  return dt.toISOString().slice(0, 10);
+}
+
+/**
+ * Situação decorrente de acidente de trabalho:
+ *  - sem data de retorno → "Afastado (Acidente de Trabalho)";
+ *  - com retorno dentro dos 12 meses → "Estabilidade (acidente de trabalho)".
+ */
+export function situacaoAcidente(
+  atestados: AtestadoAcidente[] | null | undefined,
+  hoje: string = hojeISO(),
+): { situacao: SituacaoFuncionario; fimEstabilidade: string | null } | null {
+  const dia = hoje.slice(0, 10);
+  const lista = atestados ?? [];
+  if (lista.some((a) => !a.data_retorno && a.data_inicio?.slice(0, 10) <= dia))
+    return { situacao: "Afastado (Acidente de Trabalho)", fimEstabilidade: null };
+  let melhor: string | null = null;
+  for (const a of lista) {
+    if (!a.data_retorno) continue;
+    const fim = fimEstabilidadeAcidente(a.data_retorno);
+    if (fim && dia <= fim && (!melhor || fim > melhor)) melhor = fim;
+  }
+  if (melhor) return { situacao: "Estabilidade (acidente de trabalho)", fimEstabilidade: melhor };
+  return null;
+}
 
 
 export type Suspensao = {
@@ -92,10 +144,14 @@ export function situacaoAtual(
   hoje: string,
   situacaoMes: string | null,
   suspensaoAtiva: Suspensao | null,
+  atestadosAcidente?: AtestadoAcidente[] | null,
 ): SituacaoFuncionario {
   if (f.data_desligamento) return "Desligado";
   if (suspensaoAtiva) return "Suspenso";
+  const acid = situacaoAcidente(atestadosAcidente, hoje);
+  if (acid?.situacao === "Afastado (Acidente de Trabalho)") return acid.situacao;
   if (situacaoMes === "Afastado (INSS)") return "Afastado (INSS)";
+  if (acid) return acid.situacao;
   const gest = estabilidadeGestante(
     f.data_confirmacao_gravidez,
     f.data_retorno_licenca_maternidade,
@@ -117,6 +173,8 @@ export const CORES_SITUACAO: Record<SituacaoFuncionario, string> = {
   Suspenso: "bg-orange-600/20 text-orange-800 dark:text-orange-300",
   Grávida: "bg-pink-500/15 text-pink-700 dark:text-pink-400",
   "Estabilidade (gestante)": "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-400",
+  "Afastado (Acidente de Trabalho)": "bg-red-500/15 text-red-700 dark:text-red-400",
+  "Estabilidade (acidente de trabalho)": "bg-rose-500/15 text-rose-700 dark:text-rose-400",
   Desligado: "bg-muted text-muted-foreground",
 
 };

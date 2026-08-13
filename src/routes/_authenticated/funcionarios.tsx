@@ -41,8 +41,11 @@ import {
   situacaoAtual,
   suspensaoVigente,
   type SituacaoFuncionario,
+  situacaoAcidente,
+  type AtestadoAcidente,
   type Suspensao,
 } from "@/lib/situacao-funcionario";
+import { AcidenteTrabalhoPanel, useAtestadosAcidente } from "@/components/acidente-trabalho";
 
 
 
@@ -214,6 +217,8 @@ function FuncPage() {
     },
   });
 
+  const { data: atestadosAcid = [] } = useAtestadosAcidente();
+
   const hoje = hojeISO();
 
   const situacaoDe = (f: Func): SituacaoFuncionario => {
@@ -226,7 +231,13 @@ function FuncPage() {
       suspensoes.filter((s) => s.funcionario_id === f.id),
       hoje,
     );
-    return situacaoAtual(f as any, hoje, situacaoMes, susp);
+    return situacaoAtual(
+      f as any,
+      hoje,
+      situacaoMes,
+      susp,
+      atestadosAcid.filter((a) => a.funcionario_id === f.id),
+    );
   };
 
 
@@ -246,7 +257,7 @@ function FuncPage() {
         (f.cargo ?? "").toLowerCase().includes(termo) ||
         (f.lojas?.nome ?? "").toLowerCase().includes(termo),
     );
-  }, [funcs, filtro, filtroSituacao, busca, situacaoDe, afastMes, feriasMes, suspensoes, hoje]);
+  }, [funcs, filtro, filtroSituacao, busca, situacaoDe, afastMes, feriasMes, suspensoes, atestadosAcid, hoje]);
 
   const totalFolha = filtrados.reduce((s, f) => s + custoReal(f, salarioMinimoFederal, planosCfg).total, 0);
   // Casos herdados: recebem VT mas não têm o desconto de 6% ativo — revisão manual.
@@ -363,6 +374,12 @@ function FuncPage() {
                 <SelectItem value="Suspenso">Suspenso</SelectItem>
                 <SelectItem value="Grávida">Grávida</SelectItem>
                 <SelectItem value="Estabilidade (gestante)">Estabilidade (gestante)</SelectItem>
+                <SelectItem value="Afastado (Acidente de Trabalho)">
+                  Afastado (Acidente de Trabalho)
+                </SelectItem>
+                <SelectItem value="Estabilidade (acidente de trabalho)">
+                  Estabilidade (acidente de trabalho)
+                </SelectItem>
                 <SelectItem value="Desligado">Desligado</SelectItem>
 
               </SelectContent>
@@ -635,6 +652,10 @@ function FuncForm({
   );
   const [desligamento, setDesligamento] = useState<string>(initial?.data_desligamento ?? "");
   const gestacao = estabilidadeGestante(confGravidez || null, retornoLicenca || null, hojeISO());
+  const { data: atestadosAcidTodos = [] } = useAtestadosAcidente();
+  const acidente = initial?.id
+    ? situacaoAcidente(atestadosAcidTodos.filter((a) => a.funcionario_id === initial.id))
+    : null;
 
   const [motivoDesl, setMotivoDesl] = useState<string>(
     (initial as any)?.motivo_desligamento ?? "none",
@@ -725,6 +746,17 @@ function FuncForm({
                 `(${gestacao.situacao}${gestacao.fimEstabilidade ? `, até ${fmtData(gestacao.fimEstabilidade)}` : ""}).\n\n` +
                 "A lei veda a dispensa arbitrária ou sem justa causa nesse período — há risco de " +
                 "reintegração ou indenização judicial. Isso não se aplica a pedido de demissão da própria funcionária.\n\n" +
+                "Confirma mesmo assim o registro do desligamento?",
+            );
+            if (!ok) return;
+          }
+          // Estabilidade acidentária: 12 meses após o retorno (Lei 8.213/91, Art. 118).
+          if (desligamento && acidente && motivoDesl !== "justa_causa") {
+            const ok = window.confirm(
+              "ATENÇÃO — funcionário com estabilidade por acidente de trabalho " +
+                `(${acidente.situacao}${acidente.fimEstabilidade ? `, até ${fmtData(acidente.fimEstabilidade)}` : ""}).\n\n` +
+                "A Lei 8.213/91, Art. 118 garante 12 meses de estabilidade após o retorno — a dispensa " +
+                "sem justa causa nesse período gera risco de reintegração ou indenização judicial.\n\n" +
                 "Confirma mesmo assim o registro do desligamento?",
             );
             if (!ok) return;
@@ -1076,6 +1108,14 @@ function FuncForm({
             )}
           </div>
 
+          {initial?.id ? (
+            <AcidenteTrabalhoPanel funcionarioId={initial.id} />
+          ) : (
+            <div className="col-span-2 rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+              Atestados por acidente de trabalho podem ser lançados após salvar o cadastro.
+            </div>
+          )}
+
           <div>
             <Label htmlFor="desligamento">Data de desligamento</Label>
             <Input
@@ -1095,6 +1135,16 @@ function FuncForm({
                   Funcionária em estabilidade da gestante ({gestacao.situacao}). A dispensa arbitrária
                   ou sem justa causa é vedada nesse período — risco de reintegração ou indenização
                   judicial. Será pedida uma confirmação extra ao salvar.
+                </span>
+              </p>
+            )}
+            {desligamento && acidente && motivoDesl !== "justa_causa" && (
+              <p className="mt-2 flex gap-2 rounded border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>
+                  Funcionário com estabilidade por acidente de trabalho ({acidente.situacao}). São 12
+                  meses de garantia de emprego após o retorno (Lei 8.213/91, Art. 118). Será pedida
+                  uma confirmação extra ao salvar.
                 </span>
               </p>
             )}

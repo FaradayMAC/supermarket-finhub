@@ -197,10 +197,40 @@ function ContrachequePage() {
     () => new Map<string, any>(feriasRows.map((r) => [r.funcionario_id, r])),
     [feriasRows],
   );
-  const afastMap = useMemo(
-    () => new Map<string, any>(afastRows.map((r) => [r.funcionario_id, r])),
-    [afastRows],
-  );
+  // Atestados por acidente de trabalho: mesma trava dos 15 dias pagos pela
+  // empresa (Lei 8.213/91, Art. 60, §3º), esteja formalizado no INSS ou não.
+  const { data: acidRows = [] } = useQuery({
+    queryKey: ["atestados-acidente-competencia", mes],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("atestados_acidente_trabalho" as any)
+        .select("id,funcionario_id,data_inicio,dias_atestado,afastado_inss,data_retorno")
+        .lte("data_inicio", `${mes}-31`);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const afastMap = useMemo(() => {
+    const m = new Map<string, any>(afastRows.map((r) => [r.funcionario_id, r]));
+    acidRows.forEach((a) => {
+      const ini = String(a.data_inicio).slice(0, 10);
+      const fim = new Date(
+        new Date(ini + "T00:00:00Z").getTime() + (Number(a.dias_atestado) - 1) * 86400000,
+      )
+        .toISOString()
+        .slice(0, 10);
+      if (fim < `${mes}-01`) return; // atestado encerrado antes da competência
+      m.set(a.funcionario_id, {
+        id: a.id,
+        funcionario_id: a.funcionario_id,
+        data_inicio: ini,
+        data_fim: fim,
+        tipo: "acidente_trabalho",
+      });
+    });
+    return m;
+  }, [afastRows, acidRows, mes]);
   const suspMap = useMemo(() => {
     const m = new Map<string, SuspensaoMes[]>();
     suspRows.forEach((s) => {
