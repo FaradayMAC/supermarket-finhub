@@ -251,8 +251,8 @@ function ContrachequePage() {
                 salarioMinimoFederal,
                 ferias: (feriasMap.get(f.id) as FeriasMes | undefined) ?? null,
                 afastamento: (afastMap.get(f.id) as AfastamentoMes | undefined) ?? null,
-          suspensoes: suspMap.get(f.id) ?? [],
                 suspensoes: suspMap.get(f.id) ?? [],
+
               }),
         };
       });
