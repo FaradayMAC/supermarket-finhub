@@ -251,10 +251,12 @@ function ContrachequePage() {
                 salarioMinimoFederal,
                 ferias: (feriasMap.get(f.id) as FeriasMes | undefined) ?? null,
                 afastamento: (afastMap.get(f.id) as AfastamentoMes | undefined) ?? null,
+          suspensoes: suspMap.get(f.id) ?? [],
+                suspensoes: suspMap.get(f.id) ?? [],
               }),
         };
       });
-  }, [folhaMap, funcionarios, filtro.matchLoja, filtro.matchBusca, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg, feriasMap, afastMap]);
+  }, [folhaMap, funcionarios, filtro.matchLoja, filtro.matchBusca, mes, faltasMap, convMap, salarioMinimoFederal, planosCfg, feriasMap, afastMap, suspMap]);
 
   // Escopo do botão: loja selecionada ou todas as lojas.
   const escopo = useMemo(() => {
@@ -328,6 +330,7 @@ function ContrachequePage() {
           salarioMinimoFederal,
           ferias: (feriasMap.get(f.id) as FeriasMes | undefined) ?? null,
           afastamento: (afastMap.get(f.id) as AfastamentoMes | undefined) ?? null,
+          suspensoes: suspMap.get(f.id) ?? [],
         });
         return {
           funcionario_id: f.id,
@@ -752,6 +755,7 @@ function ContrachequePage() {
               convenio={Number(convMap.get(detalhe.id)?.valor ?? 0)}
               ferias={feriasMap.get(detalhe.id) ?? null}
               afastamento={afastMap.get(detalhe.id) ?? null}
+              suspensoes={suspMap.get(detalhe.id) ?? []}
             />
           )}
         </DialogContent>
@@ -800,6 +804,7 @@ function ContrachequePage() {
               mes={mes}
               ferias={feriasMap.get(eventoOpen.id) ?? null}
               afastamento={afastMap.get(eventoOpen.id) ?? null}
+              suspensao={(suspMap.get(eventoOpen.id) ?? [])[0] ?? null}
               onFerias={(v) => saveFerias.mutate({ funcionario: eventoOpen, ...v })}
               onAfastamento={(v) => saveAfastamento.mutate({ funcionario: eventoOpen, ...v })}
               salvando={saveFerias.isPending || saveAfastamento.isPending}
@@ -966,15 +971,15 @@ function Linha({ label, valor, negativo, muted }: { label: string; valor: number
 }
 
 function DetalheContracheque({
-  func, loja, mes, faltas, convenio, ferias, afastamento,
+  func, loja, mes, faltas, convenio, ferias, afastamento, suspensoes,
 }: {
   func: Func; loja: string; mes: string; faltas: FaltaDia[]; convenio: number;
-  ferias?: FeriasMes | null; afastamento?: AfastamentoMes | null;
+  ferias?: FeriasMes | null; afastamento?: AfastamentoMes | null; suspensoes?: SuspensaoMes[];
 }) {
   const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
   const cc = calcContracheque(func, {
     mes, faltas, convenio, salarioMinimoFederal, planos: planosCfg,
-    ferias: ferias ?? null, afastamento: afastamento ?? null,
+    ferias: ferias ?? null, afastamento: afastamento ?? null, suspensoes: suspensoes ?? [],
   });
   const [y, m] = mes.split("-");
   return (
