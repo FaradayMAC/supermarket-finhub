@@ -33,6 +33,16 @@ import { dataFimCarencia } from "@/lib/planos";
 import { VALE_ALIMENTACAO_PADRAO_ES, VALE_TRANSPORTE_DESCONTO_PCT } from "@/lib/beneficios";
 import { TIPOS_RESCISAO } from "@/lib/rescisao";
 import { AlertTriangle, Info, UserX } from "lucide-react";
+import {
+  CORES_SITUACAO,
+  fimExperienciaPadrao,
+  hojeISO,
+  situacaoAtual,
+  suspensaoVigente,
+  type SituacaoFuncionario,
+  type Suspensao,
+} from "@/lib/situacao-funcionario";
+
 
 
 /** Mantém só os dígitos do CPF (remove pontos/traços). */
@@ -75,6 +85,8 @@ type Func = {
   data_admissao: string | null;
   data_nascimento: string | null;
   data_desligamento: string | null;
+  data_fim_experiencia: string | null;
+
 
   vale_transporte: number;
   vale_alimentacao: number;
@@ -186,12 +198,32 @@ function FuncPage() {
     },
   });
 
-  const situacaoDe = (id: string) =>
-    afastMes.some((a) => a.funcionario_id === id)
+  const { data: suspensoes = [] } = useQuery({
+    queryKey: ["suspensoes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("suspensoes" as any)
+        .select("id,funcionario_id,data_inicio,data_fim,motivo");
+      if (error) throw error;
+      return (data ?? []) as unknown as Suspensao[];
+    },
+  });
+
+  const hoje = hojeISO();
+
+  const situacaoDe = (f: Func): SituacaoFuncionario => {
+    const situacaoMes = afastMes.some((a) => a.funcionario_id === f.id)
       ? "Afastado (INSS)"
-      : feriasMes.some((a) => a.funcionario_id === id)
+      : feriasMes.some((a) => a.funcionario_id === f.id)
         ? "Férias"
-        : "Ativo";
+        : null;
+    const susp = suspensaoVigente(
+      suspensoes.filter((s) => s.funcionario_id === f.id),
+      hoje,
+    );
+    return situacaoAtual(f as any, hoje, situacaoMes, susp);
+  };
+
 
 
   const filtrados = useMemo(() => {
@@ -361,6 +393,8 @@ function FuncPage() {
                   <th className="px-4 py-3">CPF</th>
                   <th className="px-4 py-3">Cargo</th>
                   <th className="px-4 py-3">Unidade</th>
+                  <th className="px-4 py-3">Situação</th>
+
                   <th className="px-4 py-3">Regime</th>
                   <th className="px-4 py-3 text-center">Dep.</th>
                   <th className="px-4 py-3 text-right">Salário</th>
@@ -378,14 +412,15 @@ function FuncPage() {
               <tbody>
                 {isLoading && (
                   <tr>
-                    <td colSpan={15} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={16} className="px-4 py-8 text-center text-muted-foreground">
                       Carregando…
                     </td>
                   </tr>
                 )}
                 {!isLoading && filtrados.length === 0 && (
                   <tr>
-                    <td colSpan={15} className="px-4 py-12 text-center text-muted-foreground">
+                    <td colSpan={16} className="px-4 py-12 text-center text-muted-foreground">
+
                       Sem funcionários neste filtro.
                     </td>
                   </tr>
@@ -395,17 +430,19 @@ function FuncPage() {
                   const beneficios = c.beneficios;
                   return (
                     <tr key={f.id} className="border-b last:border-0">
-                      <td className="px-4 py-3 font-medium">
-                        {f.nome}
-                        {situacaoDe(f.id) !== "Ativo" && (
-                          <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">
-                            {situacaoDe(f.id)}
-                          </span>
-                        )}
-                      </td>
+                      <td className="px-4 py-3 font-medium">{f.nome}</td>
                       <td className="px-4 py-3 text-muted-foreground">{fmtCpf(f.cpf)}</td>
+
                       <td className="px-4 py-3 text-muted-foreground">{f.cargo ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.lojas?.nome ?? "—"}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-block rounded px-2 py-0.5 text-[11px] font-medium ${CORES_SITUACAO[situacaoDe(f)]}`}
+                        >
+                          {situacaoDe(f)}
+                        </span>
+                      </td>
+
                       <td className="px-4 py-3 text-xs">
                         {regimeDoFuncionario(f) === "lucro_real" ? "Lucro Real" : "Simples"}
                       </td>
@@ -555,6 +592,10 @@ function FuncForm({
   const va = VALE_ALIMENTACAO_PADRAO_ES;
   const [nascimento, setNascimento] = useState<string>((initial as any)?.data_nascimento ?? "");
   const [admissao, setAdmissao] = useState<string>(initial?.data_admissao ?? "");
+  const [fimExperiencia, setFimExperiencia] = useState<string>(
+    initial?.data_fim_experiencia ?? fimExperienciaPadrao(initial?.data_admissao ?? ""),
+  );
+
   const [motivoDesl, setMotivoDesl] = useState<string>(
     (initial as any)?.motivo_desligamento ?? "none",
   );
@@ -649,6 +690,8 @@ function FuncForm({
             data_admissao: admissao || null,
             data_nascimento: nascimento || null,
             data_desligamento: String(fd.get("desligamento") || "") || null,
+            data_fim_experiencia: fimExperiencia || null,
+
             motivo_desligamento: motivoDesl === "none" ? null : motivoDesl,
 
             vale_transporte: _vt,
@@ -909,9 +952,26 @@ function FuncForm({
               name="admissao"
               type="date"
               value={admissao}
-              onChange={(e) => setAdmissao(e.target.value)}
+              onChange={(e) => {
+                setAdmissao(e.target.value);
+                setFimExperiencia(fimExperienciaPadrao(e.target.value));
+              }}
             />
           </div>
+          <div>
+            <Label htmlFor="fim_experiencia">Fim do período de experiência</Label>
+            <Input
+              id="fim_experiencia"
+              name="fim_experiencia"
+              type="date"
+              value={fimExperiencia}
+              onChange={(e) => setFimExperiencia(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Preenchido automaticamente com admissão + 90 dias (CLT Art. 445) — editável.
+            </p>
+          </div>
+
           <div>
             <Label htmlFor="desligamento">Data de desligamento</Label>
             <Input
@@ -1122,11 +1182,13 @@ function FuncForm({
           <div>
             <Label>Situação</Label>
             <div className="flex h-10 items-center rounded-md border bg-muted/40 px-3 text-sm text-muted-foreground">
-              Automática — vem do Contracheque da competência aberta
+              Automática — Desligado, Suspenso, Afastado (INSS), Férias, Experiência ou Ativo
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Férias ou afastamento pelo INSS marcados no Contracheque definem a situação.
+              Desligamento, suspensão, férias, afastamento pelo INSS e o fim da experiência definem
+              a situação, nessa ordem de prioridade.
             </p>
+
           </div>
           <div>
             <Label htmlFor="observacoes">Observações</Label>

@@ -224,8 +224,27 @@ export type AfastamentoMes = {
   data_fim?: string | null;
 };
 
+/** Suspensão disciplinar (CLT Art. 474): dias não trabalhados e não pagos. */
+export type SuspensaoMes = { data_inicio: string; data_fim: string; motivo?: string };
+
+/** Dias da competência cobertos por suspensão disciplinar. */
+export function diasSuspensosNoMes(mes: string, suspensoes: SuspensaoMes[], diasNoMes: number) {
+  const dias = new Set<number>();
+  for (const s of suspensoes ?? []) {
+    const ini = s.data_inicio?.slice(0, 10);
+    const fim = (s.data_fim ?? s.data_inicio)?.slice(0, 10);
+    if (!ini || !fim) continue;
+    for (let d = 1; d <= diasNoMes; d++) {
+      const iso = `${mes}-${String(d).padStart(2, "0")}`;
+      if (iso >= ini && iso <= fim) dias.add(d);
+    }
+  }
+  return dias.size;
+}
+
 /** Máximo legal de dias de férias que podem ser vendidos (1/3 de 30). */
 export const MAX_DIAS_VENDIDOS = 10;
+
 
 /** Dias do mês em que a empresa ainda paga o salário durante afastamento INSS.
  *  Lei 8.213/91: os 15 primeiros dias de afastamento são de responsabilidade
@@ -271,6 +290,8 @@ export function calcContracheque(
     planos?: PlanosConfig;
     ferias?: FeriasMes | null;
     afastamento?: AfastamentoMes | null;
+    suspensoes?: SuspensaoMes[] | null;
+
   },
 ) {
 
@@ -333,6 +354,11 @@ export function calcContracheque(
   const diasSemPagamento = afastado ? Math.max(0, cal.diasNoMes - diasPagosEmpresa) : 0;
   const descAfastamento = afastado ? r2((baseDia * 30 * diasSemPagamento) / cal.diasNoMes) : 0;
 
+  // --- Suspensão disciplinar (CLT Art. 474): dias não trabalhados e não pagos ---
+  const diasSuspensos = diasSuspensosNoMes(opts.mes, opts.suspensoes ?? [], cal.diasNoMes);
+  const descSuspensao = r2(baseDia * Math.min(diasSuspensos, 30));
+
+
   // --- 13º salário parcelado (novembro = 1ª parcela, dezembro = 2ª) ---
   const mesNum = Number(opts.mes.split("-")[1]);
   const avosDez = avos13(f.data_admissao, `${opts.mes.split("-")[0]}-12`);
@@ -358,7 +384,10 @@ export function calcContracheque(
   // --- Descontos legais ---
   const baseInss = Math.max(
     0,
-    r2(salario + adicionais + extra + feriasTerco - descFaltas - descDsr - descExtra - descAfastamento),
+    r2(
+      salario + adicionais + extra + feriasTerco -
+        descFaltas - descDsr - descExtra - descAfastamento - descSuspensao,
+    ),
   );
   const inssMes = calcInss(baseInss);
   const inss = r2(inssMes + inss13);
@@ -368,7 +397,10 @@ export function calcContracheque(
   // Durante o afastamento por doença o FGTS continua devido sobre o salário.
   const baseFgts = Math.max(
     0,
-    r2(salario + adicionais + extra + feriasTerco + decimoNoMes - descFaltas - descDsr),
+    r2(
+      salario + adicionais + extra + feriasTerco + decimoNoMes -
+        descFaltas - descDsr - descSuspensao,
+    ),
   );
   const fgts = r2(baseFgts * FGTS_PCT);
   const irrf = r2(calcIrrf(baseInss, inssMes, Number(f.dependentes) || 0) + irrf13);
@@ -384,8 +416,10 @@ export function calcContracheque(
   const convenio = Math.max(0, Number(opts.convenio) || 0);
 
   const totalDescontos = r2(
-    descFaltas + descDsr + descExtra + descAfastamento + inss + irrf + descontoVt + convenio,
+    descFaltas + descDsr + descExtra + descAfastamento + descSuspensao +
+      inss + irrf + descontoVt + convenio,
   );
+
   const liquido = r2(proventos - totalDescontos);
 
   return {
@@ -413,6 +447,10 @@ export function calcContracheque(
     diasPagosEmpresa,
     diasSemPagamento,
     descAfastamento,
+    diasSuspensos,
+    descSuspensao,
+    suspenso: diasSuspensos > 0,
+
     decimoPrimeiraParcela,
     decimoSegundaParcela,
     decimoTotalAno,

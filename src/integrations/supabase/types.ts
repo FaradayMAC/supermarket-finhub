@@ -1049,6 +1049,7 @@ export type Database = {
           created_at: string
           data_admissao: string | null
           data_desligamento: string | null
+          data_fim_experiencia: string | null
           data_nascimento: string | null
           dependentes: number
           desconto_vt: boolean
@@ -1088,6 +1089,7 @@ export type Database = {
           created_at?: string
           data_admissao?: string | null
           data_desligamento?: string | null
+          data_fim_experiencia?: string | null
           data_nascimento?: string | null
           dependentes?: number
           desconto_vt?: boolean
@@ -1127,6 +1129,7 @@ export type Database = {
           created_at?: string
           data_admissao?: string | null
           data_desligamento?: string | null
+          data_fim_experiencia?: string | null
           data_nascimento?: string | null
           dependentes?: number
           desconto_vt?: boolean
@@ -1799,6 +1802,44 @@ export type Database = {
             columns: ["loja_id"]
             isOneToOne: false
             referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suspensoes: {
+        Row: {
+          created_at: string
+          data_fim: string
+          data_inicio: string
+          funcionario_id: string
+          id: string
+          motivo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_fim: string
+          data_inicio: string
+          funcionario_id: string
+          id?: string
+          motivo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_fim?: string
+          data_inicio?: string
+          funcionario_id?: string
+          id?: string
+          motivo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suspensoes_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
             referencedColumns: ["id"]
           },
         ]
