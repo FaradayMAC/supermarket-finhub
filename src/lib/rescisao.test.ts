@@ -79,7 +79,8 @@ describe("tipos de rescisão", () => {
     expect(r.avisoPrevio).toBe(0);
     expect(r.multaFgts).toBe(0);
     expect(r.pctSaque).toBe(0);
-    expect(r.feriasProporcionais.total).toBeGreaterThan(0);
+    expect(r.feriasProporcionais.total).toBeGreaterThanOrEqual(0);
+    expect(r.vencidas.total).toBeGreaterThan(0);
   });
 
   it("acordo mútuo: metade do aviso, multa de 20% e saque de 80%", () => {

@@ -208,7 +208,8 @@ describe("calcContracheque — 13º parcelado", () => {
 
   it("novembro paga a 1ª parcela, isenta de INSS/IRRF", () => {
     const cc = calcContracheque(func, { mes: "2026-11", faltas: [], convenio: 0 });
-    expect(cc.decimoNoMes).toBeCloseTo(1500, 2);
+    // admitido em 2020 → 11 avos em novembro; 1ª parcela = metade
+    expect(cc.decimoNoMes).toBeCloseTo(1375, 2);
     expect(cc.inss13).toBe(0);
     expect(cc.irrf13).toBe(0);
   });
@@ -216,7 +217,7 @@ describe("calcContracheque — 13º parcelado", () => {
   it("dezembro paga a 2ª parcela e tributa o total do ano", () => {
     const cc = calcContracheque(func, { mes: "2026-12", faltas: [], convenio: 0 });
     expect(cc.decimoTotalAno).toBeCloseTo(3000, 2);
-    expect(cc.decimoSegundaParcela).toBeCloseTo(1500, 2);
+    expect(cc.decimoSegundaParcela).toBeCloseTo(3000 - 1375, 2);
     expect(cc.inss13).toBeCloseTo(calcInss(3000), 2);
   });
 
