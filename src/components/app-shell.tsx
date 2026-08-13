@@ -6,6 +6,7 @@ import { useAuth, MODULO_LABEL, signOut, type ModuloId } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { NotificacoesSino } from "@/components/notificacoes-sino";
 
 type NavItem = { to: string; label: string; icon: any; modulo?: ModuloId };
 type NavGroup = { label: string; items: NavItem[]; defaultOpen?: boolean };
@@ -196,7 +197,10 @@ export function AppShell({ children, title, actions }: { children: ReactNode; ti
           <div className="min-w-0">
             <h1 className="truncate text-xl font-semibold tracking-tight">{title}</h1>
           </div>
-          <div className="flex shrink-0 items-center gap-2">{actions}</div>
+          <div className="flex shrink-0 items-center gap-2">
+            {actions}
+            <NotificacoesSino />
+          </div>
         </header>
         <main className="px-4 py-6 sm:px-8 sm:py-8">
           {!auth.loading && !auth.hasAnyModule && (
