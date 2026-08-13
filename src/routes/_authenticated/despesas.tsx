@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { registrarSaidaCofre } from "@/components/cofre-tab";
+import { FiltroBar, useFiltroBar } from "@/components/filtro-bar";
 
 export const Route = createFileRoute("/_authenticated/despesas")({
   head: () => ({ meta: [{ title: "Despesas · MercadoGest" }] }),
