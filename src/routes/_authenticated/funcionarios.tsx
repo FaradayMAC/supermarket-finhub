@@ -186,12 +186,32 @@ function FuncPage() {
     },
   });
 
-  const situacaoDe = (id: string) =>
-    afastMes.some((a) => a.funcionario_id === id)
+  const { data: suspensoes = [] } = useQuery({
+    queryKey: ["suspensoes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("suspensoes" as any)
+        .select("id,funcionario_id,data_inicio,data_fim,motivo");
+      if (error) throw error;
+      return (data ?? []) as unknown as Suspensao[];
+    },
+  });
+
+  const hoje = hojeISO();
+
+  const situacaoDe = (f: Func): SituacaoFuncionario => {
+    const situacaoMes = afastMes.some((a) => a.funcionario_id === f.id)
       ? "Afastado (INSS)"
-      : feriasMes.some((a) => a.funcionario_id === id)
+      : feriasMes.some((a) => a.funcionario_id === f.id)
         ? "Férias"
-        : "Ativo";
+        : null;
+    const susp = suspensaoVigente(
+      suspensoes.filter((s) => s.funcionario_id === f.id),
+      hoje,
+    );
+    return situacaoAtual(f as any, hoje, situacaoMes, susp);
+  };
+
 
 
   const filtrados = useMemo(() => {
