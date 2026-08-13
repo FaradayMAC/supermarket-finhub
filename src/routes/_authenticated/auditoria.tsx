@@ -99,7 +99,7 @@ function Auditoria() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["auditoria", tabela, usuario, de, ate],
-    enabled: auth.isAdmin,
+    enabled: auth.can("usuarios"),
     queryFn: async () => {
       let q = supabase
         .from("audit_log")
@@ -125,7 +125,7 @@ function Auditoria() {
     return m;
   }, [data?.perfis]);
 
-  if (!auth.isAdmin) {
+  if (!auth.can("usuarios")) {
     return (
       <AppShell title="Log de auditoria">
         <Card>
