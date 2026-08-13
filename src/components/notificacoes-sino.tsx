@@ -46,10 +46,22 @@ export function NotificacoesSino() {
     staleTime: 60 * 1000,
   });
 
-  const pendentes = useMemo(
-    () => filtrarNaoLidas(notificacoesDoDia(funcionarios as any, new Date()), lidas as any),
-    [funcionarios, lidas],
-  );
+  const { data: atestados = [] } = useAtestadosMedicos();
+
+  const pendentes = useMemo(() => {
+    const nomes = Object.fromEntries(
+      (funcionarios as any[]).map((f) => [f.id, f.nome as string]),
+    ) as Record<string, string>;
+    const ativos = new Set((funcionarios as any[]).map((f) => f.id));
+    const todas = [
+      ...notificacoesDoDia(funcionarios as any, new Date()),
+      ...verificarLimiteCid(
+        atestados.filter((a) => ativos.has(a.funcionario_id)),
+        nomes,
+      ),
+    ];
+    return filtrarNaoLidas(todas, lidas as any);
+  }, [funcionarios, lidas, atestados]);
 
   const marcarLida = useMutation({
     mutationFn: async (n: Notificacao) => {
