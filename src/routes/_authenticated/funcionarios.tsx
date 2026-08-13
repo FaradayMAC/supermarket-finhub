@@ -433,6 +433,14 @@ function FuncPage() {
 
                       <td className="px-4 py-3 text-muted-foreground">{f.cargo ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.lojas?.nome ?? "—"}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-block rounded px-2 py-0.5 text-[11px] font-medium ${CORES_SITUACAO[situacaoDe(f)]}`}
+                        >
+                          {situacaoDe(f)}
+                        </span>
+                      </td>
+
                       <td className="px-4 py-3 text-xs">
                         {regimeDoFuncionario(f) === "lucro_real" ? "Lucro Real" : "Simples"}
                       </td>
