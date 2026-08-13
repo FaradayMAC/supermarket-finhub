@@ -74,7 +74,6 @@ function ConciliacaoPage() {
   const [filtroConta, setFiltroConta] = useState("todas");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const filtro = useFiltroBar("mes");
-  const { inWindow } = periodoState;
 
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas-min"],
@@ -201,7 +200,6 @@ function ConciliacaoPage() {
       title="Conciliação bancária"
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <PeriodFilter state={periodoState} showLabel={false} />
           <Dialog open={importOpen} onOpenChange={setImportOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" disabled={lojas.length === 0}>
