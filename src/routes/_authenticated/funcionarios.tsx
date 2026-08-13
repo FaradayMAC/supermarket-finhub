@@ -592,6 +592,10 @@ function FuncForm({
   const va = VALE_ALIMENTACAO_PADRAO_ES;
   const [nascimento, setNascimento] = useState<string>((initial as any)?.data_nascimento ?? "");
   const [admissao, setAdmissao] = useState<string>(initial?.data_admissao ?? "");
+  const [fimExperiencia, setFimExperiencia] = useState<string>(
+    initial?.data_fim_experiencia ?? fimExperienciaPadrao(initial?.data_admissao ?? ""),
+  );
+
   const [motivoDesl, setMotivoDesl] = useState<string>(
     (initial as any)?.motivo_desligamento ?? "none",
   );
