@@ -129,18 +129,7 @@ function DespesasPage() {
       }
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Label className="text-xs uppercase tracking-wide text-muted-foreground">Loja:</Label>
-          <Select value={filtroLoja} onValueChange={setFiltroLoja}>
-            <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as lojas</SelectItem>
-              {(lojas as any[]).map((l) => (
-                <SelectItem key={l.id} value={l.id}>{l.nome} ({l.codigo})</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FiltroBar lojas={lojas as any} state={filtro} buscaPlaceholder="Buscar por descrição, categoria ou fornecedor…" />
         <div className="text-sm text-muted-foreground">
           Total filtrado: <span className="font-semibold text-foreground">{fmtBRL(total)}</span>
         </div>
