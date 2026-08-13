@@ -209,7 +209,7 @@ function ContrachequePage() {
   const lista = useMemo(() => {
     return funcionarios
       .filter((f) => entraNaCompetencia(f, mes) || folhaMap.has(f.id))
-      .filter((f) => filtro.matchLoja(f.loja_id) && filtro.matchBusca(f.nome, f.cargo, f.cpf))
+      .filter((f) => filtro.matchLoja(f.loja_id) && filtro.matchBusca(f.nome, f.cargo))
       .sort((a, b) => (a.nome > b.nome ? 1 : -1))
       .map((f) => {
         const hist = folhaMap.get(f.id) ?? null;
