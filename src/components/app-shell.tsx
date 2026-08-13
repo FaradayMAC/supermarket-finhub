@@ -53,6 +53,8 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/lojas", label: "Lojas", icon: Store },
       { to: "/usuarios", label: "Usuários", icon: Shield, admin: true },
+      { to: "/auditoria", label: "Log de auditoria", icon: ScrollText, admin: true },
+
     ],
   },
 ];
