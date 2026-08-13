@@ -107,6 +107,8 @@ export function NotificacoesSino() {
                   <div className="mt-0.5 text-muted-foreground">
                     {n.tipo === "plano_saude" ? (
                       <HeartPulse className="h-4 w-4" />
+                    ) : n.tipo === "limite_cid_inss" ? (
+                      <Stethoscope className="h-4 w-4" />
                     ) : (
                       <CalendarClock className="h-4 w-4" />
                     )}
