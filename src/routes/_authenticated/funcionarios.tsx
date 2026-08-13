@@ -344,6 +344,23 @@ function FuncPage() {
               </SelectContent>
             </Select>
           </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Situação:</Label>
+            <Select value={filtroSituacao} onValueChange={setFiltroSituacao}>
+              <SelectTrigger className="w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas</SelectItem>
+                <SelectItem value="Ativo">Ativo</SelectItem>
+                <SelectItem value="Férias">Férias</SelectItem>
+                <SelectItem value="Afastado (INSS)">Afastado (INSS)</SelectItem>
+                <SelectItem value="Experiência">Experiência</SelectItem>
+                <SelectItem value="Suspenso">Suspenso</SelectItem>
+                <SelectItem value="Desligado">Desligado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="relative flex-1 min-w-[16rem] max-w-sm">
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
