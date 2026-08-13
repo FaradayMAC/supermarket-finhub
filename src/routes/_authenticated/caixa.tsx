@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PeriodFilter, usePeriodo } from "@/components/period-filter";
+import { FiltroBar, useFiltroBar } from "@/components/filtro-bar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CofreTab } from "@/components/cofre-tab";
@@ -48,9 +48,8 @@ function monthKey(d: Date) {
 function CaixaPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [filtroLoja, setFiltroLoja] = useState<string>("todas");
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
-  const periodoState = usePeriodo("1m");
+  const filtro = useFiltroBar("mes");
 
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas-min"],
@@ -69,16 +68,17 @@ function CaixaPage() {
     },
   });
 
-  const { inWindow, meses: monthsBack } = periodoState;
+  const { matchLoja, inPeriodo, matchBusca, meses: monthsBack } = filtro;
 
   const filtradas = useMemo(() => {
     return movs.filter((m) => {
-      if (filtroLoja !== "todas" && m.loja_id !== filtroLoja) return false;
+      if (!matchLoja(m.loja_id)) return false;
       if (filtroTipo !== "todos" && m.tipo !== filtroTipo) return false;
-      if (!inWindow(m.data_movimentacao)) return false;
+      if (!inPeriodo(m.data_movimentacao)) return false;
+      if (!matchBusca(m.descricao)) return false;
       return true;
     });
-  }, [movs, filtroLoja, filtroTipo, periodoState.from, periodoState.to]);
+  }, [movs, filtroTipo, matchLoja, inPeriodo, matchBusca]);
 
   const entradas = filtradas.filter((m) => m.tipo === "entrada").reduce((s, m) => s + Number(m.valor), 0);
   const saidas = filtradas.filter((m) => m.tipo === "saida").reduce((s, m) => s + Number(m.valor), 0);
@@ -88,12 +88,12 @@ function CaixaPage() {
   const hojeISO = new Date().toISOString().slice(0, 10);
   const saldoAtual = useMemo(() => {
     return movs.reduce((s, m) => {
-      if (filtroLoja !== "todas" && m.loja_id !== filtroLoja) return s;
+      if (!matchLoja(m.loja_id)) return s;
       if (m.status !== "confirmado") return s;
       if ((m.data_movimentacao ?? "").slice(0, 10) > hojeISO) return s;
       return s + (m.tipo === "entrada" ? Number(m.valor) : -Number(m.valor));
     }, 0);
-  }, [movs, filtroLoja, hojeISO]);
+  }, [movs, matchLoja, hojeISO]);
 
   // Evolução mensal
   const monthly = useMemo(() => {
@@ -252,18 +252,9 @@ function CaixaPage() {
       <div className="space-y-6">
         {/* Filtros */}
         <Card>
-          <CardContent className="grid gap-3 p-4 sm:grid-cols-3">
-            <div>
-              <Label className="text-xs uppercase text-muted-foreground">Unidade</Label>
-              <Select value={filtroLoja} onValueChange={setFiltroLoja}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todas">Todas as unidades</SelectItem>
-                  {lojas.map((l: any) => <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
+          <CardContent className="space-y-3 p-4">
+            <FiltroBar lojas={lojas as any} state={filtro} buscaPlaceholder="Buscar por descrição…" />
+            <div className="w-56">
               <Label className="text-xs uppercase text-muted-foreground">Tipo</Label>
               <Select value={filtroTipo} onValueChange={setFiltroTipo}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -273,10 +264,6 @@ function CaixaPage() {
                   <SelectItem value="saida">Saídas</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <Label className="text-xs uppercase text-muted-foreground">Período</Label>
-              <PeriodFilter state={periodoState} showLabel={false} />
             </div>
           </CardContent>
         </Card>
@@ -395,11 +382,11 @@ function CaixaPage() {
           </TabsContent>
 
           <TabsContent value="projetado" className="mt-4">
-            <Projecao lojaId={filtroLoja} saldoAtual={saldoAtual} />
+            <Projecao lojasSelecionadas={filtro.lojasSelecionadas} saldoAtual={saldoAtual} />
           </TabsContent>
 
           <TabsContent value="cofre" className="mt-4">
-            <CofreTab lojaId={filtroLoja} lojas={lojas as any} periodoState={periodoState} />
+            <CofreTab lojasSelecionadas={filtro.lojasSelecionadas} lojas={lojas as any} filtro={filtro} />
           </TabsContent>
         </Tabs>
       </div>
@@ -442,7 +429,7 @@ type Titulo = {
   lojas?: { nome: string } | null;
 };
 
-function Projecao({ lojaId, saldoAtual }: { lojaId: string; saldoAtual: number }) {
+function Projecao({ lojasSelecionadas, saldoAtual }: { lojasSelecionadas: string[]; saldoAtual: number }) {
   const [horizonte, setHorizonte] = useState("6");
   const hoje = new Date().toISOString().slice(0, 10);
 
@@ -463,8 +450,8 @@ function Projecao({ lojaId, saldoAtual }: { lojaId: string; saldoAtual: number }
   const meses = Number(horizonte);
 
   const filtrados = useMemo(
-    () => titulos.filter((t) => lojaId === "todas" || t.loja_id === lojaId),
-    [titulos, lojaId],
+    () => titulos.filter((t) => lojasSelecionadas.length === 0 || (!!t.loja_id && lojasSelecionadas.includes(t.loja_id))),
+    [titulos, lojasSelecionadas],
   );
 
   const saldoAberto = (t: Titulo) => Math.max(0, Number(t.valor) - Number(t.valor_pago ?? 0));

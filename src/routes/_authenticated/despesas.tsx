@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { registrarSaidaCofre } from "@/components/cofre-tab";
+import { FiltroBar, useFiltroBar } from "@/components/filtro-bar";
 
 export const Route = createFileRoute("/_authenticated/despesas")({
   head: () => ({ meta: [{ title: "Despesas · MercadoGest" }] }),
@@ -36,7 +37,7 @@ type Despesa = {
 function DespesasPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [filtroLoja, setFiltroLoja] = useState<string>("todas");
+  const filtro = useFiltroBar("mes");
 
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas-min"],
@@ -63,9 +64,16 @@ function DespesasPage() {
   });
 
 
+  const { matchLoja, inPeriodo, matchBusca } = filtro;
   const filtradas = useMemo(
-    () => (filtroLoja === "todas" ? despesas : despesas.filter((d) => d.loja_id === filtroLoja)),
-    [despesas, filtroLoja],
+    () =>
+      despesas.filter(
+        (d) =>
+          matchLoja(d.loja_id) &&
+          inPeriodo(d.data_competencia) &&
+          matchBusca(d.descricao, d.categorias_despesa?.nome, d.fornecedores?.razao_social, d.fornecedores?.nome_fantasia),
+      ),
+    [despesas, matchLoja, inPeriodo, matchBusca],
   );
   const total = filtradas.reduce((s, d) => s + Number(d.valor), 0);
 
@@ -121,18 +129,7 @@ function DespesasPage() {
       }
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Label className="text-xs uppercase tracking-wide text-muted-foreground">Loja:</Label>
-          <Select value={filtroLoja} onValueChange={setFiltroLoja}>
-            <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as lojas</SelectItem>
-              {(lojas as any[]).map((l) => (
-                <SelectItem key={l.id} value={l.id}>{l.nome} ({l.codigo})</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FiltroBar lojas={lojas as any} state={filtro} buscaPlaceholder="Buscar por descrição, categoria ou fornecedor…" />
         <div className="text-sm text-muted-foreground">
           Total filtrado: <span className="font-semibold text-foreground">{fmtBRL(total)}</span>
         </div>

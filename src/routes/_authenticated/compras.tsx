@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PeriodFilter, usePeriodo } from "@/components/period-filter";
+import { FiltroBar, useFiltroBar } from "@/components/filtro-bar";
 import { Plus, Trash2, PackageSearch, Boxes, Truck } from "lucide-react";
 import { toast } from "sonner";
 
@@ -57,9 +57,8 @@ function ComprasPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [detalhe, setDetalhe] = useState<Compra | null>(null);
-  const [filtroLoja, setFiltroLoja] = useState("todas");
-  const periodoState = usePeriodo("1m");
-  const { inWindow } = periodoState;
+  const filtro = useFiltroBar("mes");
+  const { matchLoja, inPeriodo, matchBusca } = filtro;
 
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas-min"],
@@ -86,8 +85,14 @@ function ComprasPage() {
   });
 
   const filtradas = useMemo(
-    () => compras.filter((c) => (filtroLoja === "todas" || c.loja_id === filtroLoja) && inWindow(c.data_compra)),
-    [compras, filtroLoja, inWindow],
+    () =>
+      compras.filter(
+        (c) =>
+          matchLoja(c.loja_id) &&
+          inPeriodo(c.data_compra) &&
+          matchBusca(c.fornecedores?.razao_social, c.numero_nf),
+      ),
+    [compras, matchLoja, inPeriodo, matchBusca],
   );
   const totalCMV = filtradas.reduce((s, c) => s + Number(c.valor_total), 0);
   const pendentes = filtradas.filter((c) => c.status !== "pago");
@@ -128,7 +133,6 @@ function ComprasPage() {
       title="Compras de mercadoria"
       actions={
         <div className="flex items-center gap-2">
-          <PeriodFilter state={periodoState} showLabel={false} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button disabled={lojas.length === 0}><Plus className="h-4 w-4" /> Nova compra</Button>
@@ -152,18 +156,7 @@ function ComprasPage() {
 
         <TabsContent value="compras">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Loja:</Label>
-              <Select value={filtroLoja} onValueChange={setFiltroLoja}>
-                <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todas">Todas as lojas</SelectItem>
-                  {(lojas as any[]).map((l) => (
-                    <SelectItem key={l.id} value={l.id}>{l.nome} ({l.codigo})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <FiltroBar lojas={lojas as any} state={filtro} buscaPlaceholder="Buscar por fornecedor ou nº da NF…" />
             <div className="flex gap-6 text-sm">
               <div>
                 <div className="text-xs uppercase text-muted-foreground">CMV do período</div>

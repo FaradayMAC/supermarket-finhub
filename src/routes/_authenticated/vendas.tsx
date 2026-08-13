@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PeriodFilter, usePeriodo } from "@/components/period-filter";
+import { FiltroBar, useFiltroBar } from "@/components/filtro-bar";
 import { Plus, Trash2, ShoppingCart, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -60,9 +60,8 @@ const hojeISO = () => {
 function VendasPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [filtroLoja, setFiltroLoja] = useState("todas");
-  const periodoState = usePeriodo("1m");
-  const { inWindow } = periodoState;
+  const filtro = useFiltroBar("mes");
+  const { matchLoja, inPeriodo } = filtro;
 
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas-min"],
@@ -83,10 +82,8 @@ function VendasPage() {
 
   const filtradas = useMemo(
     () =>
-      vendas.filter(
-        (v) => (filtroLoja === "todas" || v.loja_id === filtroLoja) && inWindow(v.data),
-      ),
-    [vendas, filtroLoja, inWindow],
+      vendas.filter((v) => matchLoja(v.loja_id) && inPeriodo(v.data)),
+    [vendas, matchLoja, inPeriodo],
   );
 
   const tot = filtradas.reduce(
@@ -153,7 +150,6 @@ function VendasPage() {
       title="Vendas diárias"
       actions={
         <div className="flex items-center gap-2">
-          <PeriodFilter state={periodoState} showLabel={false} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button disabled={lojas.length === 0}><Plus className="h-4 w-4" /> Nova venda</Button>
@@ -163,17 +159,8 @@ function VendasPage() {
         </div>
       }
     >
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Label className="text-xs uppercase tracking-wide text-muted-foreground">Loja:</Label>
-        <Select value={filtroLoja} onValueChange={setFiltroLoja}>
-          <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todas">Todas as lojas</SelectItem>
-            {(lojas as any[]).map((l) => (
-              <SelectItem key={l.id} value={l.id}>{l.nome} ({l.codigo})</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="mb-4">
+        <FiltroBar lojas={lojas as any} state={filtro} busca={false} />
       </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

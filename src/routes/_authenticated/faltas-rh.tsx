@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2, Pencil } from "lucide-react";
+import { FiltroBar, useFiltroBar } from "@/components/filtro-bar";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/faltas-rh")({
@@ -69,6 +70,7 @@ function FaltasPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState<Falta | null>(null);
+  const filtro = useFiltroBar("tudo");
 
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas"],
@@ -103,16 +105,27 @@ function FaltasPage() {
   const lojaMap = useMemo(() => new Map(lojas.map((l) => [l.id, l])), [lojas]);
   const funcMap = useMemo(() => new Map(funcionarios.map((f) => [f.id, f])), [funcionarios]);
 
+  const filtradas = useMemo(
+    () =>
+      faltas.filter(
+        (f) =>
+          filtro.matchLoja(f.loja_id) &&
+          filtro.inPeriodo(f.data) &&
+          filtro.matchBusca(funcMap.get(f.funcionario_id)?.nome, f.motivo, f.observacoes),
+      ),
+    [faltas, funcMap, filtro.matchLoja, filtro.inPeriodo, filtro.matchBusca],
+  );
+
   const grupos = useMemo(() => {
     const m = new Map<string, Falta[]>();
-    faltas.forEach((f) => {
+    filtradas.forEach((f) => {
       const k = f.data.slice(0, 7);
       const arr = m.get(k) ?? [];
       arr.push(f);
       m.set(k, arr);
     });
     return [...m.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-  }, [faltas]);
+  }, [filtradas]);
 
   const save = useMutation({
     mutationFn: async (payload: Omit<Falta, "id">) => {
@@ -169,6 +182,10 @@ function FaltasPage() {
         </Dialog>
       }
     >
+      <div className="mb-4">
+        <FiltroBar lojas={lojas as any} state={filtro} buscaPlaceholder="Buscar por funcionário ou motivo…" />
+      </div>
+
       <Card>
         <CardContent className="overflow-x-auto p-0">
           <table className="w-full text-sm">
@@ -185,7 +202,7 @@ function FaltasPage() {
             </thead>
             <tbody>
               {isLoading && <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>}
-              {!isLoading && faltas.length === 0 && (
+              {!isLoading && filtradas.length === 0 && (
                 <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">Nenhuma falta lançada ainda. Clique em "Lançar falta".</td></tr>
               )}
               {grupos.map(([mes, itens]) => (

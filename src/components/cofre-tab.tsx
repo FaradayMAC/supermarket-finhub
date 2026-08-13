@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Banknote, ArrowUpRight, ArrowDownRight, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import type { PeriodoState } from "@/components/period-filter";
+import type { FiltroBarState } from "@/components/filtro-bar";
 
 export type CofreMov = {
   id: string;
@@ -61,13 +61,13 @@ export async function registrarSaidaCofre(p: {
 }
 
 export function CofreTab({
-  lojaId,
+  lojasSelecionadas,
   lojas,
-  periodoState,
+  filtro,
 }: {
-  lojaId: string;
+  lojasSelecionadas: string[];
   lojas: { id: string; nome: string; codigo?: string }[];
-  periodoState: PeriodoState;
+  filtro: FiltroBarState;
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -85,10 +85,8 @@ export function CofreTab({
     },
   });
 
-  const daLoja = useMemo(
-    () => movs.filter((m) => lojaId === "todas" || m.loja_id === lojaId),
-    [movs, lojaId],
-  );
+  const { matchLoja, inPeriodo, matchBusca } = filtro;
+  const daLoja = useMemo(() => movs.filter((m) => matchLoja(m.loja_id)), [movs, matchLoja]);
 
   // Saldo atual = todo o histórico da unidade (não filtrado por período)
   const saldoAtual = daLoja.reduce(
@@ -96,10 +94,9 @@ export function CofreTab({
     0,
   );
 
-  const { inWindow } = periodoState;
   const filtradas = useMemo(
-    () => daLoja.filter((m) => inWindow(m.data)),
-    [daLoja, periodoState.from, periodoState.to],
+    () => daLoja.filter((m) => inPeriodo(m.data) && matchBusca(m.descricao, m.motivo)),
+    [daLoja, inPeriodo, matchBusca],
   );
 
   const entradas = filtradas.filter((m) => m.tipo === "entrada").reduce((s, m) => s + Number(m.valor), 0);
@@ -159,7 +156,7 @@ export function CofreTab({
             </DialogTrigger>
             <SaidaForm
               lojas={lojas}
-              lojaPadrao={lojaId !== "todas" ? lojaId : ""}
+              lojaPadrao={lojasSelecionadas.length === 1 ? lojasSelecionadas[0] : ""}
               saving={criar.isPending}
               onSubmit={(v) => criar.mutate(v)}
             />
