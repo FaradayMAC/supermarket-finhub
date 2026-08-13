@@ -64,9 +64,16 @@ function DespesasPage() {
   });
 
 
+  const { matchLoja, inPeriodo, matchBusca } = filtro;
   const filtradas = useMemo(
-    () => (filtroLoja === "todas" ? despesas : despesas.filter((d) => d.loja_id === filtroLoja)),
-    [despesas, filtroLoja],
+    () =>
+      despesas.filter(
+        (d) =>
+          matchLoja(d.loja_id) &&
+          inPeriodo(d.data_competencia) &&
+          matchBusca(d.descricao, d.categorias_despesa?.nome, d.fornecedores?.razao_social, d.fornecedores?.nome_fantasia),
+      ),
+    [despesas, matchLoja, inPeriodo, matchBusca],
   );
   const total = filtradas.reduce((s, d) => s + Number(d.valor), 0);
 
