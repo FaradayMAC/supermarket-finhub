@@ -2,7 +2,8 @@
 // Situação do funcionário — fonte única da verdade
 // ----------------------------------------------------------------------------
 // Ordem de prioridade (da mais específica para a mais genérica):
-//   Desligado → Suspenso → Afastado (INSS) → Férias → Experiência → Ativo
+//   Desligado → Suspenso → Afastado (INSS) → Grávida / Estabilidade (gestante)
+//   → Férias → Experiência → Ativo
 // ============================================================================
 
 export type SituacaoFuncionario =
@@ -11,7 +12,10 @@ export type SituacaoFuncionario =
   | "Férias"
   | "Afastado (INSS)"
   | "Experiência"
-  | "Suspenso";
+  | "Suspenso"
+  | "Grávida"
+  | "Estabilidade (gestante)";
+
 
 export type Suspensao = {
   id?: string;
