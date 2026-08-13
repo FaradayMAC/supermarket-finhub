@@ -624,9 +624,21 @@ function FuncForm({
     initial?.data_fim_experiencia ?? fimExperienciaPadrao(initial?.data_admissao ?? ""),
   );
 
+  // Gestação / estabilidade da gestante
+  const [confGravidez, setConfGravidez] = useState<string>(
+    (initial as any)?.data_confirmacao_gravidez ?? "",
+  );
+  const [dataParto, setDataParto] = useState<string>((initial as any)?.data_parto ?? "");
+  const [retornoLicenca, setRetornoLicenca] = useState<string>(
+    (initial as any)?.data_retorno_licenca_maternidade ?? "",
+  );
+  const [desligamento, setDesligamento] = useState<string>(initial?.data_desligamento ?? "");
+  const gestacao = estabilidadeGestante(confGravidez || null, retornoLicenca || null, hojeISO());
+
   const [motivoDesl, setMotivoDesl] = useState<string>(
     (initial as any)?.motivo_desligamento ?? "none",
   );
+
   const [dependentes, setDependentes] = useState<number>(Number(initial?.dependentes ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
   // Um único controle: possuir VT já implica o desconto de até 6%.
