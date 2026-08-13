@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Bell, Check, HeartPulse, CalendarClock } from "lucide-react";
+import { Bell, Check, HeartPulse, CalendarClock, Stethoscope } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { useAtestadosMedicos } from "@/components/atestados-medicos";
 import {
   notificacoesDoDia,
   filtrarNaoLidas,
+  verificarLimiteCid,
   LABEL_TIPO,
   type Notificacao,
 } from "@/lib/notificacoes";
