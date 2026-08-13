@@ -10,11 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useAuth, ROLE_LABEL, type AppRole } from "@/hooks/use-auth";
+import { useAuth, MODULO_LABEL, MODULO_GRUPO, TODOS_MODULOS, type ModuloId } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { Plus, Pencil, KeyRound, Trash2, ShieldCheck, ShieldOff } from "lucide-react";
+import { Plus, Pencil, KeyRound, Trash2, ShieldCheck, ShieldOff, Crown } from "lucide-react";
 import { adminCreateUser, adminUpdateUser, adminDeleteUser, adminResetPassword, adminSetApproved } from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/_authenticated/usuarios")({
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/usuarios")({
   component: Usuarios,
 });
 
-const ROLES: AppRole[] = ["admin", "diretoria", "controladoria", "gerente"];
+const GRUPOS = ["Financeiro", "Relatórios", "Pessoas (RH)", "Administração"];
 
 function msgErro(e: any) {
   const m = String(e?.message ?? e ?? "Erro inesperado");
@@ -33,6 +34,37 @@ function msgErro(e: any) {
   return m;
 }
 
+function ModulosPicker({ value, onChange }: { value: ModuloId[]; onChange: (v: ModuloId[]) => void }) {
+  const toggle = (m: ModuloId) =>
+    onChange(value.includes(m) ? value.filter((x) => x !== m) : [...value, m]);
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label>Módulos liberados</Label>
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => onChange([...TODOS_MODULOS])}>Todos</Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => onChange([])}>Nenhum</Button>
+        </div>
+      </div>
+      <div className="max-h-64 space-y-3 overflow-y-auto rounded-md border p-3">
+        {GRUPOS.map((g) => (
+          <div key={g}>
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{g}</div>
+            <div className="grid grid-cols-2 gap-2">
+              {TODOS_MODULOS.filter((m) => MODULO_GRUPO[m] === g).map((m) => (
+                <label key={m} className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={value.includes(m)} onCheckedChange={() => toggle(m)} />
+                  {MODULO_LABEL[m]}
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Usuarios() {
   const auth = useAuth();
   const qc = useQueryClient();
@@ -41,21 +73,25 @@ function Usuarios() {
   const deleteFn = useServerFn(adminDeleteUser);
   const resetFn = useServerFn(adminResetPassword);
   const approveFn = useServerFn(adminSetApproved);
+  const podeGerir = auth.can("usuarios");
 
   const { data, isLoading } = useQuery({
     queryKey: ["usuarios-admin"],
-    enabled: auth.isAdmin,
+    enabled: podeGerir,
     queryFn: async () => {
-      const [{ data: profiles }, { data: roles }, { data: lojas }] = await Promise.all([
-        supabase.from("profiles").select("id, nome, email, loja_id, approved, created_at").order("created_at", { ascending: false }),
-        supabase.from("user_roles").select("user_id, role"),
+      const [{ data: profiles }, { data: mods }, { data: lojas }] = await Promise.all([
+        supabase.from("profiles").select("id, nome, email, loja_id, approved, admin_master, created_at").order("created_at", { ascending: false }),
+        supabase.from("usuario_modulos").select("usuario_id, modulo_id"),
         supabase.from("lojas").select("id, codigo, nome"),
       ]);
-      return { profiles: profiles ?? [], roles: roles ?? [], lojas: lojas ?? [] };
+      return { profiles: profiles ?? [], mods: mods ?? [], lojas: lojas ?? [] };
     },
   });
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["usuarios-admin"] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["usuarios-admin"] });
+    qc.invalidateQueries({ queryKey: ["auth-context"] });
+  };
 
   const createMut = useMutation({
     mutationFn: (v: any) => createFn({ data: v }),
@@ -83,16 +119,18 @@ function Usuarios() {
     onError: (e: any) => toast.error(msgErro(e)),
   });
 
-  if (!auth.isAdmin) {
-    return <AppShell title="Usuários"><Card><CardContent className="p-8 text-center text-muted-foreground">Acesso restrito ao Administrador.</CardContent></Card></AppShell>;
+  if (!podeGerir) {
+    return <AppShell title="Usuários"><Card><CardContent className="p-8 text-center text-muted-foreground">Acesso restrito.</CardContent></Card></AppShell>;
   }
 
-  const rolesByUser = new Map<string, AppRole>();
-  (data?.roles ?? []).forEach((r: any) => rolesByUser.set(r.user_id, r.role));
+  const modsByUser = new Map<string, ModuloId[]>();
+  (data?.mods ?? []).forEach((m: any) => {
+    modsByUser.set(m.usuario_id, [...(modsByUser.get(m.usuario_id) ?? []), m.modulo_id as ModuloId]);
+  });
   const lojas = data?.lojas ?? [];
 
   return (
-    <AppShell title="Usuários e perfis">
+    <AppShell title="Usuários e permissões">
       <div className="mb-4 flex justify-end">
         <CreateUserDialog lojas={lojas} onSubmit={(v) => createMut.mutateAsync(v)} />
       </div>
@@ -103,25 +141,37 @@ function Usuarios() {
               <thead className="border-y bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3">Usuário</th>
-                  <th className="px-4 py-3">Perfil</th>
+                  <th className="px-4 py-3">Módulos</th>
                   <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Unidade (gerentes)</th>
+                  <th className="px-4 py-3">Unidade</th>
                   <th className="px-4 py-3 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {(data?.profiles ?? []).map((p: any) => {
-                  const r = rolesByUser.get(p.id) ?? null;
+                  const mods = modsByUser.get(p.id) ?? [];
                   const isSelf = p.id === auth.user?.id;
+                  const master = !!p.admin_master;
                   const approved = !!p.approved;
                   return (
                     <tr key={p.id} className="border-b last:border-0">
                       <td className="px-4 py-3">
-                        <div className="font-medium">{p.nome ?? "—"} {isSelf && <Badge variant="secondary" className="ml-2">você</Badge>}</div>
+                        <div className="font-medium">
+                          {p.nome ?? "—"}
+                          {isSelf && <Badge variant="secondary" className="ml-2">você</Badge>}
+                        </div>
                         <div className="text-xs text-muted-foreground">{p.email}</div>
                       </td>
                       <td className="px-4 py-3">
-                        {r ? <Badge>{ROLE_LABEL[r]}</Badge> : <Badge variant="outline">Sem acesso</Badge>}
+                        {master ? (
+                          <Badge className="gap-1"><Crown className="h-3 w-3" /> Admin Master · acesso total</Badge>
+                        ) : mods.length === 0 ? (
+                          <Badge variant="outline">Sem acesso</Badge>
+                        ) : (
+                          <div className="flex max-w-md flex-wrap gap-1">
+                            {mods.map((m) => <Badge key={m} variant="secondary">{MODULO_LABEL[m]}</Badge>)}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         {approved
@@ -130,14 +180,13 @@ function Usuarios() {
                       </td>
                       <td className="px-4 py-3">
                         {(() => {
-                          if (r !== "gerente") return <span className="text-xs text-muted-foreground">—</span>;
                           const loja = lojas.find((l: any) => l.id === p.loja_id);
-                          return loja ? `${loja.codigo} — ${loja.nome}` : <span className="text-xs text-muted-foreground">não vinculada</span>;
+                          return loja ? `${loja.codigo} — ${loja.nome}` : <span className="text-xs text-muted-foreground">todas</span>;
                         })()}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
-                          {!isSelf && (
+                          {!isSelf && !master && (
                             approved ? (
                               <Button variant="ghost" size="icon" title="Revogar acesso" onClick={() => approveMut.mutate({ userId: p.id, approved: false })}>
                                 <ShieldOff className="h-4 w-4 text-amber-600" />
@@ -148,9 +197,13 @@ function Usuarios() {
                               </Button>
                             )
                           )}
-                          <EditUserDialog user={p} currentRole={r} lojas={lojas} onSubmit={(v) => updateMut.mutateAsync({ userId: p.id, ...v })} />
-                          <ResetPasswordDialog userId={p.id} email={p.email} onSubmit={(pwd) => resetMut.mutateAsync({ userId: p.id, password: pwd })} />
-                          {!isSelf && (
+                          {(!master || isSelf) && (
+                            <EditUserDialog user={p} mods={mods} master={master} lojas={lojas} onSubmit={(v) => updateMut.mutateAsync({ userId: p.id, ...v })} />
+                          )}
+                          {(!master || isSelf) && (
+                            <ResetPasswordDialog email={p.email} onSubmit={(pwd) => resetMut.mutateAsync({ userId: p.id, password: pwd })} />
+                          )}
+                          {!isSelf && !master && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" title="Excluir"><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -181,17 +234,34 @@ function Usuarios() {
   );
 }
 
+function LojaSelect({ value, onChange, lojas }: { value: string; onChange: (v: string) => void; lojas: any[] }) {
+  return (
+    <div>
+      <Label>Unidade (opcional — restringe os dados a uma loja)</Label>
+      <Select value={value || "__all"} onValueChange={(v) => onChange(v === "__all" ? "" : v)}>
+        <SelectTrigger><SelectValue placeholder="Todas as lojas" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__all">Todas as lojas</SelectItem>
+          {lojas.map((l: any) => <SelectItem key={l.id} value={l.id}>{l.codigo} — {l.nome}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 function CreateUserDialog({ lojas, onSubmit }: { lojas: any[]; onSubmit: (v: any) => Promise<any> }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ nome: "", email: "", password: "", role: "gerente" as AppRole, loja_id: "" });
+  const [form, setForm] = useState({ nome: "", email: "", password: "", loja_id: "" });
+  const [modulos, setModulos] = useState<ModuloId[]>([]);
   const [busy, setBusy] = useState(false);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
-      await onSubmit({ ...form, loja_id: form.role === "gerente" ? (form.loja_id || null) : null });
+      await onSubmit({ ...form, loja_id: form.loja_id || null, modulos });
       setOpen(false);
-      setForm({ nome: "", email: "", password: "", role: "gerente", loja_id: "" });
+      setForm({ nome: "", email: "", password: "", loja_id: "" });
+      setModulos([]);
     } catch { /* erro já exibido via toast */ } finally { setBusy(false); }
   }
   return (
@@ -203,22 +273,8 @@ function CreateUserDialog({ lojas, onSubmit }: { lojas: any[]; onSubmit: (v: any
           <div><Label>Nome</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} required /></div>
           <div><Label>E-mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
           <div><Label>Senha</Label><Input type="text" minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required /></div>
-          <div>
-            <Label>Perfil</Label>
-            <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as AppRole })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          {form.role === "gerente" && (
-            <div>
-              <Label>Unidade</Label>
-              <Select value={form.loja_id} onValueChange={(v) => setForm({ ...form, loja_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Vincular loja" /></SelectTrigger>
-                <SelectContent>{lojas.map((l: any) => <SelectItem key={l.id} value={l.id}>{l.codigo} — {l.nome}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-          )}
+          <LojaSelect value={form.loja_id} onChange={(v) => setForm({ ...form, loja_id: v })} lojas={lojas} />
+          <ModulosPicker value={modulos} onChange={setModulos} />
           <DialogFooter><Button type="submit" disabled={busy}>Criar</Button></DialogFooter>
         </form>
       </DialogContent>
@@ -226,41 +282,39 @@ function CreateUserDialog({ lojas, onSubmit }: { lojas: any[]; onSubmit: (v: any
   );
 }
 
-function EditUserDialog({ user, currentRole, lojas, onSubmit }: { user: any; currentRole: AppRole | null; lojas: any[]; onSubmit: (v: any) => Promise<any> }) {
+function EditUserDialog({ user, mods, master, lojas, onSubmit }: { user: any; mods: ModuloId[]; master: boolean; lojas: any[]; onSubmit: (v: any) => Promise<any> }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ nome: user.nome ?? "", email: user.email ?? "", role: (currentRole ?? "gerente") as AppRole, loja_id: user.loja_id ?? "" });
+  const [form, setForm] = useState({ nome: user.nome ?? "", email: user.email ?? "", loja_id: user.loja_id ?? "" });
+  const [modulos, setModulos] = useState<ModuloId[]>(mods);
   const [busy, setBusy] = useState(false);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
-      await onSubmit({ nome: form.nome, email: form.email, role: form.role, loja_id: form.role === "gerente" ? (form.loja_id || null) : null });
+      await onSubmit({
+        nome: form.nome,
+        email: form.email,
+        loja_id: form.loja_id || null,
+        ...(master ? {} : { modulos }),
+      });
       setOpen(false);
     } catch { /* erro já exibido via toast */ } finally { setBusy(false); }
   }
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) setModulos(mods); }}>
       <DialogTrigger asChild><Button variant="ghost" size="icon" title="Editar"><Pencil className="h-4 w-4" /></Button></DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>Editar usuário</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div><Label>Nome</Label><Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} required /></div>
           <div><Label>E-mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
-          <div>
-            <Label>Perfil</Label>
-            <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as AppRole })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          {form.role === "gerente" && (
-            <div>
-              <Label>Unidade</Label>
-              <Select value={form.loja_id} onValueChange={(v) => setForm({ ...form, loja_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Vincular loja" /></SelectTrigger>
-                <SelectContent>{lojas.map((l: any) => <SelectItem key={l.id} value={l.id}>{l.codigo} — {l.nome}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+          <LojaSelect value={form.loja_id} onChange={(v) => setForm({ ...form, loja_id: v })} lojas={lojas} />
+          {master ? (
+            <p className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+              Admin Master tem acesso a todos os módulos permanentemente.
+            </p>
+          ) : (
+            <ModulosPicker value={modulos} onChange={setModulos} />
           )}
           <DialogFooter><Button type="submit" disabled={busy}>Salvar</Button></DialogFooter>
         </form>
@@ -269,7 +323,7 @@ function EditUserDialog({ user, currentRole, lojas, onSubmit }: { user: any; cur
   );
 }
 
-function ResetPasswordDialog({ userId, email, onSubmit }: { userId: string; email: string; onSubmit: (pwd: string) => Promise<any> }) {
+function ResetPasswordDialog({ email, onSubmit }: { email: string; onSubmit: (pwd: string) => Promise<any> }) {
   const [open, setOpen] = useState(false);
   const [pwd, setPwd] = useState("");
   const [busy, setBusy] = useState(false);
