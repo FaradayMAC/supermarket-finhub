@@ -769,7 +769,7 @@ function FuncForm({
 
             observacoes: String(fd.get("observacoes") || "").trim() || null,
             beneficios: _vt + _va + _ps + _po + _ve,
-            ativo: !String(fd.get("desligamento") || ""),
+            ativo: !desligamento,
 
           });
 
