@@ -36,7 +36,7 @@ type Despesa = {
 function DespesasPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [filtroLoja, setFiltroLoja] = useState<string>("todas");
+  const filtro = useFiltroBar("mes");
 
   const { data: lojas = [] } = useQuery({
     queryKey: ["lojas-min"],
