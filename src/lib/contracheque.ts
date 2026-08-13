@@ -156,7 +156,13 @@ export function calcIrrf(
   const base = Math.max(0, baseBruta - inss - dependentes * DEDUCAO_DEPENDENTE);
   const faixa = IRRF_FAIXAS.find((f) => base <= f.ate)!;
   const irrfTabela = Math.max(0, base * faixa.aliq - faixa.ded);
-  const redutor = redutorIrrf2026(rendimentoTributavel);
+  // Lei 15.270/2025: isenção plena até R$ 5.000,00 — o redutor cancela o
+  // imposto integralmente, deixando o líquido exatamente em zero. Entre
+  // R$ 5.000,01 e R$ 7.350,00 aplica-se a redução decrescente da RFB.
+  const redutor =
+    rendimentoTributavel <= 5000
+      ? irrfTabela
+      : redutorIrrf2026(rendimentoTributavel);
   return Math.round(Math.max(0, irrfTabela - redutor) * 100) / 100;
 }
 
