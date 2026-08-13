@@ -41,8 +41,11 @@ import {
   situacaoAtual,
   suspensaoVigente,
   type SituacaoFuncionario,
+  situacaoAcidente,
+  type AtestadoAcidente,
   type Suspensao,
 } from "@/lib/situacao-funcionario";
+import { AcidenteTrabalhoPanel, useAtestadosAcidente } from "@/components/acidente-trabalho";
 
 
 
@@ -214,6 +217,8 @@ function FuncPage() {
     },
   });
 
+  const { data: atestadosAcid = [] } = useAtestadosAcidente();
+
   const hoje = hojeISO();
 
   const situacaoDe = (f: Func): SituacaoFuncionario => {
@@ -226,7 +231,13 @@ function FuncPage() {
       suspensoes.filter((s) => s.funcionario_id === f.id),
       hoje,
     );
-    return situacaoAtual(f as any, hoje, situacaoMes, susp);
+    return situacaoAtual(
+      f as any,
+      hoje,
+      situacaoMes,
+      susp,
+      atestadosAcid.filter((a) => a.funcionario_id === f.id),
+    );
   };
 
 
@@ -246,7 +257,7 @@ function FuncPage() {
         (f.cargo ?? "").toLowerCase().includes(termo) ||
         (f.lojas?.nome ?? "").toLowerCase().includes(termo),
     );
-  }, [funcs, filtro, filtroSituacao, busca, situacaoDe, afastMes, feriasMes, suspensoes, hoje]);
+  }, [funcs, filtro, filtroSituacao, busca, situacaoDe, afastMes, feriasMes, suspensoes, atestadosAcid, hoje]);
 
   const totalFolha = filtrados.reduce((s, f) => s + custoReal(f, salarioMinimoFederal, planosCfg).total, 0);
   // Casos herdados: recebem VT mas não têm o desconto de 6% ativo — revisão manual.
@@ -363,6 +374,12 @@ function FuncPage() {
                 <SelectItem value="Suspenso">Suspenso</SelectItem>
                 <SelectItem value="Grávida">Grávida</SelectItem>
                 <SelectItem value="Estabilidade (gestante)">Estabilidade (gestante)</SelectItem>
+                <SelectItem value="Afastado (Acidente de Trabalho)">
+                  Afastado (Acidente de Trabalho)
+                </SelectItem>
+                <SelectItem value="Estabilidade (acidente de trabalho)">
+                  Estabilidade (acidente de trabalho)
+                </SelectItem>
                 <SelectItem value="Desligado">Desligado</SelectItem>
 
               </SelectContent>
