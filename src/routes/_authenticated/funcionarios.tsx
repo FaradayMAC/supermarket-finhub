@@ -35,6 +35,7 @@ import { TIPOS_RESCISAO } from "@/lib/rescisao";
 import { AlertTriangle, Info, UserX } from "lucide-react";
 import {
   CORES_SITUACAO,
+  estabilidadeGestante,
   fimExperienciaPadrao,
   hojeISO,
   situacaoAtual,
