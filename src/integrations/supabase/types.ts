@@ -1386,6 +1386,27 @@ export type Database = {
           },
         ]
       }
+      modulos: {
+        Row: {
+          grupo: string
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          grupo: string
+          id: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          grupo?: string
+          id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: []
+      }
       movimentacoes_financeiras: {
         Row: {
           categoria_id: string | null
@@ -1743,6 +1764,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          admin_master: boolean
           approved: boolean
           created_at: string
           email: string | null
@@ -1752,6 +1774,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_master?: boolean
           approved?: boolean
           created_at?: string
           email?: string | null
@@ -1761,6 +1784,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_master?: boolean
           approved?: boolean
           created_at?: string
           email?: string | null
@@ -1920,6 +1944,32 @@ export type Database = {
         }
         Relationships: []
       }
+      usuario_modulos: {
+        Row: {
+          created_at: string
+          modulo_id: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          modulo_id: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          modulo_id?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_modulos_modulo_id_fkey"
+            columns: ["modulo_id"]
+            isOneToOne: false
+            referencedRelation: "modulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usuarios: {
         Row: {
           ativo: boolean
@@ -2064,6 +2114,10 @@ export type Database = {
       can_edit_all: { Args: never; Returns: boolean }
       can_view_all: { Args: never; Returns: boolean }
       current_user_loja: { Args: never; Returns: string }
+      has_module_access: {
+        Args: { _modulo: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2071,7 +2125,9 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_master: { Args: { _user_id: string }; Returns: boolean }
       is_manager_of: { Args: { _loja_id: string }; Returns: boolean }
+      loja_permitida: { Args: { _loja_id: string }; Returns: boolean }
       recalc_das_rateio: { Args: { _das_id: string }; Returns: undefined }
       recalc_das_rateio_prestador: {
         Args: { _prestador: string }
