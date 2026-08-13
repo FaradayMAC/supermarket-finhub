@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Store, Receipt, Users, IdCard, CalendarX, Landmark, Target, Scale, Shield, LogOut, FileBarChart, Wallet, Briefcase, FileText, ShoppingCart, PackageSearch, CalendarClock, Banknote, Gauge, FileMinus, ChevronDown, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Store, Receipt, Users, IdCard, CalendarX, Landmark, Target, Scale, Shield, LogOut, FileBarChart, Wallet, Briefcase, FileText, ShoppingCart, PackageSearch, CalendarClock, Banknote, Gauge, FileMinus, ChevronDown, ChevronRight, ScrollText } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState, useMemo } from "react";
 import { useAuth, ROLE_LABEL, signOut } from "@/hooks/use-auth";
