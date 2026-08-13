@@ -447,6 +447,10 @@ export function calcContracheque(
     diasPagosEmpresa,
     diasSemPagamento,
     descAfastamento,
+    diasSuspensos,
+    descSuspensao,
+    suspenso: diasSuspensos > 0,
+
     decimoPrimeiraParcela,
     decimoSegundaParcela,
     decimoTotalAno,
