@@ -35,6 +35,7 @@ import { TIPOS_RESCISAO } from "@/lib/rescisao";
 import { AlertTriangle, Info, UserX } from "lucide-react";
 import {
   CORES_SITUACAO,
+  estabilidadeGestante,
   fimExperienciaPadrao,
   hojeISO,
   situacaoAtual,
@@ -86,6 +87,9 @@ type Func = {
   data_nascimento: string | null;
   data_desligamento: string | null;
   data_fim_experiencia: string | null;
+  data_confirmacao_gravidez: string | null;
+  data_parto: string | null;
+  data_retorno_licenca_maternidade: string | null;
 
 
   vale_transporte: number;
@@ -357,7 +361,10 @@ function FuncPage() {
                 <SelectItem value="Afastado (INSS)">Afastado (INSS)</SelectItem>
                 <SelectItem value="Experiência">Experiência</SelectItem>
                 <SelectItem value="Suspenso">Suspenso</SelectItem>
+                <SelectItem value="Grávida">Grávida</SelectItem>
+                <SelectItem value="Estabilidade (gestante)">Estabilidade (gestante)</SelectItem>
                 <SelectItem value="Desligado">Desligado</SelectItem>
+
               </SelectContent>
             </Select>
           </div>
@@ -618,9 +625,21 @@ function FuncForm({
     initial?.data_fim_experiencia ?? fimExperienciaPadrao(initial?.data_admissao ?? ""),
   );
 
+  // Gestação / estabilidade da gestante
+  const [confGravidez, setConfGravidez] = useState<string>(
+    (initial as any)?.data_confirmacao_gravidez ?? "",
+  );
+  const [dataParto, setDataParto] = useState<string>((initial as any)?.data_parto ?? "");
+  const [retornoLicenca, setRetornoLicenca] = useState<string>(
+    (initial as any)?.data_retorno_licenca_maternidade ?? "",
+  );
+  const [desligamento, setDesligamento] = useState<string>(initial?.data_desligamento ?? "");
+  const gestacao = estabilidadeGestante(confGravidez || null, retornoLicenca || null, hojeISO());
+
   const [motivoDesl, setMotivoDesl] = useState<string>(
     (initial as any)?.motivo_desligamento ?? "none",
   );
+
   const [dependentes, setDependentes] = useState<number>(Number(initial?.dependentes ?? 0));
   const [ve, setVe] = useState<number>(Number(initial?.valor_extra_salarial ?? 0));
   // Um único controle: possuir VT já implica o desconto de até 6%.
@@ -698,6 +717,18 @@ function FuncForm({
           if (temVt && _vt <= 0) return toast.error("Informe o valor do vale-transporte");
           const _va = VALE_ALIMENTACAO_PADRAO_ES;
           if (!nascimento) return toast.error("Informe a data de nascimento");
+          // Estabilidade da gestante: dispensa arbitrária ou sem justa causa é vedada
+          // (ADCT Art. 10, II, "b"; vale também no contrato de experiência — STF Tema 542).
+          if (desligamento && gestacao && motivoDesl !== "justa_causa") {
+            const ok = window.confirm(
+              "ATENÇÃO — funcionária em período de estabilidade da gestante " +
+                `(${gestacao.situacao}${gestacao.fimEstabilidade ? `, até ${fmtData(gestacao.fimEstabilidade)}` : ""}).\n\n` +
+                "A lei veda a dispensa arbitrária ou sem justa causa nesse período — há risco de " +
+                "reintegração ou indenização judicial. Isso não se aplica a pedido de demissão da própria funcionária.\n\n" +
+                "Confirma mesmo assim o registro do desligamento?",
+            );
+            if (!ok) return;
+          }
           const _ps = preview.ps;
           const _po = preview.po;
           const _ve = Number(fd.get("ve") || 0);
@@ -711,8 +742,12 @@ function FuncForm({
             salario_base: sal,
             data_admissao: admissao || null,
             data_nascimento: nascimento || null,
-            data_desligamento: String(fd.get("desligamento") || "") || null,
+            data_desligamento: desligamento || null,
             data_fim_experiencia: fimExperiencia || null,
+            data_confirmacao_gravidez: confGravidez || null,
+            data_parto: dataParto || null,
+            data_retorno_licenca_maternidade: retornoLicenca || null,
+
 
             motivo_desligamento: motivoDesl === "none" ? null : motivoDesl,
 
@@ -734,7 +769,7 @@ function FuncForm({
 
             observacoes: String(fd.get("observacoes") || "").trim() || null,
             beneficios: _vt + _va + _ps + _po + _ve,
-            ativo: !String(fd.get("desligamento") || ""),
+            ativo: !desligamento,
 
           });
 
@@ -994,18 +1029,77 @@ function FuncForm({
             </p>
           </div>
 
+          <div className="col-span-2 rounded-md border p-3">
+            <div className="text-sm font-medium">Gestação e estabilidade da gestante</div>
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              <div>
+                <Label htmlFor="conf_gravidez">Confirmação da gravidez</Label>
+                <Input
+                  id="conf_gravidez"
+                  type="date"
+                  value={confGravidez}
+                  onChange={(e) => setConfGravidez(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="data_parto">Data do parto (opcional)</Label>
+                <Input
+                  id="data_parto"
+                  type="date"
+                  value={dataParto}
+                  onChange={(e) => setDataParto(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="retorno_licenca">Retorno da licença-maternidade</Label>
+                <Input
+                  id="retorno_licenca"
+                  type="date"
+                  value={retornoLicenca}
+                  onChange={(e) => setRetornoLicenca(e.target.value)}
+                />
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Sem a data de retorno, a situação fica <strong>Grávida</strong> (gestação ou licença em
+              curso). Com o documento de retorno registrado, passa a{" "}
+              <strong>Estabilidade (gestante)</strong> por 90 dias corridos — regra da empresa, acima
+              do mínimo legal (ADCT Art. 10, II, "b"). Vale também durante o contrato de experiência.
+            </p>
+            {gestacao && (
+              <p className="mt-2 rounded bg-pink-500/10 p-2 text-xs text-pink-700 dark:text-pink-400">
+                Situação atual: <strong>{gestacao.situacao}</strong>
+                {gestacao.fimEstabilidade
+                  ? ` — estabilidade até ${fmtData(gestacao.fimEstabilidade)}.`
+                  : " — estabilidade contará a partir do retorno da licença."}
+              </p>
+            )}
+          </div>
+
           <div>
             <Label htmlFor="desligamento">Data de desligamento</Label>
             <Input
               id="desligamento"
               name="desligamento"
               type="date"
-              defaultValue={initial?.data_desligamento ?? ""}
+              value={desligamento}
+              onChange={(e) => setDesligamento(e.target.value)}
             />
             <p className="mt-1 text-xs text-muted-foreground">
               Sai das folhas a partir do mês seguinte; competências já fechadas ficam intactas.
             </p>
+            {desligamento && gestacao && motivoDesl !== "justa_causa" && (
+              <p className="mt-2 flex gap-2 rounded border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>
+                  Funcionária em estabilidade da gestante ({gestacao.situacao}). A dispensa arbitrária
+                  ou sem justa causa é vedada nesse período — risco de reintegração ou indenização
+                  judicial. Será pedida uma confirmação extra ao salvar.
+                </span>
+              </p>
+            )}
           </div>
+
           <div>
             <Label>Motivo do desligamento</Label>
             <Select value={motivoDesl} onValueChange={setMotivoDesl}>
