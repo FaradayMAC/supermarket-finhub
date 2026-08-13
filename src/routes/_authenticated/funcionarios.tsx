@@ -1029,18 +1029,77 @@ function FuncForm({
             </p>
           </div>
 
+          <div className="col-span-2 rounded-md border p-3">
+            <div className="text-sm font-medium">Gestação e estabilidade da gestante</div>
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              <div>
+                <Label htmlFor="conf_gravidez">Confirmação da gravidez</Label>
+                <Input
+                  id="conf_gravidez"
+                  type="date"
+                  value={confGravidez}
+                  onChange={(e) => setConfGravidez(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="data_parto">Data do parto (opcional)</Label>
+                <Input
+                  id="data_parto"
+                  type="date"
+                  value={dataParto}
+                  onChange={(e) => setDataParto(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="retorno_licenca">Retorno da licença-maternidade</Label>
+                <Input
+                  id="retorno_licenca"
+                  type="date"
+                  value={retornoLicenca}
+                  onChange={(e) => setRetornoLicenca(e.target.value)}
+                />
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Sem a data de retorno, a situação fica <strong>Grávida</strong> (gestação ou licença em
+              curso). Com o documento de retorno registrado, passa a{" "}
+              <strong>Estabilidade (gestante)</strong> por 90 dias corridos — regra da empresa, acima
+              do mínimo legal (ADCT Art. 10, II, "b"). Vale também durante o contrato de experiência.
+            </p>
+            {gestacao && (
+              <p className="mt-2 rounded bg-pink-500/10 p-2 text-xs text-pink-700 dark:text-pink-400">
+                Situação atual: <strong>{gestacao.situacao}</strong>
+                {gestacao.fimEstabilidade
+                  ? ` — estabilidade até ${fmtData(gestacao.fimEstabilidade)}.`
+                  : " — estabilidade contará a partir do retorno da licença."}
+              </p>
+            )}
+          </div>
+
           <div>
             <Label htmlFor="desligamento">Data de desligamento</Label>
             <Input
               id="desligamento"
               name="desligamento"
               type="date"
-              defaultValue={initial?.data_desligamento ?? ""}
+              value={desligamento}
+              onChange={(e) => setDesligamento(e.target.value)}
             />
             <p className="mt-1 text-xs text-muted-foreground">
               Sai das folhas a partir do mês seguinte; competências já fechadas ficam intactas.
             </p>
+            {desligamento && gestacao && motivoDesl !== "justa_causa" && (
+              <p className="mt-2 flex gap-2 rounded border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>
+                  Funcionária em estabilidade da gestante ({gestacao.situacao}). A dispensa arbitrária
+                  ou sem justa causa é vedada nesse período — risco de reintegração ou indenização
+                  judicial. Será pedida uma confirmação extra ao salvar.
+                </span>
+              </p>
+            )}
           </div>
+
           <div>
             <Label>Motivo do desligamento</Label>
             <Select value={motivoDesl} onValueChange={setMotivoDesl}>
