@@ -75,7 +75,7 @@ function CaixaPage() {
       if (!matchLoja(m.loja_id)) return false;
       if (filtroTipo !== "todos" && m.tipo !== filtroTipo) return false;
       if (!inPeriodo(m.data_movimentacao)) return false;
-      if (!matchBusca(m.descricao, m.observacoes as any, m.categoria_id ? "" : "")) return false;
+      if (!matchBusca(m.descricao)) return false;
       return true;
     });
   }, [movs, filtroTipo, matchLoja, inPeriodo, matchBusca]);
