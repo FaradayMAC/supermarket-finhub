@@ -2,12 +2,12 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Store, Receipt, Users, IdCard, CalendarX, Landmark, Target, Scale, Shield, LogOut, FileBarChart, Wallet, Briefcase, FileText, ShoppingCart, PackageSearch, CalendarClock, Banknote, Gauge, FileMinus, ChevronDown, ChevronRight, ScrollText } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState, useMemo } from "react";
-import { useAuth, ROLE_LABEL, signOut } from "@/hooks/use-auth";
+import { useAuth, MODULO_LABEL, signOut, type ModuloId } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-type NavItem = { to: string; label: string; icon: any; admin?: boolean };
+type NavItem = { to: string; label: string; icon: any; modulo?: ModuloId };
 type NavGroup = { label: string; items: NavItem[]; defaultOpen?: boolean };
 
 const NAV_GROUPS: NavGroup[] = [
@@ -19,41 +19,41 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Financeiro",
     items: [
-      { to: "/vendas", label: "Vendas", icon: ShoppingCart },
-      { to: "/compras", label: "Compras", icon: PackageSearch },
-      { to: "/despesas", label: "Despesas", icon: Receipt },
-      { to: "/caixa", label: "Caixa", icon: Wallet },
-      { to: "/titulos", label: "A pagar/receber", icon: CalendarClock },
-      { to: "/conciliacao", label: "Conciliação", icon: Banknote },
-      { to: "/impostos", label: "Impostos", icon: Landmark },
-      { to: "/metas", label: "Metas", icon: Target },
+      { to: "/vendas", label: "Vendas", icon: ShoppingCart, modulo: "vendas"  },
+      { to: "/compras", label: "Compras", icon: PackageSearch, modulo: "compras"  },
+      { to: "/despesas", label: "Despesas", icon: Receipt, modulo: "despesas"  },
+      { to: "/caixa", label: "Caixa", icon: Wallet, modulo: "caixa"  },
+      { to: "/titulos", label: "A pagar/receber", icon: CalendarClock, modulo: "titulos"  },
+      { to: "/conciliacao", label: "Conciliação", icon: Banknote, modulo: "conciliacao"  },
+      { to: "/impostos", label: "Impostos", icon: Landmark, modulo: "impostos"  },
+      { to: "/metas", label: "Metas", icon: Target, modulo: "metas"  },
     ],
   },
   {
     label: "Relatórios",
     items: [
-      { to: "/indicadores", label: "Indicadores", icon: Gauge },
-      { to: "/dre", label: "DRE", icon: FileBarChart },
-      { to: "/comparativo", label: "Comparativo", icon: Scale },
+      { to: "/indicadores", label: "Indicadores", icon: Gauge, modulo: "indicadores"  },
+      { to: "/dre", label: "DRE", icon: FileBarChart, modulo: "dre"  },
+      { to: "/comparativo", label: "Comparativo", icon: Scale, modulo: "comparativo"  },
     ],
   },
   {
     label: "Pessoas (RH)",
     items: [
-      { to: "/funcionarios", label: "Funcionários", icon: Users },
-      { to: "/cargos", label: "Cargos", icon: IdCard },
-      { to: "/faltas-rh", label: "Faltas RH", icon: CalendarX },
-      { to: "/contracheque", label: "Contra cheque", icon: FileText },
-      { to: "/rescisao", label: "Rescisão", icon: FileMinus },
-      { to: "/prestadores", label: "Prestadoras", icon: Briefcase },
+      { to: "/funcionarios", label: "Funcionários", icon: Users, modulo: "funcionarios"  },
+      { to: "/cargos", label: "Cargos", icon: IdCard, modulo: "cargos"  },
+      { to: "/faltas-rh", label: "Faltas RH", icon: CalendarX, modulo: "faltas_rh"  },
+      { to: "/contracheque", label: "Contra cheque", icon: FileText, modulo: "contracheque"  },
+      { to: "/rescisao", label: "Rescisão", icon: FileMinus, modulo: "rescisao"  },
+      { to: "/prestadores", label: "Prestadoras", icon: Briefcase, modulo: "prestadores"  },
     ],
   },
   {
     label: "Administração",
     items: [
-      { to: "/lojas", label: "Lojas", icon: Store },
-      { to: "/usuarios", label: "Usuários", icon: Shield, admin: true },
-      { to: "/auditoria", label: "Log de auditoria", icon: ScrollText, admin: true },
+      { to: "/lojas", label: "Lojas", icon: Store, modulo: "lojas"  },
+      { to: "/usuarios", label: "Usuários", icon: Shield, modulo: "usuarios" },
+      { to: "/auditoria", label: "Log de auditoria", icon: ScrollText, modulo: "usuarios" },
 
     ],
   },
@@ -70,9 +70,17 @@ export function AppShell({ children, title, actions }: { children: ReactNode; ti
   const groups = useMemo(() => {
     return NAV_GROUPS.map((g) => ({
       ...g,
-      items: g.items.filter((i) => !i.admin || auth.isAdmin),
+      items: g.items.filter((i) => !i.modulo || auth.can(i.modulo)),
     })).filter((g) => g.items.length > 0);
-  }, [auth.isAdmin]);
+  }, [auth.modulos.join(","), auth.adminMaster, auth.approved]);
+
+  const moduloAtual = useMemo<ModuloId | null>(() => {
+    for (const g of NAV_GROUPS) {
+      const found = g.items.find((i) => i.to === currentPath);
+      if (found) return found.modulo ?? null;
+    }
+    return null;
+  }, [currentPath]);
 
   const activeGroupLabel = useMemo(() => {
     return groups.find((g) => g.items.some((i) => i.to === currentPath))?.label ?? null;
@@ -168,8 +176,13 @@ export function AppShell({ children, title, actions }: { children: ReactNode; ti
             <div className="text-xs">
               <div className="font-medium text-foreground truncate">{auth.profile?.nome ?? auth.user.email}</div>
               <div className="text-muted-foreground truncate">{auth.user.email}</div>
-              {auth.role && <Badge variant="outline" className="mt-1">{ROLE_LABEL[auth.role]}</Badge>}
-              {!auth.role && <Badge variant="destructive" className="mt-1">Sem perfil</Badge>}
+              {auth.adminMaster && <Badge variant="outline" className="mt-1">Admin Master</Badge>}
+              {!auth.adminMaster && auth.modulos.length > 0 && (
+                <Badge variant="outline" className="mt-1">{auth.modulos.length} módulo(s)</Badge>
+              )}
+              {!auth.adminMaster && auth.modulos.length === 0 && (
+                <Badge variant="destructive" className="mt-1">Sem acesso</Badge>
+              )}
             </div>
           )}
           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={signOut}>
@@ -186,12 +199,18 @@ export function AppShell({ children, title, actions }: { children: ReactNode; ti
           <div className="flex shrink-0 items-center gap-2">{actions}</div>
         </header>
         <main className="px-4 py-6 sm:px-8 sm:py-8">
-          {!auth.loading && !auth.role && (
+          {!auth.loading && !auth.hasAnyModule && (
             <div className="mb-4 rounded-md border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning-foreground">
-              Sua conta ainda não tem perfil atribuído. Solicite ao Administrador.
+              Sua conta ainda não tem módulos liberados. Solicite ao Admin Master.
             </div>
           )}
-          {children}
+          {!auth.loading && moduloAtual && !auth.can(moduloAtual) ? (
+            <div className="rounded-md border bg-card px-6 py-12 text-center text-sm text-muted-foreground">
+              Você não tem acesso ao módulo <b>{MODULO_LABEL[moduloAtual]}</b>. Solicite a liberação ao Admin Master.
+            </div>
+          ) : (
+            children
+          )}
         </main>
 
         {/* Mobile nav */}
