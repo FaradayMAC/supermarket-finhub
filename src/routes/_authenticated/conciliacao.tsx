@@ -116,13 +116,14 @@ function ConciliacaoPage() {
     () =>
       extratos.filter(
         (e) =>
-          (filtroLoja === "todas" || e.loja_id === filtroLoja) &&
+          filtro.matchLoja(e.loja_id) &&
           (filtroConta === "todas" || e.conta === filtroConta) &&
           (filtroStatus === "todos" ||
             (filtroStatus === "conciliados" ? e.conciliado : !e.conciliado)) &&
-          inWindow(e.data),
+          filtro.inPeriodo(e.data) &&
+          filtro.matchBusca(e.descricao, e.conta, e.observacoes),
       ),
-    [extratos, filtroLoja, filtroConta, filtroStatus, inWindow],
+    [extratos, filtroConta, filtroStatus, filtro.matchLoja, filtro.inPeriodo, filtro.matchBusca],
   );
 
   const tot = filtrados.reduce(
@@ -218,16 +219,9 @@ function ConciliacaoPage() {
         </div>
       }
     >
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Select value={filtroLoja} onValueChange={setFiltroLoja}>
-          <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todas">Todas as lojas</SelectItem>
-            {(lojas as any[]).map((l) => (
-              <SelectItem key={l.id} value={l.id}>{l.nome} ({l.codigo})</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="mb-4 space-y-2">
+        <FiltroBar lojas={lojas as any} state={filtro} buscaPlaceholder="Buscar por descrição ou conta…" />
+        <div className="flex flex-wrap items-center gap-2">
         <Select value={filtroConta} onValueChange={setFiltroConta}>
           <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -243,6 +237,7 @@ function ConciliacaoPage() {
             <SelectItem value="conciliados">Conciliados</SelectItem>
           </SelectContent>
         </Select>
+        </div>
       </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
