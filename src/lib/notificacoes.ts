@@ -6,7 +6,8 @@
 export type TipoNotificacao =
   | "plano_saude"
   | "fim_1o_contrato_experiencia"
-  | "fim_2o_contrato_experiencia";
+  | "fim_2o_contrato_experiencia"
+  | "limite_cid_inss";
 
 export type FuncionarioNotificavel = {
   id: string;
@@ -68,7 +69,87 @@ export const LABEL_TIPO: Record<TipoNotificacao, string> = {
   plano_saude: "Plano de saúde/odontológico",
   fim_1o_contrato_experiencia: "1º contrato de experiência",
   fim_2o_contrato_experiencia: "Contrato de experiência (90 dias)",
+  limite_cid_inss: "Atestados do mesmo CID — perícia do INSS",
 };
+
+// ---------------------------------------------------------------------------
+// Soma de atestados por CID dentro de 60 dias (Decreto 3.048/99, Art. 75 §§4/5)
+// ---------------------------------------------------------------------------
+
+export type AtestadoMedico = {
+  id?: string;
+  funcionario_id: string;
+  data_inicio: string;
+  dias: number;
+  cid: string;
+};
+
+export const JANELA_CID_DIAS = 60;
+export const LIMITE_CID_DIAS = 15;
+
+/** Data de fim (inclusiva) do atestado: início + dias - 1. */
+export function fimAtestado(a: AtestadoMedico): Date {
+  return addDias(diaLocal(a.data_inicio), Math.max(0, a.dias - 1));
+}
+
+/**
+ * Alertas de atestados do mesmo CID somando mais de 15 dias em 60 dias.
+ * Dispara uma única vez por grupo — no atestado que cruza o limite.
+ */
+export function verificarLimiteCid(
+  atestados: AtestadoMedico[],
+  nomes: Record<string, string> = {},
+): Notificacao[] {
+  const alertas: Notificacao[] = [];
+  const grupos = new Map<string, AtestadoMedico[]>();
+
+  for (const a of atestados) {
+    const chave = `${a.funcionario_id}|${(a.cid ?? "").trim().toUpperCase()}`;
+    const arr = grupos.get(chave);
+    if (arr) arr.push(a);
+    else grupos.set(chave, [a]);
+  }
+
+  for (const [chave, lista] of grupos) {
+    const cid = chave.split("|")[1];
+    const ordenados = [...lista].sort(
+      (a, b) => diaLocal(a.data_inicio).getTime() - diaLocal(b.data_inicio).getTime(),
+    );
+
+    let grupoAtual: AtestadoMedico[] = [];
+    let jaAlertou = false;
+
+    for (const at of ordenados) {
+      const dentroDaJanela =
+        grupoAtual.length > 0 &&
+        diasEntre(diaLocal(grupoAtual[0].data_inicio), at.data_inicio) <= JANELA_CID_DIAS;
+
+      if (dentroDaJanela) {
+        grupoAtual.push(at);
+      } else {
+        grupoAtual = [at];
+        jaAlertou = false;
+      }
+
+      const somaDias = grupoAtual.reduce((s, x) => s + (x.dias || 0), 0);
+      if (somaDias > LIMITE_CID_DIAS && !jaAlertou) {
+        jaAlertou = true;
+        const data_evento = toISO(diaLocal(at.data_inicio));
+        const nome = nomes[at.funcionario_id] ?? "Funcionário";
+        alertas.push({
+          id: `${at.funcionario_id}|limite_cid_inss|${data_evento}`,
+          tipo: "limite_cid_inss",
+          funcionario_id: at.funcionario_id,
+          funcionario_nome: nome,
+          data_evento,
+          mensagem: `${nome} — atestados de CID ${cid} somam ${somaDias} dias dentro de 60 dias. A partir do 16º dia o pagamento é do INSS: encaminhar à perícia médica previdenciária.`,
+        });
+      }
+    }
+  }
+
+  return alertas;
+}
 
 export function notificacoesDoDia(
   funcs: FuncionarioNotificavel[],

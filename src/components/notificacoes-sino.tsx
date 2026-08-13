@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Bell, Check, HeartPulse, CalendarClock } from "lucide-react";
+import { Bell, Check, HeartPulse, CalendarClock, Stethoscope } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { useAtestadosMedicos } from "@/components/atestados-medicos";
 import {
   notificacoesDoDia,
   filtrarNaoLidas,
+  verificarLimiteCid,
   LABEL_TIPO,
   type Notificacao,
 } from "@/lib/notificacoes";
@@ -44,10 +46,22 @@ export function NotificacoesSino() {
     staleTime: 60 * 1000,
   });
 
-  const pendentes = useMemo(
-    () => filtrarNaoLidas(notificacoesDoDia(funcionarios as any, new Date()), lidas as any),
-    [funcionarios, lidas],
-  );
+  const { data: atestados = [] } = useAtestadosMedicos();
+
+  const pendentes = useMemo(() => {
+    const nomes = Object.fromEntries(
+      (funcionarios as any[]).map((f) => [f.id, f.nome as string]),
+    ) as Record<string, string>;
+    const ativos = new Set((funcionarios as any[]).map((f) => f.id));
+    const todas = [
+      ...notificacoesDoDia(funcionarios as any, new Date()),
+      ...verificarLimiteCid(
+        atestados.filter((a) => ativos.has(a.funcionario_id)),
+        nomes,
+      ),
+    ];
+    return filtrarNaoLidas(todas, lidas as any);
+  }, [funcionarios, lidas, atestados]);
 
   const marcarLida = useMutation({
     mutationFn: async (n: Notificacao) => {
@@ -93,6 +107,8 @@ export function NotificacoesSino() {
                   <div className="mt-0.5 text-muted-foreground">
                     {n.tipo === "plano_saude" ? (
                       <HeartPulse className="h-4 w-4" />
+                    ) : n.tipo === "limite_cid_inss" ? (
+                      <Stethoscope className="h-4 w-4" />
                     ) : (
                       <CalendarClock className="h-4 w-4" />
                     )}

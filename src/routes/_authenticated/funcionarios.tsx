@@ -46,6 +46,7 @@ import {
   type Suspensao,
 } from "@/lib/situacao-funcionario";
 import { AcidenteTrabalhoPanel, useAtestadosAcidente } from "@/components/acidente-trabalho";
+import { AtestadosMedicosPanel } from "@/components/atestados-medicos";
 
 
 
@@ -1109,10 +1110,13 @@ function FuncForm({
           </div>
 
           {initial?.id ? (
-            <AcidenteTrabalhoPanel funcionarioId={initial.id} />
+            <>
+              <AcidenteTrabalhoPanel funcionarioId={initial.id} />
+              <AtestadosMedicosPanel funcionarioId={initial.id} />
+            </>
           ) : (
             <div className="col-span-2 rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-              Atestados por acidente de trabalho podem ser lançados após salvar o cadastro.
+              Atestados médicos e por acidente de trabalho podem ser lançados após salvar o cadastro.
             </div>
           )}
 
