@@ -124,6 +124,7 @@ function FuncPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Func | null>(null);
   const [filtro, setFiltro] = useState("todas");
+  const [filtroSituacao, setFiltroSituacao] = useState("todas");
   const [busca, setBusca] = useState("");
 
   const { salarioMinimoFederal, planos: planosCfg } = useReferenciasSalariais();
@@ -228,16 +229,20 @@ function FuncPage() {
 
   const filtrados = useMemo(() => {
     const porLoja = filtro === "todas" ? funcs : funcs.filter((f) => f.loja_id === filtro);
+    const porSituacao =
+      filtroSituacao === "todas"
+        ? porLoja
+        : porLoja.filter((f) => situacaoDe(f) === filtroSituacao);
     const termo = busca.trim().toLowerCase();
-    if (!termo) return porLoja;
-    return porLoja.filter(
+    if (!termo) return porSituacao;
+    return porSituacao.filter(
       (f) =>
         f.nome.toLowerCase().includes(termo) ||
         (f.cpf ?? "").toLowerCase().includes(termo) ||
         (f.cargo ?? "").toLowerCase().includes(termo) ||
         (f.lojas?.nome ?? "").toLowerCase().includes(termo),
     );
-  }, [funcs, filtro, busca]);
+  }, [funcs, filtro, filtroSituacao, busca, situacaoDe, afastMes, feriasMes, suspensoes, hoje]);
 
   const totalFolha = filtrados.reduce((s, f) => s + custoReal(f, salarioMinimoFederal, planosCfg).total, 0);
   // Casos herdados: recebem VT mas não têm o desconto de 6% ativo — revisão manual.
@@ -336,6 +341,23 @@ function FuncPage() {
                     {l.nome} ({l.codigo})
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Situação:</Label>
+            <Select value={filtroSituacao} onValueChange={setFiltroSituacao}>
+              <SelectTrigger className="w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas</SelectItem>
+                <SelectItem value="Ativo">Ativo</SelectItem>
+                <SelectItem value="Férias">Férias</SelectItem>
+                <SelectItem value="Afastado (INSS)">Afastado (INSS)</SelectItem>
+                <SelectItem value="Experiência">Experiência</SelectItem>
+                <SelectItem value="Suspenso">Suspenso</SelectItem>
+                <SelectItem value="Desligado">Desligado</SelectItem>
               </SelectContent>
             </Select>
           </div>
