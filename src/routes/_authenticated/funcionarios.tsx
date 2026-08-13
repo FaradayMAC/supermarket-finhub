@@ -229,16 +229,20 @@ function FuncPage() {
 
   const filtrados = useMemo(() => {
     const porLoja = filtro === "todas" ? funcs : funcs.filter((f) => f.loja_id === filtro);
+    const porSituacao =
+      filtroSituacao === "todas"
+        ? porLoja
+        : porLoja.filter((f) => situacaoDe(f) === filtroSituacao);
     const termo = busca.trim().toLowerCase();
-    if (!termo) return porLoja;
-    return porLoja.filter(
+    if (!termo) return porSituacao;
+    return porSituacao.filter(
       (f) =>
         f.nome.toLowerCase().includes(termo) ||
         (f.cpf ?? "").toLowerCase().includes(termo) ||
         (f.cargo ?? "").toLowerCase().includes(termo) ||
         (f.lojas?.nome ?? "").toLowerCase().includes(termo),
     );
-  }, [funcs, filtro, busca]);
+  }, [funcs, filtro, filtroSituacao, busca, situacaoDe, afastMes, feriasMes, suspensoes, hoje]);
 
   const totalFolha = filtrados.reduce((s, f) => s + custoReal(f, salarioMinimoFederal, planosCfg).total, 0);
   // Casos herdados: recebem VT mas não têm o desconto de 6% ativo — revisão manual.
