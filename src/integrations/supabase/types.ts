@@ -1048,9 +1048,12 @@ export type Database = {
           cpf: string | null
           created_at: string
           data_admissao: string | null
+          data_confirmacao_gravidez: string | null
           data_desligamento: string | null
           data_fim_experiencia: string | null
           data_nascimento: string | null
+          data_parto: string | null
+          data_retorno_licenca_maternidade: string | null
           dependentes: number
           desconto_vt: boolean
           email: string | null
@@ -1088,9 +1091,12 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           data_admissao?: string | null
+          data_confirmacao_gravidez?: string | null
           data_desligamento?: string | null
           data_fim_experiencia?: string | null
           data_nascimento?: string | null
+          data_parto?: string | null
+          data_retorno_licenca_maternidade?: string | null
           dependentes?: number
           desconto_vt?: boolean
           email?: string | null
@@ -1128,9 +1134,12 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           data_admissao?: string | null
+          data_confirmacao_gravidez?: string | null
           data_desligamento?: string | null
           data_fim_experiencia?: string | null
           data_nascimento?: string | null
+          data_parto?: string | null
+          data_retorno_licenca_maternidade?: string | null
           dependentes?: number
           desconto_vt?: boolean
           email?: string | null
