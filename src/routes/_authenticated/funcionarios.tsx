@@ -360,7 +360,10 @@ function FuncPage() {
                 <SelectItem value="Afastado (INSS)">Afastado (INSS)</SelectItem>
                 <SelectItem value="Experiência">Experiência</SelectItem>
                 <SelectItem value="Suspenso">Suspenso</SelectItem>
+                <SelectItem value="Grávida">Grávida</SelectItem>
+                <SelectItem value="Estabilidade (gestante)">Estabilidade (gestante)</SelectItem>
                 <SelectItem value="Desligado">Desligado</SelectItem>
+
               </SelectContent>
             </Select>
           </div>
